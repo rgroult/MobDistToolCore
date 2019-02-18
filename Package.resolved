@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "Auth",
+        "repositoryURL": "https://github.com/vapor/auth.git",
+        "state": {
+          "branch": null,
+          "revision": "9c71c8a6c021601d981305987e8e95fd36fd0c56",
+          "version": "2.0.2"
+        }
+      },
+      {
         "package": "BSON",
         "repositoryURL": "https://github.com/OpenKitten/BSON.git",
         "state": {
@@ -71,6 +80,15 @@
           "branch": null,
           "revision": "b57005e0de30ba36372ac41bfce1ac12b2bc3272",
           "version": "3.1.8"
+        }
+      },
+      {
+        "package": "JWT",
+        "repositoryURL": "https://github.com/vapor/jwt.git",
+        "state": {
+          "branch": null,
+          "revision": "2e225c722bf26407c1c4bd11d341e48759f46095",
+          "version": "3.0.0"
         }
       },
       {

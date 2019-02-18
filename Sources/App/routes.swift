@@ -1,5 +1,6 @@
 import Vapor
 import Swiftgger
+import Authentication
 
 /// Register your application's routes here.
 public func routes(_ router: Router) throws {
@@ -38,7 +39,10 @@ public func routes(_ router: Router) throws {
    
     let usersController = UsersController(apiBuilder: openAPIBuilder)
     router.get("users",use:usersController.index)
-    router.get("apps",use:usersController.apps)
+/*    let protectedGroup = router.group([GuardAuthenticationMiddleware]) { router in
+        router.get("apps",use:usersController.apps)
+    }*/
+    
     router.get("app",use:usersController.app)
     router.get("test",use:usersController.test)
     router.get("artifacts",use:usersController.artifacts)
