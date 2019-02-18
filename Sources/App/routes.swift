@@ -44,6 +44,10 @@ public func routes(_ router: Router) throws {
     router.get("artifacts",use:usersController.artifacts)
     router.get("find",use:usersController.findAppsForUser)
     
+    let artifactController = ArtifactsController()
+    router.post("testupload",use:artifactController.uploadArtifact)
+    
+    
    
     //OpenAPI
     let document = openAPIBuilder.built()

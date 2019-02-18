@@ -6,6 +6,10 @@ import MeowVapor
 public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
     // Register providers first
     try services.register(FluentSQLiteProvider())
+    
+    //Meow
+    let meow = try MeowProvider("mongodb://localhost:27017/mobdisttool")
+    try services.register(meow)
 
     // Register routes to the router
     let router = EngineRouter.default()
@@ -17,10 +21,11 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     middlewares.use(FileMiddleware.self) // Serves files from `Public/` directory
     middlewares.use(ErrorMiddleware.self) // Catches errors and converts to HTTP response
     services.register(middlewares)
-    
-    //Meow
-    let meow = try MeowProvider("mongodb://localhost:27017/mobdisttool")
-    try services.register(meow)
+   
+    //custom config
+    var myServerConfig = NIOServerConfig.default()
+    myServerConfig.maxBodySize = 3_000_000_000
+    services.register(myServerConfig)
 
     // Configure a SQLite database
     let sqlite = try SQLiteDatabase(storage: .memory)
