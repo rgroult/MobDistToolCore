@@ -9,14 +9,15 @@ import Vapor
 import MeowVapor
 import BSON
 import Swiftgger
+import JWT
+import JWTAuth
 
-final class UsersController {
-    let controllerVersion = "v2"
-    func generateRoute(_ verb:String)->String{
-        return "/\(controllerVersion)/Users/\(verb)"
-    }
+final class UsersController:BaseController {
+  /*  override var  controllerVersion = "v2"
+    var pathPrefix = "Users"
+   */
     init(apiBuilder:OpenAPIBuilder) {
-        generateOpenAPI(apiBuilder: apiBuilder)
+        super.init(version: "v2", pathPrefix: "Users", apiBuilder: apiBuilder)
     }
     
     func register(_ req: Request) throws -> Future<String> {
@@ -27,10 +28,36 @@ final class UsersController {
         throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
     }
     
-    func login(_ req: Request) throws -> Future<String> {
-        throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
+    func login(_ req: Request) throws -> Future<LoginRespDto> {
+        return try req.content.decode(LoginReqDto.self)
+            .flatMap({ loginDto -> Future<LoginRespDto>  in
+                return req.meow().flatMap{context in
+                    return context.find(User.self, where:  Query.valEquals(field: "email", val: loginDto.email)).getFirstResult()
+                        .flatMap({ user in
+                            guard let user = user else { throw Abort(.notFound)}
+                            //generate token in header
+                            let signers = try req.make(JWTSigners.self)
+                            return try signers.get(kid: signerIdentifier, on: req)
+                                .map{ signer in
+                                    let jwt = JWT(header: .init(kid: signerIdentifier), payload: JWTTokenPayload())
+                                    let signatureData = try jwt.sign(using: signer)
+                                    let token = String(bytes: signatureData, encoding: .utf8)!
+                                    return LoginRespDto( email: user.email, name: user.name,token:token)
+                                }
+                        })
+                }
+            })
+        }
+    
+    func me(_ req: Request) throws -> Future<UserDto> {
+        return try retrieveUser(from:req)
+            .map{ user in
+                guard let user = user else { throw Abort(.unauthorized)}
+                return UserDto.create(from: user, content: .full)
+            }
     }
     
+    /*
     func index(_ req: Request) throws -> Future<[User]> {
         return req.meow().flatMap({ context -> Future<[User]> in
             // Start using Meow!
@@ -57,8 +84,8 @@ final class UsersController {
             return context.find(MDTApplication.self).getFirstResult()
                 .map({$0!})
         })
-    }
-    
+    }*/
+    /*
     func test(_ req: Request) throws -> Future<MDTApplication2> {
         return req.meow().flatMap { context -> EventLoopFuture<MDTApplication2> in
             return context.find(User.self).getFirstResult().flatMap({ user in
@@ -71,9 +98,9 @@ final class UsersController {
                 })
             })
         }
-    }
+    }*/
     
-    
+    /*
     func artifacts(_ req: Request) throws -> Future<[Artifact]> {
         return req.meow().flatMap({ context -> Future<[Artifact]> in
             // Start using Meow!
@@ -95,7 +122,7 @@ final class UsersController {
                     return context.find(MDTApplication.self, where: Query.containsElement(field: "adminUsers", match: Query.custom(query))).getAllResults()
                 })
         }
-    }
+    }*/
 }
 //extension Array : PrimitiveConvertible {}
 /*

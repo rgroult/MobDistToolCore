@@ -11,10 +11,13 @@ let package = Package(
         .package(url: "https://github.com/vapor/fluent-sqlite.git", from: "3.0.0"),
         
         // 🔏 JSON Web Token signing and verification (HMAC, RSA).
-        .package(url: "https://github.com/vapor/jwt.git", from: "3.0.0"),
+        //.package(url: "https://github.com/vapor/jwt.git", from: "3.0.0"),
+        
+        // 🔏 JSON Web Token Middleware.
+        .package(url: "https://github.com/asensei/vapor-auth-jwt", .upToNextMajor(from: "1.0.0")),
         
         // 👤 Authentication and Authorization framework for Fluent.
-        .package(url: "https://github.com/vapor/auth.git", from: "3.0.0"),
+        //.package(url: "https://github.com/vapor/auth.git", from: "2.0.0"),
     
         //🐈 MeowVapor
         .package(url: "https://github.com/OpenKitten/MeowVapor.git", from: "2.0.0"),
@@ -22,7 +25,7 @@ let package = Package(
         .package(url: "https://github.com/mczachurski/Swiftgger.git", from: "1.2.1")
     ],
     targets: [
-        .target(name: "App", dependencies: ["Authentication", "JWT", "FluentSQLite", "Vapor","MeowVapor","Swiftgger"]),
+        .target(name: "App", dependencies: ["JWTAuth","FluentSQLite", "Vapor","MeowVapor","Swiftgger"]),
         .target(name: "Run", dependencies: ["App"]),
         .testTarget(name: "AppTests", dependencies: ["App"])
     ]

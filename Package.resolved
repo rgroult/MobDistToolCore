@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/vapor/auth.git",
         "state": {
           "branch": null,
-          "revision": "9c71c8a6c021601d981305987e8e95fd36fd0c56",
-          "version": "2.0.2"
+          "revision": "ed402783942af1d40b5c9e537e956aea51618f0e",
+          "version": "2.0.3"
         }
       },
       {
@@ -42,8 +42,8 @@
         "repositoryURL": "https://github.com/vapor/crypto.git",
         "state": {
           "branch": null,
-          "revision": "bce9ac891c9b33fc045deda713e0d976d13b749a",
-          "version": "3.3.1"
+          "revision": "45bb12d13cdec80dbd1cc0685ea002e51ab83439",
+          "version": "3.3.2"
         }
       },
       {
@@ -240,8 +240,17 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "26d68063358fe73a37df371ebb6edf93e6f0c3ad",
-          "version": "3.1.3"
+          "revision": "6c7284681c3432fee29c268babf954be6816cbfb",
+          "version": "3.2.2"
+        }
+      },
+      {
+        "package": "JWTAuth",
+        "repositoryURL": "https://github.com/asensei/vapor-auth-jwt",
+        "state": {
+          "branch": null,
+          "revision": "05af64824605d4f1d5c6261d3d55f9abd4862221",
+          "version": "1.0.0"
         }
       },
       {
