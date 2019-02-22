@@ -33,19 +33,23 @@ struct MdtConfiguration: Codable {
     var initialAdminPassword:String
     
     static func loadConfig(from filePath:String? = nil, from env:Environment) throws -> MdtConfiguration{
-        let configFileContent:String
+        let configFilePath:String
         if let filePath = filePath {
-            configFileContent = try String(contentsOfFile: filePath)
+            configFilePath = filePath
+           // configFileContent = try String(contentsOfFile: filePath)
         }else {
             let directory = DirectoryConfig.detect()
             if env == .production {
-                configFileContent = try  String(contentsOfFile: "\(directory.workDir)/Config/config.json")
+                configFilePath = "\(directory.workDir)/config/config.json"
+               // configFileContent = try  String(contentsOfFile: "\(directory.workDir)/config/config.json")
             }else {
                 //use default file for current env
-                configFileContent = try  String(contentsOfFile: "\(directory.workDir)/Sources/App/Config/envs/\(env.name)/config.json")
+                configFilePath = "\(directory.workDir)/Sources/App/Config/envs/\(env.name)/config.json"
+                //configFileContent = try  String(contentsOfFile: "\(directory.workDir)/Sources/App/Config/envs/\(env.name)/config.json")
             }
-            
         }
+        print("Loading configuration from \(configFilePath)")
+        let configFileContent = try String(contentsOfFile: configFilePath)
         guard var configJson:[String:Any] = try JSONSerialization.jsonObject(with: configFileContent.data(using: .utf8) ?? Data(), options: JSONSerialization.ReadingOptions.mutableContainers) as? [String : Any] else {
             throw "Invalid config file"
             //throw DecodingError.dataCorruptedError(in: configFileContent, debugDescription: "Invalid config file")

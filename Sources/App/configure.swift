@@ -15,7 +15,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
         configuration = try MdtConfiguration.loadConfig(from: nil, from: env)
         print("config: \(configuration)")
     }catch {
-        print("Unable to read configuration")
+        print("Unable to read configuration: \(error)")
         throw error
     }
     
