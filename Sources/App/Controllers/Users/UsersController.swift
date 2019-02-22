@@ -13,9 +13,9 @@ import JWT
 import JWTAuth
 
 final class UsersController:BaseController {
-  /*  override var  controllerVersion = "v2"
-    var pathPrefix = "Users"
-   */
+    /*  override var  controllerVersion = "v2"
+     var pathPrefix = "Users"
+     */
     init(apiBuilder:OpenAPIBuilder) {
         super.init(version: "v2", pathPrefix: "Users", apiBuilder: apiBuilder)
     }
@@ -39,90 +39,90 @@ final class UsersController:BaseController {
                             let signers = try req.make(JWTSigners.self)
                             return try signers.get(kid: signerIdentifier, on: req)
                                 .map{ signer in
-                                    let jwt = JWT(header: .init(kid: signerIdentifier), payload: JWTTokenPayload())
+                                    let jwt = JWT(header: .init(kid: signerIdentifier), payload: JWTTokenPayload(email: user.email))
                                     let signatureData = try jwt.sign(using: signer)
                                     let token = String(bytes: signatureData, encoding: .utf8)!
                                     return LoginRespDto( email: user.email, name: user.name,token:token)
-                                }
+                            }
                         })
                 }
             })
-        }
+    }
     
     func me(_ req: Request) throws -> Future<UserDto> {
         return try retrieveUser(from:req)
             .map{ user in
                 guard let user = user else { throw Abort(.unauthorized)}
                 return UserDto.create(from: user, content: .full)
-            }
+        }
     }
     
     /*
-    func index(_ req: Request) throws -> Future<[User]> {
-        return req.meow().flatMap({ context -> Future<[User]> in
-            // Start using Meow!
-            return context.find(User.self).getAllResults()
-        })
-        //return Todo.query(on: req).all()
-    }
-    
-    func apps(_ req: Request) throws -> Future<[MDTApplication]> {
-        print("Retrieve Apps")
-        
-        
-        return req.meow().flatMap({ context -> Future<[MDTApplication]> in
-            // Start using Meow!
-            return context.find(MDTApplication.self).getAllResults()
-        })
-    }
-    
-    func app(_ req: Request) throws -> Future<MDTApplication> {
-        print("Retrieve first App")
-        
-        return req.meow().flatMap({ context -> Future<MDTApplication> in
-            // Start using Meow!
-            return context.find(MDTApplication.self).getFirstResult()
-                .map({$0!})
-        })
-    }*/
+     func index(_ req: Request) throws -> Future<[User]> {
+     return req.meow().flatMap({ context -> Future<[User]> in
+     // Start using Meow!
+     return context.find(User.self).getAllResults()
+     })
+     //return Todo.query(on: req).all()
+     }
+     
+     func apps(_ req: Request) throws -> Future<[MDTApplication]> {
+     print("Retrieve Apps")
+     
+     
+     return req.meow().flatMap({ context -> Future<[MDTApplication]> in
+     // Start using Meow!
+     return context.find(MDTApplication.self).getAllResults()
+     })
+     }
+     
+     func app(_ req: Request) throws -> Future<MDTApplication> {
+     print("Retrieve first App")
+     
+     return req.meow().flatMap({ context -> Future<MDTApplication> in
+     // Start using Meow!
+     return context.find(MDTApplication.self).getFirstResult()
+     .map({$0!})
+     })
+     }*/
     /*
-    func test(_ req: Request) throws -> Future<MDTApplication2> {
-        return req.meow().flatMap { context -> EventLoopFuture<MDTApplication2> in
-            return context.find(User.self).getFirstResult().flatMap({ user in
-                let appJson:Document = ["_id" : ObjectId() , "name" : "testAppNew"]
-                let app = try MDTApplication2.decoder.decode(MDTApplication2.self, from: appJson)
-                if let user = user {
-                    app.adminUsers = [Reference(to: user)]
-                }
-                return app.save(to: context).map({_ in return app
-                })
-            })
-        }
-    }*/
+     func test(_ req: Request) throws -> Future<MDTApplication2> {
+     return req.meow().flatMap { context -> EventLoopFuture<MDTApplication2> in
+     return context.find(User.self).getFirstResult().flatMap({ user in
+     let appJson:Document = ["_id" : ObjectId() , "name" : "testAppNew"]
+     let app = try MDTApplication2.decoder.decode(MDTApplication2.self, from: appJson)
+     if let user = user {
+     app.adminUsers = [Reference(to: user)]
+     }
+     return app.save(to: context).map({_ in return app
+     })
+     })
+     }
+     }*/
     
     /*
-    func artifacts(_ req: Request) throws -> Future<[Artifact]> {
-        return req.meow().flatMap({ context -> Future<[Artifact]> in
-            // Start using Meow!
-            return context.find(Artifact.self).getAllResults()
-        })
-        //return Todo.query(on: req).all()
-    }
-    
-    func findAppsForUser(_ req: Request) throws -> Future<[MDTApplication]> {
-        guard let email = req.query[String.self, at: "email"] else {
-            throw Abort(.badRequest)
-        }
-        
-        return req.meow().flatMap {context -> Future<[MDTApplication]> in
-            return context.findOne(User.self, where: Query.valEquals(field: "email", val: email))
-                .flatMap({ user -> Future<[MDTApplication]> in
-                    guard let user = user else {throw Abort(.badRequest)}
-                    let query: Document = ["$eq": user._id]
-                    return context.find(MDTApplication.self, where: Query.containsElement(field: "adminUsers", match: Query.custom(query))).getAllResults()
-                })
-        }
-    }*/
+     func artifacts(_ req: Request) throws -> Future<[Artifact]> {
+     return req.meow().flatMap({ context -> Future<[Artifact]> in
+     // Start using Meow!
+     return context.find(Artifact.self).getAllResults()
+     })
+     //return Todo.query(on: req).all()
+     }
+     
+     func findAppsForUser(_ req: Request) throws -> Future<[MDTApplication]> {
+     guard let email = req.query[String.self, at: "email"] else {
+     throw Abort(.badRequest)
+     }
+     
+     return req.meow().flatMap {context -> Future<[MDTApplication]> in
+     return context.findOne(User.self, where: Query.valEquals(field: "email", val: email))
+     .flatMap({ user -> Future<[MDTApplication]> in
+     guard let user = user else {throw Abort(.badRequest)}
+     let query: Document = ["$eq": user._id]
+     return context.find(MDTApplication.self, where: Query.containsElement(field: "adminUsers", match: Query.custom(query))).getAllResults()
+     })
+     }
+     }*/
 }
 //extension Array : PrimitiveConvertible {}
 /*

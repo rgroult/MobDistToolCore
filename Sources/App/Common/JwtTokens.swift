@@ -14,12 +14,14 @@ let refreshTokenExpiration:TimeInterval = 16*60 // 15mins
 
 struct JWTTokenPayload: JWTAuthenticatable, JWTPayload, Equatable {
     
-    init(_ id: String = UUID().uuidString) {
+    init(_ id: String = UUID().uuidString, email:String) {
         self.id = id
         self.expireAt = Date().addingTimeInterval(tokenExpiration)
+        self.email = email
     }
     
     let id: String
+    let email:String
     let expireAt:Date
     
     func verify(using signer: JWTSigner) throws {

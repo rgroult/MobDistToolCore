@@ -8,6 +8,7 @@
 import Foundation
 import Vapor
 import Swiftgger
+import Meow
 
 protocol APIBuilderControllerProtocol {
     func generateOpenAPI(apiBuilder:OpenAPIBuilder)
@@ -31,8 +32,9 @@ class BaseController {
     
     func retrieveUser(from req:Request) throws -> Future<User?>  {
         let jwt = try req.authenticated(JWTTokenPayload.self)
+        guard let email = jwt?.email else { throw Abort(.notFound)}
         return req.meow().flatMap({ context in
-            return context.find(User.self).getFirstResult()
+            return context.findOne(User.self, where: Query.valEquals(field: "email", val: email))
         })
         
     }

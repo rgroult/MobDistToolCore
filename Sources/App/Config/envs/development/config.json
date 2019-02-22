@@ -1,0 +1,12 @@
+{
+    "serverListeningPort":8080,
+    "serverExternalUrl":"http://localhost:8080",
+    "mongoServerUrl":"mongodb://localhost:27017/mobdisttool",
+    "jwtSecretToken":"qsdqsdqsdqs",
+    "loginResponseDelay":0,
+    "storageMode":"TestingStorage",
+    "automaticRegistration":true,
+    "minimumPasswordStrength":0,
+    "initialAdminEmail":"admin@localhost.com",
+    "initialAdminPassword":"password"
+}

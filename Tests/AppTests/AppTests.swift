@@ -47,16 +47,13 @@ final class AppTests: XCTestCase {
         
         let body = loginJSON.convertToHTTPBody()
         try app.clientTest(.POST, "/v2/Users/login", body){ res in
+            XCTAssertNotNil(res)
            // let token = res.content.get(String.self, at: "token")
             let loginResp = try res.content.decode(LoginRespDto.self).wait()
             XCTAssertEqual(loginResp.email, email)
             XCTAssertEqual(loginResp.name, "admin")
             print(loginResp)
         }
-        
-//        try app.clientTest(.POST, "/v2/Users/login", beforeSend: { req in
-//
-//        })
     }
     
     

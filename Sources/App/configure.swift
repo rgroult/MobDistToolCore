@@ -8,8 +8,19 @@ let signerIdentifier = "mdt_jwt_signer"
 
 /// Called before your application initializes.
 public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
+    //load config
+    let configuration:MdtConfiguration
+    do {
+        print("Loading Config")
+        configuration = try MdtConfiguration.loadConfig(from: nil, from: env)
+        print("config: \(configuration)")
+    }catch {
+        print("Unable to read configuration")
+        throw error
+    }
+    
     // Register providers first
-    try services.register(FluentSQLiteProvider())
+   // try services.register(FluentSQLiteProvider())
     
     //Meow
     let meow = try MeowProvider("mongodb://localhost:27017/mobdisttool")
@@ -47,7 +58,8 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
    
     //custom config
     var myServerConfig = NIOServerConfig.default()
-    myServerConfig.maxBodySize = 3_000_000_000
+    myServerConfig.port = configuration.serverListeningPort
+    myServerConfig.maxBodySize = 2_000_000_000
     services.register(myServerConfig)
 
     // Configure a SQLite database
