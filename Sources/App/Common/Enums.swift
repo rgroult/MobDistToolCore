@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Vapor
 
 enum ModelVisibility:Int {
     case light, full
@@ -13,4 +14,13 @@ enum ModelVisibility:Int {
 
 enum Platform:String,Codable {
     case ios, android
+}
+
+extension Platform {
+    static func create(from value:String) throws -> Platform {
+        guard let platform = Platform(rawValue:value) else {
+            let error = Abort(.badRequest,reason: "Bad parameter platorm, values are [\(Platform.ios),\(Platform.android)]")
+            throw error }
+        return platform
+    }
 }

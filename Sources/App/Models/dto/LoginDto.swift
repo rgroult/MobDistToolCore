@@ -8,15 +8,15 @@
 import Foundation
 import MeowVapor
 
-struct LoginReqDto: Codable {
+public struct LoginReqDto: Codable {
     var email:String
     var password:String
 }
 
-struct LoginRespDto: Codable {
-    var email:String
-    var name:String
-    var token:String
+public struct LoginRespDto: Codable {
+    public var email:String
+    public var name:String
+    public var token:String
    // var refreshToken:String
 }
 

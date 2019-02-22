@@ -19,10 +19,7 @@ final class ApplicationsController:BaseController {
     func applications(_ req: Request) throws -> Future<[ApplicationDto]> {
         var platformFilter:Platform?
         if let platormString = try? req.query.get(String.self, at: "platorm") {
-            guard let platform = Platform(rawValue:platormString) else {
-                let error = Abort(.badRequest,reason: "Bad filter, values are [\(Platform.ios),\(Platform.android)]")
-                throw error }
-            platformFilter = platform
+            platformFilter = try Platform.create(from: platormString)
         }
         
         return try retrieveUser(from:req)
