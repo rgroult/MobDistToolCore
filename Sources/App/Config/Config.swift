@@ -118,6 +118,13 @@ extension MdtConfiguration {
         return objectParsed
     }
 }
+extension MdtConfiguration: Provider {
+    func didBoot(_ container: Container) throws -> EventLoopFuture<Void> {
+        return .done(on: container)
+    }
+    
+    func register(_ services: inout Services) throws {}
+}
 
 //final Map defaultConfig = {
 //    MDT_SERVER_PORT:8080,

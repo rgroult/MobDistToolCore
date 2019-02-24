@@ -18,12 +18,12 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
         print("Unable to read configuration: \(error)")
         throw error
     }
-    
+    try services.register(configuration)
     // Register providers first
    // try services.register(FluentSQLiteProvider())
     
     //Meow
-    let meow = try MeowProvider("mongodb://localhost:27017/mobdisttool")
+    let meow = try MeowProvider(configuration.mongoServerUrl.absoluteString)
     try services.register(meow)
     
     // register Authentication provider
