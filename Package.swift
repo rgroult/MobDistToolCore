@@ -22,10 +22,14 @@ let package = Package(
         //🐈 MeowVapor
         .package(url: "https://github.com/OpenKitten/MeowVapor.git", from: "2.0.0"),
         
-        .package(url: "https://github.com/mczachurski/Swiftgger.git", from: "1.2.1")
+        // open APi
+        .package(url: "https://github.com/mczachurski/Swiftgger.git", from: "1.2.1"),
+        
+        //🔐 crypto
+        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMinor(from: "0.9.0"))
     ],
     targets: [
-        .target(name: "App", dependencies: ["JWTAuth","FluentSQLite", "Vapor","MeowVapor","Swiftgger"]),
+        .target(name: "App", dependencies: ["JWTAuth","FluentSQLite", "Vapor","MeowVapor","Swiftgger","CryptoSwift"]),
         .target(name: "Run", dependencies: ["App"]),
         .testTarget(name: "AppTests", dependencies: ["App"])
     ]
