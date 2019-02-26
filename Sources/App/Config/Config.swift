@@ -32,6 +32,8 @@ struct MdtConfiguration: Codable {
     var initialAdminEmail:String
     var initialAdminPassword:String
     
+    var logDirectory:String? //for production mode : use ./logs if not provided
+    
     static func loadConfig(from filePath:String? = nil, from env:Environment) throws -> MdtConfiguration{
         let configFilePath:String
         if let filePath = filePath {
@@ -95,7 +97,7 @@ struct MdtConfiguration: Codable {
 
 extension MdtConfiguration {
     private static var empty:MdtConfiguration {
-        return MdtConfiguration(serverListeningPort: 0, serverExternalUrl: URL(string: "http://host.com")!, mongoServerUrl: URL(string: "mongodb://host")!, jwtSecretToken: nil, loginResponseDelay: 0, storageMode: .testing, storageConfiguration: nil, registrationWhiteDomains: nil, automaticRegistration: true, minimumPasswordStrength: 0, initialAdminEmail: "", initialAdminPassword: "")
+        return MdtConfiguration(serverListeningPort: 0, serverExternalUrl: URL(string: "http://host.com")!, mongoServerUrl: URL(string: "mongodb://host")!, jwtSecretToken: nil, loginResponseDelay: 0, storageMode: .testing, storageConfiguration: nil, registrationWhiteDomains: nil, automaticRegistration: true, minimumPasswordStrength: 0, initialAdminEmail: "", initialAdminPassword: "", logDirectory:nil)
     }
     
     private func convert<T>(from value:String, into:T) throws -> T {
@@ -118,34 +120,18 @@ extension MdtConfiguration {
         return objectParsed
     }
 }
-extension MdtConfiguration: Provider {
-    func didBoot(_ container: Container) throws -> EventLoopFuture<Void> {
-        return .done(on: container)
+//extension MdtConfiguration: Provider {
+//    func didBoot(_ container: Container) throws -> EventLoopFuture<Void> {
+//        return .done(on: container)
+//    }
+//
+//    func register(_ services: inout Services) throws {}
+//}
+
+extension MdtConfiguration : ServiceType {
+    static func makeService(for container: Container) throws -> MdtConfiguration {
+       throw "Unable to make empty service"
     }
     
-    func register(_ services: inout Services) throws {}
+    
 }
-
-//final Map defaultConfig = {
-//    MDT_SERVER_PORT:8080,
-//    MDT_SERVER_URL:"http://localhost:8080",
-//    MDT_DATABASE_URI:"mongodb://localhost:27017/mdt_dev",
-//    MDT_STORAGE_NAME:"yes_storage_manager",
-//    MDT_STORAGE_CONFIG:{},
-//    MDT_SMTP_CONFIG:{},
-//    MDT_REGISTRATION_WHITE_DOMAINS:[],
-//    MDT_REGISTRATION_NEED_ACTIVATION:"false",
-//    MDT_TOKEN_SECRET:"secret token dsfsxfsfsqd%%Qsdqs",
-//    MDT_LOG_DIR:"",
-//    MDT_LOG_TO_CONSOLE:"true",
-//    MDT_SYSADMIN_INITIAL_PASSWORD:"sysadmin",
-//    MDT_SYSADMIN_INITIAL_EMAIL:"admin@localhost.com",
-//    //delay (in ms) before login resquest response (limit brut attack).
-//    MDT_LOGIN_DELAY:"0",
-//    // minimum strength password required
-//    //[0,1,2,3,4] if crack time is less than
-//    /// [10**2, 10**4, 10**6, 10**8, Infinity]. see https://github.com/exitlive/xcvbnm for more details
-//    MDT_PASSWORD_MIN_STRENGTH:"0",
-//    MDT_IPA_EXTRACT_USING_UNZIP:"false",
-//    MDT_AAPT_FULL_PATH:"aapt" //search in path
-//};

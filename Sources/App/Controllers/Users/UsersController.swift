@@ -27,8 +27,26 @@ final class UsersController:BaseController {
     func forgotPassword(_ req: Request) throws -> Future<String> {
         throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
     }
-    
     func login(_ req: Request) throws -> Future<LoginRespDto> {
+        return try req.content.decode(LoginReqDto.self)
+        .flatMap{ loginDto -> Future<LoginRespDto>  in
+             return req.meow().flatMap{context in
+                return try findUser(by: loginDto.email, and: loginDto.password, updateLastLogin: true, into: context)
+                    .flatMap({ user in
+                        //generate token in header
+                        let signers = try req.make(JWTSigners.self)
+                        return try signers.get(kid: signerIdentifier, on: req)
+                            .map{ signer in
+                                let jwt = JWT(header: .init(kid: signerIdentifier), payload: JWTTokenPayload(email: user.email))
+                                let signatureData = try jwt.sign(using: signer)
+                                let token = String(bytes: signatureData, encoding: .utf8)!
+                                return LoginRespDto( email: user.email, name: user.name,token:token)
+                        }
+                    })
+            }
+        }
+    }
+    func loginOLD(_ req: Request) throws -> Future<LoginRespDto> {
         return try req.content.decode(LoginReqDto.self)
             .flatMap({ loginDto -> Future<LoginRespDto>  in
                 return req.meow().flatMap{context in
