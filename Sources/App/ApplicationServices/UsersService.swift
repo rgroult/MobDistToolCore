@@ -9,9 +9,11 @@ import Vapor
 import Meow
 import CryptoSwift
 
-enum UserError: Error {    
+enum UserError: Error,Equatable {
     case notFound
+    case alreadyExist
     case invalidLoginOrPassword
+    case fieldInvalid(fieldName:String)
 }
 
 extension UserError: Debuggable {
@@ -21,6 +23,10 @@ extension UserError: Debuggable {
             return "invalidLoginOrPassword"
         case .notFound:
             return "notFound"
+        case .fieldInvalid(let fieldName):
+            return "FieldInvalid:\(fieldName)"
+        case .alreadyExist:
+            return "alreadyPresent"
         }
     }
     
@@ -48,7 +54,6 @@ func findUser(by email:String, and password:String, updateLastLogin:Bool = true,
             }else {
                 return context.eventLoop.newSucceededFuture(result: user)
             }
-
         }
 }
 
@@ -59,29 +64,48 @@ func createSysAdminIfNeeded(into context:Meow.Context,with config:MdtConfigurati
                 return context.eventLoop.newSucceededFuture(result: false)
             }else {
                 //create Admin user
-                let document  = ["email" : config.initialAdminEmail] as Document
-                
-                let adminUser = try BSONDecoder().decode(User.self, from: document)
-                adminUser.isActivated = true
-                let salt = generateSalt()
-                adminUser.salt = salt
-                adminUser.email = config.initialAdminEmail
-                adminUser.password = generateHashedPassword(plain: config.initialAdminPassword,salt: salt)
-                return adminUser.save(to: context).map{ true}
+                return try createUser(name: "Admin", email: config.initialAdminEmail, password: config.initialAdminPassword, into: context)
+                    .map{_ in  true}
             }
         })
-    
-//    let config = try into.make(Config.self)
-//    return into.make(Meow.Context.self)
-//        .flatMap{ context in
-//            return context
-//    }
-//
-   // throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
+}
+
+func createUser(name:String,email:String,password:String,isSystemAdmin:Bool = false, isActivated:Bool = false , into context:Meow.Context) throws -> Future<User>{
+    //find existing user
+    return try findUser(by: email, into: context).flatMap { user in
+        guard user == nil else { throw UserError.alreadyExist }
+        
+        //create  user
+        let createdUser = User(email: email, name: name)
+        createdUser.isActivated = isActivated
+        createdUser.isSystemAdmin = isSystemAdmin
+        let salt = generateSalt()
+        createdUser.salt = salt
+        createdUser.password = generateHashedPassword(plain: password,salt: salt)
+        if !isActivated {
+            //generate activation token
+            createdUser.activationToken = UUID().description
+        }
+        return createdUser.save(to: context).map{ createdUser}
+    }
+}
+
+func deleteUser(withEmail email:String, into context:Meow.Context) throws -> Future<Void>{
+    return context.deleteOne(User.self, where: Query.valEquals(field: "email", val: email))
+        .map({ count -> () in
+            guard count == 1 else { throw UserError.notFound }
+        })
+}
+
+func resetUser(user:User,newPassword:String,into context:Meow.Context) throws -> Future<User>{
+    user.password = generateHashedPassword(plain: newPassword,salt: user.salt)
+    //generate activation token
+    user.activationToken = UUID().description
+    user.isActivated = false
+    return user.save(to: context).map{user}
 }
 
 private func checkPassword(plain:String,salt:String,hash:String) -> Bool{
-    
     return generateHashedPassword(plain: plain, salt: salt) == hash
 }
 

@@ -52,3 +52,11 @@ extension ApplicationDto {
 }
 
 extension ApplicationDto : Content {}
+
+
+struct ApplicationUpdateDto: Codable,Content {
+    var name:String?
+    var description:String?
+    var maxVersionCheckEnabled:Bool?
+    var base64IconData:String?
+}

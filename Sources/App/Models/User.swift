@@ -22,7 +22,27 @@ final class User: Model {
     var lastLogin:Date?
     var createdAt:Date
     var favoritesApplicationsUUID:String?
+    
+     init(email:String, name:String){
+        self.email = email
+        self.name = name
+        salt = ""
+        password = ""
+        isSystemAdmin = false
+        isActivated = false
+        activationToken = nil
+        lastLogin = nil
+        createdAt = Date()
+        favoritesApplicationsUUID = nil
+    }
 }
+
+//extension User {
+//    convenience init(email:String, name:String){
+//        self.init(email:email,name:name,salt:"",password:"",isSystemAdmin:false,isActivated:false,activationToken:nil,createdAt: Date(),favoritesApplicationsUUID:nil)
+//      /*  */
+//    }
+//}
 
 /// Allows `Todo` to be used as a dynamic migration.
 //extension User: Migration { }

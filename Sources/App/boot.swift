@@ -5,19 +5,36 @@ import Meow
 public func boot(_ app: Application) throws {
     // Your code here
    // let context:Meow.Context = try app.make()
+    let config = try app.make(MdtConfiguration.self)
+    let logger:Logger = try app.make()
     try app.make(Future<Meow.Context>.self)
-        .whenSuccess({ context in
-            print("Context \(context)")
+        .whenSuccess{ context in
             do {
-                print("Nbre of uers \(try context.count(User.self).wait())")
-                //executeAndComplete(try context.count(User.self))
-            }catch{
+                let adminUserCreation = try createSysAdminIfNeeded(into: context, with: config)
+    
+                adminUserCreation.whenSuccess { result in
+                        if result {
+                            logger.info("Admin user(\(config.initialAdminEmail)) created !")
+                        }
+                }
                 
+                adminUserCreation.whenFailure{error in
+                        logger.error("Unable to create initial admin user: \(error)")
+                }
+            }catch {
+                 logger.error("Unable to create initial admin user: \(error)")
             }
-            
-            context.find(User.self).getAllResults()
-                .whenSuccess { users in
-                    print("User \(users.count)")
-            }
-        })
+            //display statistics of server
+            context.count(User.self).whenSuccess({ count in
+                logger.info("Number Users:\(count)")
+            })
+            context.count(MDTApplication.self).whenSuccess({ count in
+                logger.info("Number Applications:\(count)")
+            })
+            context.count(Artifact.self).whenSuccess({ count in
+                logger.info("Number Artifacts:\(count)")
+            })
+        }
+    
+    
 }

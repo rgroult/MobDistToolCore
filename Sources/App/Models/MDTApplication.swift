@@ -9,6 +9,7 @@ import MeowVapor
 import MongoKitten
 
  final class MDTApplication: Model {
+    static let defaultIconPlaceholder = "images/placeholder.jpg"
     //static let collectionName = "MDTApplication"
     var _id = ObjectId()
     var name:String
@@ -22,6 +23,17 @@ import MongoKitten
     
     func isAdmin(user:User) -> Bool {
         return user.isSystemAdmin || adminUsers.contains(Reference(to: user))
+    }
+    
+    init(name:String,platform:Platform,adminUser:User, description:String, base64Icon:String? = nil){
+        self.name = name
+        self.platform = platform
+        self.description = description
+        self.adminUsers = [Reference(to: adminUser)]
+        self.base64IconData = base64Icon ?? MDTApplication.defaultIconPlaceholder
+        self.apiKey = UUID().uuidString
+        self.uuid = UUID().uuidString
+        self.maxVersionSecretKey = nil
     }
 }
 //BsonDbPointer{namespace='MDTUser', id=56d5a8a8f558ddacef0f14b1}
