@@ -66,7 +66,7 @@ final class ApplicationServiceTests: BaseAppTests {
         }
     }
     
-    func testUpdateApplication() throws {
+    func testUpdateApplicationAdminUsers() throws {
         try testCreateApplication()
         //find app
         
@@ -91,6 +91,20 @@ final class ApplicationServiceTests: BaseAppTests {
         let reloadApp:MDTApplication? = try findApplications(for: normalUser, into: context).getFirstResult().wait()
         XCTAssertNotNil(reloadApp)
         XCTAssertEqual(app?._id, reloadApp?._id)
+    }
+    
+    func testFindApplication() throws {
+        try testCreateApplication()
+        
+        //find app
+        var app:MDTApplication? = try findApplications(for: normalUser, into: context).getFirstResult().wait()
+        XCTAssertNotNil(app)
+        
+        //find by uuid
+        XCTAssertEqual(app!._id, try findApplication(uuid: app!.uuid, into: context).wait()?._id)
+        
+        //find by apiKey
+        XCTAssertEqual(app!._id, try findApplication(apiKey: app!.apiKey, into: context).wait()?._id)
     }
 }
 
