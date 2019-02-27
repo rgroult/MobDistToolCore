@@ -48,19 +48,4 @@ import MongoKitten
 //extension MDTApplication: Parameter { }
 
 
-final class Artifact: Model {
-    static let collectionName = "MDTArtifact"
-    var _id = ObjectId()
-    var name:String
-    var application:  Reference<MDTApplication>
-    //var adminUsers: [Data]
-}
 
-/// Allows `Todo` to be used as a dynamic migration.
-//extension User: Migration { }
-
-/// Allows `Todo` to be encoded to and decoded from HTTP messages.
-extension Artifact: Content { }
-
-/// Allows `Todo` to be used as a dynamic parameter in route definitions.
-extension Artifact: Parameter { }

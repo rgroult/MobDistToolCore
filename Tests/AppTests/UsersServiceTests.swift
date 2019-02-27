@@ -11,12 +11,11 @@ import Vapor
 import Meow
 @testable import App
 
-final class UserServiceTests: BaseAppTests {
-    var context:Meow.Context!
+final class UsersServiceTests: BaseAppTests {
     
     override func setUp() {
         super.setUp()
-        XCTAssertNoThrow(context = try app.make(Future<Meow.Context>.self).wait())
+        
     }
     
     func dropNormalUsers(){
@@ -108,7 +107,7 @@ final class UserServiceTests: BaseAppTests {
     }
     
     func testLoginUserFailed() throws {
-        var user = try createUser(name: "toto", email: "toto@toto.com", password: "pwd", into: context).wait()
+        let user = try createUser(name: "toto", email: "toto@toto.com", password: "pwd", into: context).wait()
         XCTAssertThrowsError(try findUser(by: user.name, and: "totot", into: context).wait(), "") { error in
             XCTAssertTrue((error as? UserError) == UserError.invalidLoginOrPassword)
         }

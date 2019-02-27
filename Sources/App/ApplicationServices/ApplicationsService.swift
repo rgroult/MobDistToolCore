@@ -70,7 +70,9 @@ func deleteApplication(by app:MDTApplication,into context:Meow.Context) -> Futur
 func deleteApplication(with name:String, and platform:Platform, into context:Meow.Context) throws -> Future<Void>{
     return context.deleteOne(MDTApplication.self, where: Query.and([Query.valEquals(field: "name", val: name),Query.valEquals(field: "platform", val: platform.rawValue)]))
         .map({ count -> () in
-            guard count == 1 else { throw ApplicationError.notFound }
+            guard count == 1 else {
+                throw ApplicationError.notFound }
+            
         })
 }
 

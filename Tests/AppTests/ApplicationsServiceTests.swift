@@ -1,0 +1,96 @@
+//
+//  ApplicationServiceTests.swift
+//  AppTests
+//
+//  Created by Rémi Groult on 27/02/2019.
+//
+import XCTest
+import Vapor
+import Meow
+@testable import App
+
+let normalUSerInfo = RegisterDto(email: "toto@toto.Com", name: "toto", password: "pwd")
+
+final class ApplicationServiceTests: BaseAppTests {
+    var normalUser:User!
+    var adminUser:User!
+    
+    override func setUp() {
+        super.setUp()
+        XCTAssertNoThrow(context = try app.make(Future<Meow.Context>.self).wait())
+        XCTAssertNoThrow(normalUser =  try createUser(name: normalUSerInfo.name, email: normalUSerInfo.email, password: normalUSerInfo.password,isActivated:true, into: context).wait())
+        let adminUser = try? findUser(by: "admin@localhost.com", into: context).wait()
+        XCTAssertNotNil(adminUser)
+        self.adminUser = adminUser!
+    }
+    
+    override func tearDown() {
+        XCTAssertNoThrow(try deleteUser(withEmail: normalUser.email, into: context).wait())
+       
+        //delete all apps
+        XCTAssertNoThrow(try context.deleteAll(MDTApplication.self,where:Query()).wait())
+         super.tearDown()
+    }
+    
+    func testCreateApplication() throws {
+        let app = try createApplication(name: "testApp", platform: Platform.android, description: "testApp", adminUser: normalUser, into: context).wait()
+        XCTAssertEqual(app.name, "testApp")
+        XCTAssertEqual(app.platform, .android)
+        XCTAssertEqual(app.description,"testApp")
+        XCTAssertEqual(app.adminUsers.count, 1)
+        XCTAssertEqual(app.adminUsers.first, Reference(to: normalUser))
+    }
+    
+    func testExistingApp() throws {
+        try testCreateApplication()
+        
+        XCTAssertThrowsError(try testCreateApplication(), "") { error in
+            XCTAssertTrue((error as? ApplicationError) == ApplicationError.alreadyExist)
+        }
+    }
+    
+    func testDeleteApplication() throws {
+        //delete not found
+        XCTAssertThrowsError(try deleteApplication(with: "testApp", and:Platform.android, into: context).wait(), "") { error in
+            XCTAssertTrue((error as? ApplicationError) == ApplicationError.notFound)
+        }
+        
+        try testCreateApplication()
+        
+        //delete app
+        XCTAssertNoThrow(try deleteApplication(with: "testApp", and:Platform.android, into: context).wait())
+        
+        //delete again
+        XCTAssertThrowsError(try deleteApplication(with: "testApp", and:Platform.android, into: context).wait(), "") { error in
+            XCTAssertTrue((error as? ApplicationError) == ApplicationError.notFound)
+        }
+    }
+    
+    func testUpdateApplication() throws {
+        try testCreateApplication()
+        //find app
+        
+        var app:MDTApplication? = try findApplications(for: normalUser, into: context).getFirstResult().wait()
+        XCTAssertNotNil(app)
+        XCTAssertEqual(app!.adminUsers.count, 1)
+        _ = try app!.removeAdmin(user: normalUser, into: context).wait()
+        
+        XCTAssertEqual(app!.adminUsers.count, 0)
+        
+        //find app
+        XCTAssertNil(try findApplications(for: normalUser, into: context).getFirstResult().wait())
+        
+        //reload app
+        app = try findApplications(into: context).getFirstResult().wait()
+        XCTAssertEqual(app?.adminUsers.count, 0)
+        
+        //add user as admin
+        _ = try app?.addAdmin(user: normalUser, into: context).wait()
+        XCTAssertNotNil(app)
+        //reload app
+        let reloadApp:MDTApplication? = try findApplications(for: normalUser, into: context).getFirstResult().wait()
+        XCTAssertNotNil(reloadApp)
+        XCTAssertEqual(app?._id, reloadApp?._id)
+    }
+}
+

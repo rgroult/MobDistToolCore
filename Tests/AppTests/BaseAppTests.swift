@@ -8,6 +8,8 @@
 import App
 import XCTest
 import Vapor
+import Meow
+@testable import App
 
 class BaseAppTests: XCTestCase {
     //let droplet = try! Droplet.testable()
@@ -30,9 +32,15 @@ class BaseAppTests: XCTestCase {
 //        }
 //    }
     internal var app:Application!
+    internal var context:Meow.Context!
     override func setUp() {
         do {
             app = try Application.runningAppTest()
+            context = try app.make(Future<Meow.Context>.self).wait()
+            try context.manager.database.drop().wait()
+            let config = try app.make(MdtConfiguration.self)
+            try createSysAdminIfNeeded(into: context, with: config)
+            
         }catch {
             print("Error Starting server:\(error)")
             XCTAssertFalse(true)
