@@ -9,6 +9,8 @@ import Vapor
 import MeowVapor
 import MongoKitten
 
+typealias StorageAccessUrl = String
+
 final class Artifact: Model {
     static let collectionName = "MDTArtifact"
     var _id = ObjectId()
@@ -20,7 +22,7 @@ final class Artifact: Model {
     var sortIdentifier:String?
     var metaDataTags:String?
     //file info
-    var storageInfos:String?
+    var storageInfos:StorageAccessUrl?
     var filename:String?
     var size:Int?
     var contentType:String?
