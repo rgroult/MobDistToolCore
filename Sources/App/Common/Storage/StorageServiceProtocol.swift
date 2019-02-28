@@ -8,13 +8,13 @@
 import Vapor
 import Foundation
 
-enum storedResult {
+enum StoredResult {
     case asFile(file:Foundation.FileHandle)
     case asUrI(url:URL)
 }
 
 enum StorageError:Error {
-    case badFormat, notFound
+    case badFormat, notFound, storeError(from:Error)
 }
 
 protocol StorageServiceProtocol: Service  {
@@ -22,9 +22,9 @@ protocol StorageServiceProtocol: Service  {
     
     func  initializeStore(with config:[String:String], into eventLoop:EventLoop) throws-> Future<Bool>
     
-    func store(file:Foundation.FileHandle,inside artifact:Artifact, into eventLoop:EventLoop) throws-> Future<StorageAccessUrl>
+    func store(file:Foundation.FileHandle, with info:StorageInfo, into eventLoop:EventLoop) throws-> Future<StorageAccessUrl>
     
-    func getStoredFile(storedIn artifact:Artifact, into eventLoop:EventLoop) throws-> Future<storedResult>
+    func getStoredFile(storedIn:StorageAccessUrl, into eventLoop:EventLoop) throws-> Future<StoredResult>
     
     func extractStorageId(storageInfo:String) throws-> String
 }
@@ -35,5 +35,9 @@ extension StorageServiceProtocol {
         guard storageInfo.hasPrefix(scheme) else { throw StorageError.badFormat }
         
         return String(storageInfo.dropFirst(scheme.count))
+    }
+    
+    internal func makeStorageAccessUrl(from:String) -> String{
+        return "\(storageIdentifier)://\(from)"
     }
 }
