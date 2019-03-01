@@ -54,25 +54,26 @@ final class LocalStorageService: StorageServiceProtocol {
         //absolutePathName.appendPathComponent(random(5))
         
         let result = eventLoop.newPromise(of: StorageAccessUrl.self)
-        let resultStoreUrl = makeStorageAccessUrl(from: absolutePathName.absoluteString)
+        let fileManager = FileManager.default
+        //create directory if needed
+        try fileManager.createDirectory(at: absolutePathName, withIntermediateDirectories: true, attributes: nil)
+        //add random to filename to avoid collision
+        absolutePathName.appendPathComponent("\(info.uploadFilename ?? "JohnDoe")\(random(5))")
+        
+        let storePath = absolutePathName.path
+        let resultStoreUrl = makeStorageAccessUrl(from: storePath)
         fileQueue.async {
             do {
-                let fileManager = FileManager.default
-                //create directory
-                try fileManager.createDirectory(atPath: absolutePathName.absoluteString, withIntermediateDirectories: true, attributes: nil)
-                
-                //add random to avoid collision
-                absolutePathName.appendPathComponent("\(info.uploadFilename ?? "JohnDoe")\(random(5))")
-                
                 //Create File
-                fileManager.createFile(atPath: absolutePathName.absoluteString, contents: nil, attributes: nil)
+                fileManager.createFile(atPath: storePath, contents: nil, attributes: nil)
                 let outputFile = try Foundation.FileHandle.init(forWritingTo: absolutePathName)
                 //read
                 var data = file.readData(ofLength:bufferSize)
                 while (data.count > 0) {
                     outputFile.write(data)
-                    file.readData(ofLength:bufferSize)
+                    data = file.readData(ofLength:bufferSize)
                 }
+                outputFile.synchronizeFile()
                 outputFile.closeFile()
                 //generate storageAccessUrl
                 result.succeed(result: resultStoreUrl)
@@ -89,6 +90,7 @@ final class LocalStorageService: StorageServiceProtocol {
         guard let filename = URL(string:  try extractStorageId(storageInfo: storedIn)) else { throw StorageError.badFormat }
         do {
             let fileHandler = try Foundation.FileHandle(forReadingFrom: filename)
+            //print(fileHandler.readDataToEndOfFile())
             return eventLoop.newSucceededFuture(result:StoredResult.asFile(file: fileHandler))
         }catch {
             return eventLoop.newFailedFuture(error: StorageError.notFound)
