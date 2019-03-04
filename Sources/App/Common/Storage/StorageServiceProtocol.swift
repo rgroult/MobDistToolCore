@@ -14,7 +14,10 @@ enum StoredResult {
 }
 
 enum StorageError:Error {
-    case badFormat, notFound, storeError(from:Error)
+    case badFormat
+    case notFound
+    case storeError(from:Error)
+    case deleteError(from:Error)
 }
 
 protocol StorageServiceProtocol: Service  {
@@ -27,6 +30,8 @@ protocol StorageServiceProtocol: Service  {
     func getStoredFile(storedIn:StorageAccessUrl, into eventLoop:EventLoop) throws-> Future<StoredResult>
     
     func extractStorageId(storageInfo:String) throws-> String
+    
+    func deleteStoredFileStorageId(storedIn:StorageAccessUrl, into eventLoop:EventLoop) throws-> Future<Void>
 }
 
 extension StorageServiceProtocol {

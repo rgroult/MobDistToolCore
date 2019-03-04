@@ -61,6 +61,26 @@ final class LocalStorageServiceTests: BaseAppTests {
         }
     }
     
+    func testDeleteFile() throws {
+        //store file
+        let tempFile = createRandomFile(size: 1024)
+        let info = StorageInfo(applicationName: "test", platform: .ios, version: "X.Y.Z", uploadFilename: nil, uploadContentType: nil)
+        var accessUrl:StorageAccessUrl = ""
+        XCTAssertNoThrow(accessUrl = try storageService.store(file: tempFile, with: info, into: app.eventLoop).wait())
+        
+        XCTAssertNoThrow(try storageService.deleteStoredFileStorageId(storedIn: accessUrl, into: app.eventLoop).wait())
+        
+        XCTAssertThrowsError(try storageService.deleteStoredFileStorageId(storedIn: accessUrl, into: app.eventLoop).wait(), "") { error in
+            switch (error as? StorageError){
+            case StorageError.notFound?:
+                 XCTAssertTrue(true)
+            default:
+                 XCTAssertTrue(false)
+            }
+           // XCTAssertEqual((error as? StorageError.notFound) != nil)
+        }
+    }
+    
     func testStoreBigFile() throws {
         let bigSize:UInt64 = 1024*1024*100 //100 M
         let tempFile = createRandomFile(size: Int(bigSize),randomData:false)

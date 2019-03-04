@@ -96,4 +96,19 @@ final class LocalStorageService: StorageServiceProtocol {
             return eventLoop.newFailedFuture(error: StorageError.notFound)
         }
     }
+    
+    func deleteStoredFileStorageId(storedIn:StorageAccessUrl, into eventLoop:EventLoop) throws-> Future<Void>{
+        //guard let filename = URL(fileURLWithPath:  try extractStorageId(storageInfo: storedIn)) else { throw StorageError.badFormat }
+        let filename = URL(fileURLWithPath:  try extractStorageId(storageInfo: storedIn))
+        let fileManager = FileManager.default
+        if !fileManager.fileExists(atPath: filename.path) {
+            throw StorageError.notFound
+        }
+        do {
+            try FileManager.default.removeItem(at: filename)
+            return eventLoop.newSucceededFuture(result: ())
+        }catch {
+            throw StorageError.deleteError(from: error)
+        }
+    }
 }
