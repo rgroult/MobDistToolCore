@@ -11,8 +11,32 @@ import BSON
 import Swiftgger
 import JWT
 import JWTAuth
+import SwiftSMTP
+
+enum RegistrationError : Error {
+    case invalidEmailFormat, emailDomainForbidden
+}
 
 final class UsersController:BaseController {
+    private func sendValidationEmail(for email:String, and name:String, into container:Container) throws -> Future<Void> {
+        let smtp = SMTP(
+            hostname: "smtp.gmail.com",     // SMTP server address
+            email: "user@gmail.com",        // username to login
+            password: "password"            // password to login
+        )
+        let drLight = Mail.User(name: "Dr. Light", email: "drlight@gmail.com")
+        let megaman = Mail.User(name: "Megaman", email: "megaman@gmail.com")
+        let mail = Mail(
+            from: drLight,
+            to: [megaman],
+            subject: "Humans and robots living together in harmony and equality.",
+            text: "That was my ultimate wish."
+        )
+        return container.eventLoop.newSucceededFuture(result: ())
+        //smtp.send(mail)
+        // TO DO
+    }
+    
     /*  override var  controllerVersion = "v2"
      var pathPrefix = "Users"
      */
@@ -20,13 +44,40 @@ final class UsersController:BaseController {
         super.init(version: "v2", pathPrefix: "Users", apiBuilder: apiBuilder)
     }
     
-    func register(_ req: Request) throws -> Future<String> {
-        throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
+    func register(_ req: Request) throws -> Future<UserDto> {
+        let config = try req.make(MdtConfiguration.self)
+        return try req.content.decode(RegisterDto.self)
+            .flatMap{ registerDto -> Future<UserDto>  in
+                guard registerDto.email.isValidEmail() else { throw RegistrationError.invalidEmailFormat}
+                
+                //check in white domains
+                if let whiteDomains = config.registrationWhiteDomains, whiteDomains.isEmpty {
+                    if whiteDomains.firstIndex(where: {registerDto.email.hasSuffix($0)}) == nil {
+                        throw RegistrationError.emailDomainForbidden
+                    }
+                }
+                //register user
+                let needRegistrationEmail = !config.automaticRegistration
+                let context = try req.context()
+                
+                return try createUser(name: registerDto.name, email: registerDto.name, password: registerDto.password, isActivated:!needRegistrationEmail, into: context)
+                    .flatMap{ user in
+                        var userCreated = UserDto.create(from: user, content: ModelVisibility.full)
+                        if needRegistrationEmail {
+                            userCreated.message = "A activation email was sent."
+                            
+                            // TO DO SENT Email
+                            return try self.sendValidationEmail(for: userCreated.email, and: userCreated.name, into: req).map{userCreated}
+                        }
+                        return req.eventLoop.newSucceededFuture(result: userCreated)
+                    }
+        }
     }
     
     func forgotPassword(_ req: Request) throws -> Future<String> {
         throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
     }
+    
     func login(_ req: Request) throws -> Future<LoginRespDto> {
         return try req.content.decode(LoginReqDto.self)
         .flatMap{ loginDto -> Future<LoginRespDto>  in

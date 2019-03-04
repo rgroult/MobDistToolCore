@@ -16,11 +16,12 @@ struct UserDto: Codable {
     var favoritesApplicationsUUID:[String]? = nil
     var createdAt:Date? = nil
     var lastLogin:Date? = nil
+    var message:String? = nil
 }
 
 extension UserDto {
     static func sample() -> UserDto {
-        return UserDto( email: "email@test.com", name: "John Doe",isActivated:nil,isSystemAdmin:nil,favoritesApplicationsUUID:nil,createdAt:nil,lastLogin:nil)
+        return UserDto( email: "email@test.com", name: "John Doe",isActivated:nil,isSystemAdmin:nil,favoritesApplicationsUUID:nil,createdAt:nil,lastLogin:nil,message:nil)
     }
     
     static func create(from user:User, content:ModelVisibility) -> UserDto {

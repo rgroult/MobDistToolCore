@@ -26,10 +26,13 @@ let package = Package(
         .package(url: "https://github.com/mczachurski/Swiftgger.git", from: "1.2.1"),
         
         //🔐 crypto
-        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMinor(from: "0.9.0"))
+        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMinor(from: "0.9.0")),
+        
+        //✉️ email
+        .package(url: "https://github.com/IBM-Swift/Swift-SMTP", .upToNextMinor(from: "5.1.0"))
     ],
     targets: [
-        .target(name: "App", dependencies: ["JWTAuth","FluentSQLite", "Vapor","MeowVapor","Swiftgger","CryptoSwift"]),
+        .target(name: "App", dependencies: ["SwiftSMTP","JWTAuth","FluentSQLite", "Vapor","MeowVapor","Swiftgger","CryptoSwift"]),
         .target(name: "Run", dependencies: ["App"]),
         .testTarget(name: "AppTests", dependencies: ["App"])
     ]
