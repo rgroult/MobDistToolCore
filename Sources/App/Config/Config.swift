@@ -25,9 +25,11 @@ struct MdtConfiguration: Codable {
     
     var registrationWhiteDomains:[String]?
     var automaticRegistration:Bool
+    var smtpConfiguration:[String:String]?
+    
+    var minimumPasswordStrength:Int
     //[0,1,2,3,4] if crack time is less than
     //[10**2, 10**4, 10**6, 10**8, Infinity]. see https://github.com/exitlive/xcvbnm for more details
-    var minimumPasswordStrength:Int
     
     var initialAdminEmail:String
     var initialAdminPassword:String
@@ -97,7 +99,7 @@ struct MdtConfiguration: Codable {
 
 extension MdtConfiguration {
     private static var empty:MdtConfiguration {
-        return MdtConfiguration(serverListeningPort: 0, serverExternalUrl: URL(string: "http://host.com")!, mongoServerUrl: URL(string: "mongodb://host")!, jwtSecretToken: nil, loginResponseDelay: 0, storageMode: .testing, storageConfiguration: nil, registrationWhiteDomains: nil, automaticRegistration: true, minimumPasswordStrength: 0, initialAdminEmail: "", initialAdminPassword: "", logDirectory:nil)
+        return MdtConfiguration(serverListeningPort: 0, serverExternalUrl: URL(string: "http://host.com")!, mongoServerUrl: URL(string: "mongodb://host")!, jwtSecretToken: nil, loginResponseDelay: 0, storageMode: .testing, storageConfiguration: nil, registrationWhiteDomains: nil, automaticRegistration: true, smtpConfiguration:nil, minimumPasswordStrength: 0, initialAdminEmail: "", initialAdminPassword: "", logDirectory:nil)
     }
     
     private func convert<T>(from value:String, into:T) throws -> T {

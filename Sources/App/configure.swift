@@ -30,6 +30,15 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     }
     
     services.register(configuration)
+    
+    //email if needed
+    if !configuration.automaticRegistration {
+        guard let smtpConfig = configuration.smtpConfiguration else { throw "Smtp configuration needed if automaticRegistration is disabled" }
+        let emailService = try EmailService(with: smtpConfig, externalServerUrl: configuration.serverExternalUrl)
+        services.register(emailService)
+    }
+    
+    
     // Register providers first
    // try services.register(FluentSQLiteProvider())
     

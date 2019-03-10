@@ -18,25 +18,6 @@ enum RegistrationError : Error {
 }
 
 final class UsersController:BaseController {
-    private func sendValidationEmail(for email:String, and name:String, into container:Container) throws -> Future<Void> {
-        let smtp = SMTP(
-            hostname: "smtp.gmail.com",     // SMTP server address
-            email: "user@gmail.com",        // username to login
-            password: "password"            // password to login
-        )
-        let drLight = Mail.User(name: "Dr. Light", email: "drlight@gmail.com")
-        let megaman = Mail.User(name: "Megaman", email: "megaman@gmail.com")
-        let mail = Mail(
-            from: drLight,
-            to: [megaman],
-            subject: "Humans and robots living together in harmony and equality.",
-            text: "That was my ultimate wish."
-        )
-        return container.eventLoop.newSucceededFuture(result: ())
-        //smtp.send(mail)
-        // TO DO
-    }
-    
     /*  override var  controllerVersion = "v2"
      var pathPrefix = "Users"
      */
@@ -62,15 +43,23 @@ final class UsersController:BaseController {
                 
                 return try createUser(name: registerDto.name, email: registerDto.name, password: registerDto.password, isActivated:!needRegistrationEmail, into: context)
                     .flatMap{ user in
-                        var userCreated = UserDto.create(from: user, content: ModelVisibility.full)
+                        let userCreated = UserDto.create(from: user, content: ModelVisibility.full)
                         if needRegistrationEmail {
-                            userCreated.message = "A activation email was sent."
-                            
-                            // TO DO SENT Email
-                            return try self.sendValidationEmail(for: userCreated.email, and: userCreated.name, into: req).map{userCreated}
+                            //sent registration email
+                            let emailService = try req.make(EmailService.self)
+                            return try emailService.sendValidationEmail(for: user, into: req).map{
+                                userCreated }
+                                .catchFlatMap({ error -> Future<UserDto> in
+                                    //delete create user
+                                    return try delete(user: user, into: context).map{
+                                        throw error
+                                    }
+                                })
+                        }else {
+                            return req.eventLoop.newSucceededFuture(result: userCreated)
                         }
-                        return req.eventLoop.newSucceededFuture(result: userCreated)
-                    }
+                        
+                }
         }
     }
     
@@ -97,26 +86,26 @@ final class UsersController:BaseController {
             }
         }
     }
-    func loginOLD(_ req: Request) throws -> Future<LoginRespDto> {
-        return try req.content.decode(LoginReqDto.self)
-            .flatMap({ loginDto -> Future<LoginRespDto>  in
-                return req.meow().flatMap{context in
-                    return context.find(User.self, where:  Query.valEquals(field: "email", val: loginDto.email)).getFirstResult()
-                        .flatMap({ user in
-                            guard let user = user else { throw Abort(.notFound)}
-                            //generate token in header
-                            let signers = try req.make(JWTSigners.self)
-                            return try signers.get(kid: signerIdentifier, on: req)
-                                .map{ signer in
-                                    let jwt = JWT(header: .init(kid: signerIdentifier), payload: JWTTokenPayload(email: user.email))
-                                    let signatureData = try jwt.sign(using: signer)
-                                    let token = String(bytes: signatureData, encoding: .utf8)!
-                                    return LoginRespDto( email: user.email, name: user.name,token:token)
-                            }
-                        })
-                }
-            })
-    }
+//    func loginOLD(_ req: Request) throws -> Future<LoginRespDto> {
+//        return try req.content.decode(LoginReqDto.self)
+//            .flatMap({ loginDto -> Future<LoginRespDto>  in
+//                return req.meow().flatMap{context in
+//                    return context.find(User.self, where:  Query.valEquals(field: "email", val: loginDto.email)).getFirstResult()
+//                        .flatMap({ user in
+//                            guard let user = user else { throw Abort(.notFound)}
+//                            //generate token in header
+//                            let signers = try req.make(JWTSigners.self)
+//                            return try signers.get(kid: signerIdentifier, on: req)
+//                                .map{ signer in
+//                                    let jwt = JWT(header: .init(kid: signerIdentifier), payload: JWTTokenPayload(email: user.email))
+//                                    let signatureData = try jwt.sign(using: signer)
+//                                    let token = String(bytes: signatureData, encoding: .utf8)!
+//                                    return LoginRespDto( email: user.email, name: user.name,token:token)
+//                            }
+//                        })
+//                }
+//            })
+//    }
     
     func me(_ req: Request) throws -> Future<UserDto> {
         return try retrieveUser(from:req)

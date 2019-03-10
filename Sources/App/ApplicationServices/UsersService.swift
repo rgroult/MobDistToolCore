@@ -97,6 +97,10 @@ func deleteUser(withEmail email:String, into context:Meow.Context) throws -> Fut
         })
 }
 
+func delete(user:User, into context:Meow.Context) throws -> Future<Void>{
+    return context.delete(user)
+}
+
 func resetUser(user:User,newPassword:String,into context:Meow.Context) throws -> Future<User>{
     user.password = generateHashedPassword(plain: newPassword,salt: user.salt)
     //generate activation token
