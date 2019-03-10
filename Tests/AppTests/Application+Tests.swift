@@ -33,7 +33,7 @@ extension Application {
             workerCount: 1,
             maxBodySize: 128_000,
             reuseAddress: true,
-            tcpNoDelay: true,
+            tcpNoDelay: true, supportCompression: false,
             webSocketMaxFrameSize: 1 << 14
         )
         services.register(serverConfig)

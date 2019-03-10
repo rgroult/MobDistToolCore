@@ -6,18 +6,19 @@
 //
 
 import Foundation
+import Random
 
 func random(_ n: Int) -> String
 {
     let a = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+    //let allowedCharacters = "!\"#'$%&()*+-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_$"
     
     var s = ""
+    let randomData = OSRandom().generateData(count: n)
     
-    for _ in 0..<n
-    {
-        let r = Int(arc4random_uniform(UInt32(a.characters.count)))
-        
-        s += String(a[a.index(a.startIndex, offsetBy: r)])
+    for byte in randomData {
+        let r = Int(byte%UInt8(a.count))
+         s += String(a[a.index(a.startIndex, offsetBy: r)])
     }
     
     return s
