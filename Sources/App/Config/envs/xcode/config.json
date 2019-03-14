@@ -8,5 +8,6 @@
     "automaticRegistration":true,
     "minimumPasswordStrength":0,
     "initialAdminEmail":"admin@localhost.com",
-    "initialAdminPassword":"password"
+    "initialAdminPassword":"password",
+    "smtpConfiguration" : {"smtpServer":"gmail","smtpLogin":"toto","smtpPassword":"password","smtpSender":"toto","fakeMode":"true"}
 }

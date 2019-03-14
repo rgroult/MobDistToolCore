@@ -41,7 +41,7 @@ final class UsersController:BaseController {
                 let needRegistrationEmail = !config.automaticRegistration
                 let context = try req.context()
                 
-                return try createUser(name: registerDto.name, email: registerDto.name, password: registerDto.password, isActivated:!needRegistrationEmail, into: context)
+                return try createUser(name: registerDto.name, email: registerDto.email, password: registerDto.password, isActivated:!needRegistrationEmail, into: context)
                     .flatMap{ user in
                         let userCreated = UserDto.create(from: user, content: ModelVisibility.full)
                         if needRegistrationEmail {

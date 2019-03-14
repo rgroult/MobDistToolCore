@@ -64,7 +64,7 @@ func createSysAdminIfNeeded(into context:Meow.Context,with config:MdtConfigurati
                 return context.eventLoop.newSucceededFuture(result: false)
             }else {
                 //create Admin user
-                return try createUser(name: "Admin", email: config.initialAdminEmail, password: config.initialAdminPassword, into: context)
+                return try createUser(name: "Admin", email: config.initialAdminEmail, password: config.initialAdminPassword, isSystemAdmin:true, isActivated: true, into: context)
                     .map{_ in  true}
             }
         })

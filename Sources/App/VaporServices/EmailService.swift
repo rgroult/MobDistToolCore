@@ -11,12 +11,14 @@ import SwiftSMTP
 
 final class EmailService {
     enum ConfigKeys:String {
-        case smtpServer,smtpLogin,smtpPassword,smtpSender
+        case smtpServer,smtpLogin,smtpPassword,smtpSender,fakeMode
     }
     let emailQueue = DispatchQueue.init(label: "EmailService", qos: .default)
     let smtp:SMTP
     let defaultSenderEmail:Mail.User
     let externalUrl:URL
+    //for testing
+    let fakeMode:Bool
     
     init(with smtpConfig:[String:String], externalServerUrl:URL) throws{
         guard let serverName = smtpConfig[ConfigKeys.smtpServer.rawValue] else { throw "Unable to retrieve \(ConfigKeys.smtpServer) in smtp configuration"}
@@ -27,10 +29,16 @@ final class EmailService {
         smtp = SMTP(hostname: serverName, email: login, password: password)
         defaultSenderEmail = Mail.User(email:sender)
         externalUrl = externalServerUrl
+        
+        //testing
+        fakeMode = Bool(smtpConfig[ConfigKeys.fakeMode.rawValue] ?? "false") ?? false
     }
     
     
     func send(email:Mail, into container:Container)throws -> Future<Void> {
+        if fakeMode {
+            return container.eventLoop.newSucceededFuture(result: ())
+        }
         let smtp = self.smtp
         let result = container.eventLoop.newPromise(of: Void.self)
         emailQueue.async {

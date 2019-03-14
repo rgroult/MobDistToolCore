@@ -34,18 +34,23 @@ class BaseAppTests: XCTestCase {
     internal var app:Application!
     internal var context:Meow.Context!
     override func setUp() {
+        configure()
+    }
+        
+    func configure(with env:Environment? = nil) {
         do {
-            app = try Application.runningAppTest()
+            app = try Application.runningAppTest(loadingEnv:env)
             context = try app.make(Future<Meow.Context>.self).wait()
             try context.manager.database.drop().wait()
             let config = try app.make(MdtConfiguration.self)
-            try createSysAdminIfNeeded(into: context, with: config)
+            _ = try createSysAdminIfNeeded(into: context, with: config)
             
         }catch {
             print("Error Starting server:\(error)")
             XCTAssertFalse(true)
         }
     }
+    
     override func tearDown()  {
         do {
         try app.runningServer?.close().wait()

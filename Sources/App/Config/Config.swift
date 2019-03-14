@@ -36,16 +36,16 @@ struct MdtConfiguration: Codable {
     
     var logDirectory:String? //for production mode : use ./logs if not provided
     
-    static func loadConfig(from filePath:String? = nil, from env:Environment) throws -> MdtConfiguration{
+    static func loadConfig(from filePath:String? = nil, from env:inout Environment) throws -> MdtConfiguration{
         let configFilePath:String
         if let filePath = filePath {
             configFilePath = filePath
-           // configFileContent = try String(contentsOfFile: filePath)
+            // configFileContent = try String(contentsOfFile: filePath)
         }else {
             let directory = DirectoryConfig.detect()
             if env == .production {
                 configFilePath = "\(directory.workDir)/config/config.json"
-               // configFileContent = try  String(contentsOfFile: "\(directory.workDir)/config/config.json")
+                // configFileContent = try  String(contentsOfFile: "\(directory.workDir)/config/config.json")
             }else {
                 //use default file for current env
                 configFilePath = "\(directory.workDir)/Sources/App/Config/envs/\(env.name)/config.json"
@@ -58,22 +58,34 @@ struct MdtConfiguration: Codable {
             throw "Invalid config file"
             //throw DecodingError.dataCorruptedError(in: configFileContent, debugDescription: "Invalid config file")
         }
+        //parse command line argumens values if provided
+        //value must be is format "-D<keyname>=value
+        var commandArgs = [String:String]()
+        let prefix = "-D"
+        for arg in env.arguments.filter({ $0.hasPrefix(prefix)}) {
+            if let equalSeparatorIndex = arg.firstIndex(of: "=") {
+                let keyName = String(arg.substring(to:equalSeparatorIndex).dropFirst(prefix.count))
+                let value = arg.substring(from: arg.index(after:equalSeparatorIndex))
+                commandArgs[keyName] = value
+            }
+        }
+        //remove -DXXX from env
+        env.arguments = env.arguments.filter({ !$0.hasPrefix(prefix)})
         
         let decoder = JSONDecoder()
-        
-        //override by authorised environnement values if provided
+        //override by authorised [command Line | environnement] values if provided
         //Create empty config to user refexion
         let object = MdtConfiguration.empty
         for case let (label?, value) in Mirror(reflecting: object)
             .children.map({ ($0.label, $0.value) }) {
                 //search in env for value "MDT_$label"
-                if let envValue = Environment.get("MDT_\(label)") {
+                if let envValue =  Environment.get("MDT_\(label)") ?? commandArgs[label] {
                     do {
                         let newValue = try object.convert(from: envValue,into:value)
-                       // Int.conver
+                        // Int.conver
                         print("Override : \(label), with value: \(envValue)")
-                       // newValue = try decoder.decode(Int.self, from: envValue.convertToData())
-                            //decoder.decode(type(of:newValue),envValue.data(using: .ascii))
+                        // newValue = try decoder.decode(Int.self, from: envValue.convertToData())
+                        //decoder.decode(type(of:newValue),envValue.data(using: .ascii))
                         configJson[label] =  newValue
                     }catch {
                         print ("Incorrect value type for key MDT_\(label)")
@@ -84,7 +96,7 @@ struct MdtConfiguration: Codable {
         }
         
         let mergeConfig = try JSONSerialization.data(withJSONObject: configJson, options: JSONSerialization.WritingOptions.prettyPrinted)
-    
+        
         let config = try decoder.decode(MdtConfiguration.self, from: mergeConfig)
         //print("Refexion \(Mirror(reflecting: MdtConfiguration.self))")
         
@@ -92,9 +104,9 @@ struct MdtConfiguration: Codable {
     }
     
     /*public init(from decoder: Decoder) throws {
-        super.init(decoder)
-        print("Check env to missing keys")
-    }*/
+     super.init(decoder)
+     print("Check env to missing keys")
+     }*/
 }
 
 extension MdtConfiguration {
@@ -105,12 +117,14 @@ extension MdtConfiguration {
     private func convert<T>(from value:String, into:T) throws -> T {
         let result:T?
         switch into {
-            case is String, is URL:
-               result = value as? T
+        case is String, is URL:
+            result = value as? T
         case is Int:
             result = Int(value) as? T
-      /*  case is URL:
-            result = URL(string: value) as? T*/
+        case is Bool:
+            result = Bool(value) as? T
+            /*  case is URL:
+             result = URL(string: value) as? T*/
         case is [String]:
             result = try JSONDecoder().decode([String].self, from: value.convertToData()) as? T
         case is [String:String]:
@@ -132,7 +146,7 @@ extension MdtConfiguration {
 
 extension MdtConfiguration : ServiceType {
     static func makeService(for container: Container) throws -> MdtConfiguration {
-       throw "Unable to make empty service"
+        throw "Unable to make empty service"
     }
     
     

@@ -10,9 +10,9 @@ import Vapor
 import App
 
 extension Application {
-    static func runningAppTest() throws -> Application {
+    static func runningAppTest(loadingEnv:Environment? = nil) throws -> Application {
         var config = Config.default()
-        var env = Environment.xcode
+        var env = loadingEnv ?? Environment.xcode
         var services = Services.default()
         try configure(&config, &env, &services)
         let app = try Application.asyncBoot(config: config, environment: env, services: services).wait()

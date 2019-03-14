@@ -12,7 +12,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     let configuration:MdtConfiguration
     do {
         print("Loading Config")
-        configuration = try MdtConfiguration.loadConfig(from: nil, from: env)
+        configuration = try MdtConfiguration.loadConfig(from: nil, from: &env)
         print("config: \(configuration)")
     }catch {
         print("Unable to read configuration: \(error)")
@@ -43,7 +43,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
    // try services.register(FluentSQLiteProvider())
     
     //Meow
-    let meow = try MeowProvider(configuration.mongoServerUrl.absoluteString)
+    let meow = try MeowProvider(uri: configuration.mongoServerUrl.absoluteString,lazy: true)
     try services.register(meow)
     
     // register Authentication provider
