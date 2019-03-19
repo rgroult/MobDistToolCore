@@ -58,13 +58,35 @@ final class UsersController:BaseController {
                         }else {
                             return req.eventLoop.newSucceededFuture(result: userCreated)
                         }
-                        
                 }
         }
     }
     
-    func forgotPassword(_ req: Request) throws -> Future<String> {
-        throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
+    func forgotPassword(_ req: Request) throws -> Future<MessageDto> {
+        return try req.content.decode(ForgotPasswordDto.self)
+            .flatMap({ forgotPasswordDto in
+                let config = try req.make(MdtConfiguration.self)
+                if config.automaticRegistration {
+                    //ask to a admin
+                    throw  Abort(.badRequest, reason: "Contact an administrator to retrieve new password")
+                }
+                //reset user
+                let context = try req.context()
+                let newPassword = random(15)
+                return try findUser(by: forgotPasswordDto.email, into: context)
+                    .flatMap({ user  in
+                        guard let user = user else { throw UserError.notFound}
+                        return try resetUser(user: user, newPassword: newPassword, into: context)
+                            .flatMap({ user in
+                                let message = MessageDto(message:"Your account has been temporarily desactivated, a email with new password and activation link was sent")
+                                //sent reset email
+                                let emailService = try req.make(EmailService.self)
+                                return try emailService.sendResetEmail(for: user, newPassword: newPassword, into: req)
+                                    .map { message}
+                            })
+                    })
+            })
+       // throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
     }
     
     func login(_ req: Request) throws -> Future<LoginRespDto> {
@@ -73,6 +95,8 @@ final class UsersController:BaseController {
              return req.meow().flatMap{context in
                 return try findUser(by: loginDto.email, and: loginDto.password, updateLastLogin: true, into: context)
                     .flatMap({ user in
+                        // user is activated ?
+                        guard user.isActivated else { throw UserError.notActivated}
                         //generate token in header
                         let signers = try req.make(JWTSigners.self)
                         return try signers.get(kid: signerIdentifier, on: req)
@@ -112,6 +136,23 @@ final class UsersController:BaseController {
             .map{ user in
                 guard let user = user else { throw Abort(.unauthorized)}
                 return UserDto.create(from: user, content: .full)
+        }
+    }
+    
+    func activation(_ req: Request) throws -> Future<MessageDto> {
+        if let activationToken = try? req.query.get(String.self, at: "activationToken") {
+            //activate user
+            let context = try req.context()
+            return try activateUser(withToken: activationToken, into: context)
+                .map { MessageDto(message:"Activation Done")}
+                .thenIfErrorThrowing({ error in
+                    if let userError = error as? UserError, userError == UserError.notFound {
+                        throw Abort(.badRequest, reason: "Invalid activationToken")
+                    }
+                    throw error
+                })
+        }else {
+            throw Abort(.badRequest, reason: "Invalid activationToken")
         }
     }
     

@@ -85,6 +85,11 @@ final class EmailService {
         
         return try send(email: mail, into: container)
     }
+    
+    func sendResetEmail(for user:User,newPassword:String, into container:Container) throws -> Future<Void> {
+        // TO DO
+        return container.eventLoop.future()
+    }
 }
 
 extension EmailService : ServiceType {

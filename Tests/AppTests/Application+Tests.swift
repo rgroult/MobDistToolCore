@@ -46,6 +46,7 @@ extension Application {
         _ method: HTTPMethod,
         _ path: String,
         _ body: HTTPBody? = nil,
+        token: String? = nil,
         beforeSend: (Request) throws -> () = { _ in },
         afterSend: (Response) throws -> ()
         ) throws {
@@ -60,9 +61,31 @@ extension Application {
             req.http.contentType = .json
         }
         
+        if let token = token {
+            req.http.headers.add(name: "Authorization", value: "Bearer \(token)")
+        }
+        
         try beforeSend(req)
         let res = try FoundationClient.default(on: self).send(req).wait()
         try afterSend(res)
+    }
+    
+    func clientSyncTest (
+        _ method: HTTPMethod,
+        _ path: String,
+        _ body: HTTPBody? = nil) throws -> Response {
+        let config = try make(NIOServerConfig.self)
+        let path = path.hasPrefix("/") ? path : "/\(path)"
+        let req = Request(
+            http: .init(method: method, url: "http://localhost:\(config.port)" + path),
+            using: self
+        )
+        if let body = body {
+            req.http.body = body
+            req.http.contentType = .json
+        }
+        
+        return  try FoundationClient.default(on: self).send(req).wait()
     }
     
     func clientTest(_ method: HTTPMethod, _ path: String, equals: String) throws {

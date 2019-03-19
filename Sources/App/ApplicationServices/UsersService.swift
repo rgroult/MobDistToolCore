@@ -11,6 +11,7 @@ import CryptoSwift
 
 enum UserError: Error,Equatable {
     case notFound
+    case notActivated
     case alreadyExist
     case invalidLoginOrPassword
     case fieldInvalid(fieldName:String)
@@ -20,13 +21,15 @@ extension UserError: Debuggable {
     var reason: String {
         switch self {
         case .invalidLoginOrPassword:
-            return "invalidLoginOrPassword"
+            return "UserError.invalidLoginOrPassword"
         case .notFound:
-            return "notFound"
+            return "UserError.notFound"
         case .fieldInvalid(let fieldName):
-            return "FieldInvalid:\(fieldName)"
+            return "UserError.fieldInvalid:\(fieldName)"
         case .alreadyExist:
-            return "alreadyPresent"
+            return "UserError.alreadyPresent"
+        case .notActivated:
+            return "UserError.notActivated"
         }
     }
     
@@ -35,6 +38,10 @@ extension UserError: Debuggable {
     }
 }
 
+func findActivableUser(by activationToken:String,into context:Meow.Context) throws -> Future<User?>{
+    return context.find(User.self, where:  Query.valEquals(field: "activationToken", val: activationToken))
+        .getFirstResult()
+}
 
 func findUser(by email:String,into context:Meow.Context) throws -> Future<User?>{
     return context.find(User.self, where:  Query.valEquals(field: "email", val: email))
@@ -84,10 +91,21 @@ func createUser(name:String,email:String,password:String,isSystemAdmin:Bool = fa
         createdUser.password = generateHashedPassword(plain: password,salt: salt)
         if !isActivated {
             //generate activation token
-            createdUser.activationToken = UUID().description
+            createdUser.activationToken = UUID().uuidString
         }
         return createdUser.save(to: context).map{ createdUser}
     }
+}
+
+func activateUser(withToken:String, into context:Meow.Context) throws -> Future<Void>{
+    return try findActivableUser(by: withToken, into: context)
+        .flatMap({ user in
+            guard let user = user else { throw UserError.notFound }
+            //activate user
+            user.isActivated = true
+            user.activationToken  = nil
+            return user.save(to: context)
+        })
 }
 
 func deleteUser(withEmail email:String, into context:Meow.Context) throws -> Future<Void>{
@@ -104,7 +122,7 @@ func delete(user:User, into context:Meow.Context) throws -> Future<Void>{
 func resetUser(user:User,newPassword:String,into context:Meow.Context) throws -> Future<User>{
     user.password = generateHashedPassword(plain: newPassword,salt: user.salt)
     //generate activation token
-    user.activationToken = UUID().description
+    user.activationToken = UUID().uuidString
     user.isActivated = false
     return user.save(to: context).map{user}
 }
@@ -114,7 +132,7 @@ private func checkPassword(plain:String,salt:String,hash:String) -> Bool{
 }
 
 private func generateSalt() -> String {
-    return UUID().description
+    return UUID().uuidString
 }
 
 private func generateHashedPassword(plain:String,salt:String) -> String {

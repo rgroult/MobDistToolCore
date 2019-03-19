@@ -10,7 +10,7 @@ import Vapor
 extension UsersController {
     
     enum Verb:String {
-        case login, me, register, forgotPassword
+        case login, me, activation,register, forgotPassword
     }
     
     func configure(with router: Router, and protectedRouter:Router){
@@ -18,6 +18,7 @@ extension UsersController {
         usersRouter.post(Verb.login.rawValue, use: self.login)
         usersRouter.post(Verb.register.rawValue, use: self.register)
         usersRouter.post(Verb.forgotPassword.rawValue, use: self.forgotPassword)
+        usersRouter.get(Verb.activation.rawValue, use: self.activation)
         
         let usersProtectedRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
         usersProtectedRouter.get(Verb.me.rawValue, use: self.me)

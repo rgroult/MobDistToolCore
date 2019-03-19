@@ -52,7 +52,6 @@ final class UsersServiceTests: BaseAppTests {
         XCTAssertNoThrow(try createUser(name: "toto", email: "toto@toto.com", password: "pwd", into: context).wait())
         XCTAssertThrowsError(try createUser(name: "toto", email: "toto@toto.com", password: "pwd", into: context).wait(), "Should throw user error") { error in
             XCTAssertTrue((error as? UserError) == UserError.alreadyExist)
-            
         }
         //delete user
         XCTAssertNoThrow(try deleteUser(withEmail: "toto@toto.com", into: context).wait())
@@ -65,7 +64,6 @@ final class UsersServiceTests: BaseAppTests {
         //delete user again
         XCTAssertThrowsError(try deleteUser(withEmail: "toto@toto.com", into: context).wait(), "") { error in
             XCTAssertTrue((error as? UserError) == UserError.notFound)
-            
         }
     }
     

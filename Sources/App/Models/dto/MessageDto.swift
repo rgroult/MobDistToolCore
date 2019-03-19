@@ -6,7 +6,16 @@
 //
 
 import Foundation
+import Vapor
 
 struct MessageDto: Codable {
     var message:String
 }
+
+extension MessageDto {
+    static func sample() -> MessageDto {
+        return MessageDto( message: "Message")
+    }
+}
+
+extension MessageDto: Content {}
