@@ -1,4 +1,4 @@
-# MobDistToolSwift
+# Mobile Distribution Tool Core
 
 Rewrite of the Mobile Distribution Tool Core in swift/vapor.
 
