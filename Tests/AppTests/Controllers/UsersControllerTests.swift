@@ -11,6 +11,7 @@ import XCTest
 @testable import App
 
 let userToto = RegisterDto(email: "toto@toto.com", name: "toto", password: "passwd")
+let userTiti = RegisterDto(email: "titi@titi.com", name: "titi", password: "passwd")
 
 final class UsersControllerAutomaticRegistrationTests: BaseAppTests {
     func testRegister() throws{
@@ -230,4 +231,12 @@ func login(withEmail:String, password:String,inside app:Application) throws -> L
     let body = bodyJSON.convertToHTTPBody()
     let result = try app.clientSyncTest(.POST, "/v2/Users/login", body)
     return try result.content.decode(LoginRespDto.self).wait()
+}
+
+func register(registerInfo:RegisterDto, inside app:Application) throws -> UserDto {
+    //register
+    let bodyJSON = try JSONEncoder().encode(registerInfo)
+    let body = bodyJSON.convertToHTTPBody()
+    let result = try app.clientSyncTest(.POST, "/v2/Users/register", body)
+    return try result.content.decode(UserDto.self).wait()
 }

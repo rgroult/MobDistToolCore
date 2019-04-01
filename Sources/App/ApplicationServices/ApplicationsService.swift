@@ -11,6 +11,7 @@ import Meow
 enum ApplicationError: Error {
     case notFound
     case alreadyExist
+    case notAnApplicationAdministrator
 }
 
 func findApplications(platform:Platform? = nil ,into context:Meow.Context) throws -> MappedCursor<FindCursor, MDTApplication>{
@@ -49,7 +50,11 @@ func createApplication(name:String,platform:Platform,description:String,adminUse
         })
 }
 
-func updateApplication(from app:MDTApplication, with appDto:ApplicationUpdateDto,into context:Meow.Context){
+func updateApplication(from app:MDTApplication, maxVersionCheckEnabled:Bool?, iconData:String?){
+    updateApplication(from: app, with:ApplicationUpdateDto(maxVersion: maxVersionCheckEnabled, iconData: iconData))
+}
+
+func updateApplication(from app:MDTApplication, with appDto:ApplicationUpdateDto){
     app.name = appDto.name ?? app.name
     app.description = appDto.description ?? app.description
     app.base64IconData = appDto.base64IconData ?? app.base64IconData
@@ -61,6 +66,10 @@ func updateApplication(from app:MDTApplication, with appDto:ApplicationUpdateDto
     }else {
         app.maxVersionSecretKey = nil
     }
+}
+
+func saveApplication(app:MDTApplication,into context:Meow.Context) -> Future<MDTApplication>{
+    return app.save(to: context).map{app}
 }
 
 func deleteApplication(by app:MDTApplication,into context:Meow.Context) -> Future<Void>{
