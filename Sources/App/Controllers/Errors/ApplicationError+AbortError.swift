@@ -1,15 +1,16 @@
 //
-//  UserError+AbortError.swift
+//  ApplicationsError+AbortError.swift
 //  App
 //
-//  Created by Rémi Groult on 18/03/2019.
+//  Created by Remi Groult on 03/04/2019.
 //
 
 import Foundation
 import Vapor
 
-extension UserError:AbortError {
+extension ApplicationError:AbortError {
     var status: HTTPResponseStatus {
         return HTTPResponseStatus(statusCode: 400)
     }
 }
+

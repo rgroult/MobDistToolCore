@@ -72,10 +72,87 @@ final class ApplicationsTests: BaseAppTests {
         try app.clientTest(.POST, "/v2/Applications", body,token:token){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 400)
+            let errorResp = try res.content.decode(ErrorDto.self).wait()
+            XCTAssertTrue(errorResp.reason == "ApplicationError.alreadyExist")
         }
     }
     
-    func testSearch() throws {
+    func testAllApplications() throws {
+        try testCreate()
+        
+        //login
+        let loginDto = try login(withEmail: userToto.email, password: userToto.password, inside: app)
+        let token = loginDto.token
+        
+        try app.clientTest(.GET, "/v2/Applications",token:token){ res in
+            print(res.content)
+            XCTAssertEqual(res.http.status.code , 200)
+            let apps = try res.content.decode([ApplicationDto].self).wait()
+            XCTAssertTrue(apps.count == 1)
+            let firstApp = apps.first
+            XCTAssertEqual(firstApp?.name, appDtoiOS.name)
+            XCTAssertEqual(firstApp?.platform, appDtoiOS.platform)
+            XCTAssertEqual(firstApp?.description, appDtoiOS.description)
+            XCTAssertNotNil(firstApp?.apiKey)
+        }
+    }
+    
+    func testFilterApplications() throws {
+        
+    }
+    
+    func testAllApplicationsMultipleUsers() throws {
+        try testCreateMultiple()
+        
+        //login
+        let loginDto = try login(withEmail: userToto.email, password: userToto.password, inside: app)
+        let token = loginDto.token
+        
+        try app.clientTest(.GET, "/v2/Applications",token:token){ res in
+            print(res.content)
+            XCTAssertEqual(res.http.status.code , 200)
+            let apps = try res.content.decode([ApplicationDto].self).wait()
+            XCTAssertTrue(apps.count == 2)
+            apps.forEach({ app in
+                if app.adminUsers.contains(where: { $0.email == userToto.email }) {
+                    XCTAssertNotNil(app.apiKey)
+                }else {
+                    XCTAssertNil(app.apiKey)
+                }
+            })
+        }
+    }
+    
+    func testUpdateApplication() throws {
+        try testCreate()
+        
+        //login
+        let loginDto = try login(withEmail: userToto.email, password: userToto.password, inside: app)
+        let token = loginDto.token
+        
+        try app.clientTest(.GET, "/v2/Applications",token:token){ res in
+            let apps = try res.content.decode([ApplicationDto].self).wait()
+            let firstApp = apps.first
+            
+            let uuid = firstApp?.uuid
+             XCTAssertNotNil(uuid)
+            
+            let updateDto = ApplicationUpdateDto(name: "NewName", description: "New description", maxVersionCheckEnabled: true,base64IconData: nil)
+            
+            let bodyJSON = try JSONEncoder().encode(updateDto)
+            
+            let body = bodyJSON.convertToHTTPBody()
+            try app.clientTest(.PUT, "/v2/Applications/\(uuid!)", body,token:token){ res in
+                print(res.content)
+                XCTAssertEqual(res.http.status.code , 200)
+                
+                let app = try res.content.decode(ApplicationDto.self).wait()
+                XCTAssertEqual(app.name, updateDto.name)
+                XCTAssertEqual(app.description, updateDto.description)
+                XCTAssertNotNil(app.apiKey)
+            }
+        }
+        
         
     }
 }

@@ -33,14 +33,14 @@ final class ApplicationsController:BaseController {
     }
     
     func updateApplication(_ req: Request) throws -> Future<ApplicationDto> {
-        let uuid = try req.parameters.next(String.self)
+        let uuid = try req.parameters.next(UUID.self)
         let context = try req.context()
         return try retrieveUser(from:req)
             .flatMap{user -> Future<ApplicationDto> in
                 guard let user = user else { throw Abort(.unauthorized)}
                 return try req.content.decode(ApplicationUpdateDto.self)
                     .flatMap({ applicationUpdateDto in
-                        return try findApplication(uuid: uuid, into: context)
+                        return try findApplication(uuid: uuid.uuidString, into: context)
                             .flatMap({ app  in
                                 guard let app = app else {throw ApplicationError.notFound }
                                 //check if user is app admin

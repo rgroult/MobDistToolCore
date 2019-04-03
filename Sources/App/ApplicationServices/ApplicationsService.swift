@@ -14,6 +14,23 @@ enum ApplicationError: Error {
     case notAnApplicationAdministrator
 }
 
+extension ApplicationError:Debuggable {
+    var reason: String {
+        switch self {
+        case .alreadyExist:
+            return "ApplicationError.alreadyExist"
+        case .notAnApplicationAdministrator:
+            return "ApplicationError.notAnApplicationAdministrator"
+        case .notFound:
+            return "ApplicationError.notFound"
+        }
+    }
+    
+    var identifier: String {
+        return "ApplicationError"
+    }
+}
+
 func findApplications(platform:Platform? = nil ,into context:Meow.Context) throws -> MappedCursor<FindCursor, MDTApplication>{
     let query:Query
     if let platorm = platform {
