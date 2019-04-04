@@ -3,9 +3,10 @@ os: osx
 osx_image: xcode10.2
 before_script:
 - gem install xcpretty
-- gem install vapor
-- gem install pkg-config
-- gem install libressl
+- /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+##- gem install vapor
+- brew install pkg-config
+- brew install libressl
 script:
 - swift package generate-xcodeproj
 - set -o pipefail && xcodebuild -scheme Run clean test | xcpretty
