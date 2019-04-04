@@ -11,7 +11,7 @@ before_script:
 - brew install mongodb
 - mkdir -p $PWD/data/db
 ## start mongo
-- mongod --dbpath=$PWD/data/db
+- mongod --dbpath $PWD/data/db
 ## check mongo running?
 - mongo
 script:
