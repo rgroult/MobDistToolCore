@@ -11,8 +11,8 @@ before_script:
 - brew install mongodb
 - mkdir -p $PWD/data/db
 ## start mongo
-- mongod --help
-- mongod --dbpath $PWD/data/db --fork
+## - mongod --help
+- mongod --dbpath $PWD/data/db --fork --syslog
 ## check mongo running?
 - mongo
 script:
