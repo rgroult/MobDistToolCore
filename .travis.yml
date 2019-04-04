@@ -12,7 +12,7 @@ before_script:
 - mkdir -p $PWD/data/db
 ## start mongo
 - mongod --help
-- mongod --dbpath=$PWD/data/db -d
+- mongod --dbpath $PWD/data/db --fork
 ## check mongo running?
 - mongo
 script:
