@@ -9,6 +9,10 @@ before_script:
 - brew install pkg-config
 - brew install libressl
 - brew install mongodb
+## start mongo
+- mongod
+## check mongo running?
+- mongo
 script:
 - swift package generate-xcodeproj
 - set -o pipefail && xcodebuild -scheme Run clean test | xcpretty
