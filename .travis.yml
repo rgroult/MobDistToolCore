@@ -13,8 +13,6 @@ before_script:
 ## start mongo
 ## - mongod --help
 - mongod --dbpath $PWD/data/db --fork --syslog
-## check mongo running?
-- mongo
 script:
 - swift package generate-xcodeproj
 - set -o pipefail && xcodebuild -scheme Run clean test | xcpretty
