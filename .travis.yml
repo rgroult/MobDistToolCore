@@ -1,4 +1,6 @@
 language: swift
+services:
+  - mongodb
 os: osx
 osx_image: xcode10.2
 before_script:
