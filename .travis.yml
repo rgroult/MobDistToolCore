@@ -9,9 +9,9 @@ before_script:
 - brew install pkg-config
 - brew install libressl
 - brew install mongodb
-- mkdir -p /data/db
+- mkdir -p $PWD/data/db
 ## start mongo
-- mongod
+- mongod --dbpath=$PWD/data/db
 ## check mongo running?
 - mongo
 script:
