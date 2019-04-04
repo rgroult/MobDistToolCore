@@ -1,6 +1,6 @@
 language: swift
-services:
-  - mongodb
+##services:
+##  - mongodb
 os: osx
 osx_image: xcode10.2
 before_script:
@@ -8,6 +8,7 @@ before_script:
 ##- gem install vapor
 - brew install pkg-config
 - brew install libressl
+- brew install mongodb
 script:
 - swift package generate-xcodeproj
 - set -o pipefail && xcodebuild -scheme Run clean test | xcpretty
