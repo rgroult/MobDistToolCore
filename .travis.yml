@@ -3,6 +3,7 @@ os: osx
 osx_image: xcode10.2
 before_script:
 - gem install xcpretty
+- gem install vapor
 script:
 - swift package generate-xcodeproj
 - set -o pipefail && xcodebuild -scheme Run clean test | xcpretty
