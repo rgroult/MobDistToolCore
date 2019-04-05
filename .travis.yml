@@ -10,8 +10,8 @@ before_script:
 - mkdir -p $PWD/data/db
 ## start mongo
 - mongod --dbpath $PWD/data/db --fork --syslog
-script:
 - swift package generate-xcodeproj
+script:
 - set -o pipefail && xcodebuild -scheme Run clean test | xcpretty
 after_success:
   - bash <(curl -s https://codecov.io/bash)
