@@ -1,6 +1,4 @@
 language: swift
-##services:
-##  - mongodb
 os: osx
 osx_image: xcode10.2
 before_script:
@@ -11,8 +9,9 @@ before_script:
 - brew install mongodb
 - mkdir -p $PWD/data/db
 ## start mongo
-## - mongod --help
 - mongod --dbpath $PWD/data/db --fork --syslog
 script:
 - swift package generate-xcodeproj
 - set -o pipefail && xcodebuild -scheme Run clean test | xcpretty
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
