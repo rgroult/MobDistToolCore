@@ -12,6 +12,7 @@ enum ApplicationError: Error {
     case notFound
     case alreadyExist
     case notAnApplicationAdministrator
+    case unknownPlatform
 }
 
 extension ApplicationError:Debuggable {
@@ -23,6 +24,8 @@ extension ApplicationError:Debuggable {
             return "ApplicationError.notAnApplicationAdministrator"
         case .notFound:
             return "ApplicationError.notFound"
+        case .unknownPlatform:
+            return "unknownPlatform"
         }
     }
     

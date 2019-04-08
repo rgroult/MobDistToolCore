@@ -97,7 +97,7 @@ final class ApplicationServiceTests: BaseAppTests {
         try testCreateApplication()
         
         //find app
-        var app:MDTApplication? = try findApplications(for: normalUser, into: context).getFirstResult().wait()
+        let app:MDTApplication? = try findApplications(for: normalUser, into: context).getFirstResult().wait()
         XCTAssertNotNil(app)
         
         //find by uuid

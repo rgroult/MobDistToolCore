@@ -98,7 +98,26 @@ final class ApplicationsTests: BaseAppTests {
     }
     
     func testFilterApplications() throws {
+        try testCreateMultiple()
         
+        let token = try login(withEmail: userToto.email, password: userToto.password, inside: app).token
+        //find iOs App
+        let appsResp = try app.clientSyncTest(.GET, "/v2/Applications", nil,["platform":Platform.ios.rawValue] ,token: token)
+        XCTAssertEqual(appsResp.http.status.code , 200)
+        let apps = try appsResp.content.decode([ApplicationDto].self).wait()
+        XCTAssertEqual(apps.count,1)
+        
+        //find Android App
+        let AndroidApps = try app.clientSyncTest(.GET, "/v2/Applications", nil,["platform":Platform.ios.rawValue] ,token: token).content.decode([ApplicationDto].self).wait()
+         XCTAssertEqual(AndroidApps.count,1)
+    }
+    
+    func testFilterApplicationsBadPlatform() throws {
+        try testCreate()
+        let token = try login(withEmail: userToto.email, password: userToto.password, inside: app).token
+        
+        let appsResp = try app.clientSyncTest(.GET, "/v2/Applications", nil,["platform":"TOTO"] ,token: token)
+        XCTAssertEqual(appsResp.http.status.code , 400)
     }
     
     func testAllApplicationsMultipleUsers() throws {
@@ -152,7 +171,33 @@ final class ApplicationsTests: BaseAppTests {
                 XCTAssertNotNil(app.apiKey)
             }
         }
-        
-        
     }
+    
+    func testUpdateApplicationNotAdmin() throws {
+       try testCreateMultiple()
+        
+        //login
+        let loginDto = try login(withEmail: userTiti.email, password: userTiti.password, inside: app)
+        let token = loginDto.token
+        
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let apps = try allAppsResp.content.decode([ApplicationDto].self).wait()
+        
+        //find not admin app
+        let appFound = apps.first(where:{ $0.adminUsers.contains(where: {$0.email != userTiti.email})})
+        let uuid = appFound?.uuid
+        XCTAssertNotNil(uuid)
+        
+        let updateDto = ApplicationUpdateDto(name: "NewName", description: "New description", maxVersionCheckEnabled: false,base64IconData: nil)
+       // let bodyJSON = try JSONEncoder().encode(updateDto)
+        let body = try updateDto.convertToHTTPBody()
+        
+        //try to update not administrated App
+        let updateResp = try app.clientSyncTest(.PUT, "/v2/Applications/\(uuid!)",body,token:token)
+        print(updateResp.content)
+        XCTAssertEqual(updateResp.http.status.code , 400)
+    }
+}
+
+extension ApplicationsTests {
 }

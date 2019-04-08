@@ -72,8 +72,9 @@ public func routes(_ router: Router, authenticateMiddleware:Middleware) throws {
     router.get("artifacts",use:usersController.artifacts)
     router.get("find",use:usersController.findAppsForUser)
     */
-    let artifactController = ArtifactsController()
-    router.post("testupload",use:artifactController.uploadArtifact)
+    let artifactController = ArtifactsController(apiBuilder: openAPIBuilder)
+    artifactController.configure(with: router, and: protected)
+    //router.post("testupload",use:artifactController.uploadArtifact)
 
    
     //OpenAPI
