@@ -15,9 +15,12 @@ extension ApplicationsController {
     func configure(with router: Router, and protectedRouter:Router){
         let protectedAppsRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
         protectedAppsRouter.get(Verb.applications.rawValue, use : self.applications)
-      //  protectedAppsRouter.get(Verb.applications.rawValue, /*PathComponent.parameter("platform")*/ use : self.applications)
         protectedAppsRouter.post(Verb.applications.rawValue,  use: self.createApplication)
         protectedAppsRouter.put(Verb.applications.rawValue, PathComponent.parameter("uuid"),  use: self.updateApplication)
         protectedAppsRouter.get(Verb.applications.rawValue, PathComponent.parameter("uuid"),  use: self.applicationDetail)
+        protectedAppsRouter.delete(Verb.applications.rawValue, PathComponent.parameter("uuid"),  use: self.deleteApplication)
+        //admin user
+        protectedAppsRouter.put(Verb.applications.rawValue, PathComponent.parameter("uuid"),PathComponent.constant("adminUsers"),PathComponent.parameter("email"), use: self.addAdminUser)
+        protectedAppsRouter.delete(Verb.applications.rawValue, PathComponent.parameter("uuid"),PathComponent.constant("adminUsers"),PathComponent.parameter("email"), use: self.deleteAdminUser)
     }
 }

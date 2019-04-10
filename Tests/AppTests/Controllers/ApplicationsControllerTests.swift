@@ -15,8 +15,8 @@ let appDtoAndroid = ApplicationCreateDto(name: "test App Android", platform: Pla
 
 final class ApplicationsTests: BaseAppTests {
     func testCreate() throws{
-        _ = try register(registerInfo: userToto, inside: app)
-        let loginDto = try login(withEmail: userToto.email, password: userToto.password, inside: app)
+        _ = try register(registerInfo: userIOS, inside: app)
+        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         let token = loginDto.token
         
         let appCreation = appDtoiOS
@@ -32,7 +32,7 @@ final class ApplicationsTests: BaseAppTests {
             XCTAssertTrue(app.platform == appDtoiOS.platform)
             XCTAssertNotNil(app.uuid)
             XCTAssertNotNil(app.apiKey)
-            XCTAssertTrue(app.adminUsers.first?.email == userToto.email)
+            XCTAssertTrue(app.adminUsers.first?.email == userIOS.email)
             XCTAssertEqual(res.http.status.code , 200)
         }
     }
@@ -41,8 +41,8 @@ final class ApplicationsTests: BaseAppTests {
         try testCreate()
         
         //create another user
-        _ = try register(registerInfo: userTiti, inside: app)
-        let loginDto = try login(withEmail: userTiti.email, password: userTiti.password, inside: app)
+        _ = try register(registerInfo: userANDROID, inside: app)
+        let loginDto = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app)
         let token = loginDto.token
         
         let appCreation = appDtoAndroid
@@ -61,7 +61,7 @@ final class ApplicationsTests: BaseAppTests {
         try testCreate()
         
         //login
-        let loginDto = try login(withEmail: userToto.email, password: userToto.password, inside: app)
+        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         let token = loginDto.token
         
         //try to create same app
@@ -81,7 +81,7 @@ final class ApplicationsTests: BaseAppTests {
         try testCreate()
         
         //login
-        let loginDto = try login(withEmail: userToto.email, password: userToto.password, inside: app)
+        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         let token = loginDto.token
         
         try app.clientTest(.GET, "/v2/Applications",token:token){ res in
@@ -99,7 +99,7 @@ final class ApplicationsTests: BaseAppTests {
     func testFilterApplications() throws {
         try testCreateMultiple()
         
-        let token = try login(withEmail: userToto.email, password: userToto.password, inside: app).token
+        let token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
         //find iOs App
         let appsResp = try app.clientSyncTest(.GET, "/v2/Applications", nil,["platform":Platform.ios.rawValue] ,token: token)
         XCTAssertEqual(appsResp.http.status.code , 200)
@@ -113,7 +113,7 @@ final class ApplicationsTests: BaseAppTests {
     
     func testFilterApplicationsBadPlatform() throws {
         try testCreate()
-        let token = try login(withEmail: userToto.email, password: userToto.password, inside: app).token
+        let token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
         
         let appsResp = try app.clientSyncTest(.GET, "/v2/Applications", nil,["platform":"TOTO"] ,token: token)
         XCTAssertEqual(appsResp.http.status.code , 400)
@@ -123,7 +123,7 @@ final class ApplicationsTests: BaseAppTests {
         try testCreateMultiple()
         
         //login
-        let loginDto = try login(withEmail: userToto.email, password: userToto.password, inside: app)
+        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         let token = loginDto.token
         
         try app.clientTest(.GET, "/v2/Applications",token:token){ res in
@@ -145,7 +145,7 @@ final class ApplicationsTests: BaseAppTests {
         try testCreate()
         
         //login
-        let loginDto = try login(withEmail: userToto.email, password: userToto.password, inside: app)
+        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         let token = loginDto.token
         
         try app.clientTest(.GET, "/v2/Applications",token:token){ res in
@@ -174,7 +174,7 @@ final class ApplicationsTests: BaseAppTests {
        try testCreateMultiple()
         
         //login
-        let loginDto = try login(withEmail: userTiti.email, password: userTiti.password, inside: app)
+        let loginDto = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app)
         let token = loginDto.token
         
         let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
@@ -193,6 +193,115 @@ final class ApplicationsTests: BaseAppTests {
         let updateResp = try app.clientSyncTest(.PUT, "/v2/Applications/\(uuid!)",body,token:token)
         print(updateResp.content)
         XCTAssertEqual(updateResp.http.status.code , 400)
+    }
+    
+    func testDeleteApplication() throws {
+        try testCreateMultiple()
+        //login
+        let token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
+        
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
+        
+        let appFound = apps.first(where:{ $0.name == appDtoAndroid.name})
+        XCTAssertNotNil(appFound)
+        
+        //delete App
+        let deleteApp = try app.clientSyncTest(.DELETE, "/v2/Applications/\(appFound!.uuid)",token:token)
+        print(deleteApp.content)
+        XCTAssertEqual(deleteApp.http.status.code , 200)
+        
+    }
+    func testDeleteApplicationKO() throws {
+        try testCreateMultiple()
+        //login
+        let token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
+        
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
+        
+        let appFound = apps.first(where:{ $0.name == appDtoiOS.name})
+        XCTAssertNotNil(appFound)
+        
+        //delete App
+        let deleteApp = try app.clientSyncTest(.DELETE, "/v2/Applications/\(appFound!.uuid)",token:token)
+        XCTAssertEqual(deleteApp.http.status.code , 400)
+        let errorResp = try deleteApp.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(errorResp.reason , "ApplicationError.notAnApplicationAdministrator")
+    }
+    
+    func testAppDetail() throws {
+        try testCreate()
+        //login
+        let token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
+        
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
+        
+        let appFound = apps.first
+        XCTAssertNotNil(appFound)
+        
+        //check detail
+        let detailResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)",token:token)
+        print(detailResp.content)
+        XCTAssertEqual(detailResp.http.status.code , 200)
+        let app = try detailResp.content.decode(ApplicationDto.self).wait()
+        XCTAssertEqual(app.adminUsers.count , 1)
+        XCTAssertNotNil(app.apiKey)
+    }
+    
+    func testAppDetailNotAdmin() throws {
+        try testCreateMultiple()
+        
+        //login
+        let token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
+        
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
+        
+        //find not admin app
+        let appFound = apps.first(where:{ $0.name == appDtoAndroid.name})
+        
+        //check detail
+        let detailResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)",token:token)
+        let app = try detailResp.content.decode(ApplicationDto.self).wait()
+        XCTAssertNil(app.apiKey)
+    }
+    
+    func testAddAdminUser() throws {
+        try testCreateMultiple()
+        //login
+        let token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
+        
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
+        
+        let appFound = apps.first(where:{ $0.name == appDtoAndroid.name})
+        XCTAssertNotNil(appFound)
+        
+        //add admin
+        let adminEscaped = userIOS.email.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed)
+        let resp = try app.clientSyncTest(.PUT, "/v2/Applications/\(appFound!.uuid)/adminUsers/\(adminEscaped!)",token:token)
+        print(resp.content)
+        XCTAssertEqual(resp.http.status.code , 200)
+        
+        //check detail
+        let detailResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)",token:token)
+        XCTAssertEqual(detailResp.http.status.code , 200)
+        let app = try detailResp.content.decode(ApplicationDto.self).wait()
+        
+        XCTAssertEqual(app.adminUsers.count , 2)
+        
+    }
+    func testAddAdminUserKO() throws {
+        
+    }
+    
+    func testRemoveAdminUser() throws {
+        
+    }
+    func testRemoveAdminUserKO() throws {
+        
     }
 }
 

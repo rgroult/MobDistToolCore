@@ -10,12 +10,12 @@ import Vapor
 import XCTest
 @testable import App
 
-let userToto = RegisterDto(email: "toto@toto.com", name: "toto", password: "passwd")
-let userTiti = RegisterDto(email: "titi@titi.com", name: "titi", password: "passwd")
+let userIOS = RegisterDto(email: "toto@toto.com", name: "toto", password: "passwd")
+let userANDROID = RegisterDto(email: "titi@titi.com", name: "titi", password: "passwd")
 
 final class UsersControllerAutomaticRegistrationTests: BaseAppTests {
     func testRegister() throws{
-        let registerReq = userToto
+        let registerReq = userIOS
         let registerJSON = try JSONEncoder().encode(registerReq)
         
         let body = registerJSON.convertToHTTPBody()
@@ -34,12 +34,12 @@ final class UsersControllerAutomaticRegistrationTests: BaseAppTests {
     
     func testLogin() throws {
         try testRegister()
-        XCTAssertNoThrow(try login(withEmail: userToto.email, password: userToto.password, inside: app))
+        XCTAssertNoThrow(try login(withEmail: userIOS.email, password: userIOS.password, inside: app))
     }
     
     func testForgotPassword() throws {
         try testRegister()
-        let forgot = ForgotPasswordDto(email: userToto.email)
+        let forgot = ForgotPasswordDto(email: userIOS.email)
         let bodyJSON = try JSONEncoder().encode(forgot)
         let body = bodyJSON.convertToHTTPBody()
         try app.clientTest(.POST, "/v2/Users/forgotPassword", body){ res in
@@ -61,7 +61,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     }
     
     func testRegister() throws{
-        let registerReq = userToto
+        let registerReq = userIOS
         let registerJSON = try JSONEncoder().encode(registerReq)
         
         let body = registerJSON.convertToHTTPBody()
@@ -81,7 +81,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     func testActivation() throws {
         try testRegister()
         //retrieve activation token
-        let userFound = try findUser(by: userToto.email, into: context).wait()
+        let userFound = try findUser(by: userIOS.email, into: context).wait()
         XCTAssertNotNil(userFound)
         guard let user = userFound else { return }
        
@@ -96,7 +96,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     func testActivationKO() throws {
         try testRegister()
         //retrieve activation token
-        let userFound = try findUser(by: userToto.email, into: context).wait()
+        let userFound = try findUser(by: userIOS.email, into: context).wait()
         XCTAssertNotNil(userFound)
         guard let user = userFound else { return }
         
@@ -114,7 +114,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     func testLoginNotActivated() throws {
         try testRegister()
         //login
-        let login = LoginReqDto(email: userToto.email, password: userToto.password)
+        let login = LoginReqDto(email: userIOS.email, password: userIOS.password)
         let bodyJSON = try JSONEncoder().encode(login)
         
         let body = bodyJSON.convertToHTTPBody()
@@ -130,7 +130,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     func testLogin() throws {
         try testActivation()
         //login
-        let login = LoginReqDto(email: userToto.email, password: userToto.password)
+        let login = LoginReqDto(email: userIOS.email, password: userIOS.password)
         let bodyJSON = try JSONEncoder().encode(login)
         
         let body = bodyJSON.convertToHTTPBody()
@@ -139,8 +139,8 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
             XCTAssertEqual(res.http.status.code , 200)
             XCTAssertNotNil(res)
             let loginResp = try res.content.decode(LoginRespDto.self).wait()
-            XCTAssertTrue(loginResp.email == userToto.email)
-            XCTAssertTrue(loginResp.name == userToto.name)
+            XCTAssertTrue(loginResp.email == userIOS.email)
+            XCTAssertTrue(loginResp.name == userIOS.name)
             XCTAssertNotNil(loginResp.token)
         }
     }
@@ -148,7 +148,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     func testLoginKo() throws {
         try testActivation()
         //login
-        let login = LoginReqDto(email: userToto.email, password: "bad password")
+        let login = LoginReqDto(email: userIOS.email, password: "bad password")
         let bodyJSON = try JSONEncoder().encode(login)
         
         let body = bodyJSON.convertToHTTPBody()
@@ -163,7 +163,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     
     func testForgotPassword() throws {
         try testActivation()
-        let forgot = ForgotPasswordDto(email: userToto.email)
+        let forgot = ForgotPasswordDto(email: userIOS.email)
         let bodyJSON = try JSONEncoder().encode(forgot)
         let body = bodyJSON.convertToHTTPBody()
         try app.clientTest(.POST, "/v2/Users/forgotPassword", body){ res in
@@ -179,11 +179,11 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         try testForgotPassword()
         let password = "password"
         //force reset to have real password
-        guard let user = try findUser(by: userToto.email, into: context).wait() else { throw "Not Found" }
+        guard let user = try findUser(by: userIOS.email, into: context).wait() else { throw "Not Found" }
         try resetUser(user: user, newPassword: password, into: context).wait()
         
         //login
-        let login = LoginReqDto(email: userToto.email, password: password)
+        let login = LoginReqDto(email: userIOS.email, password: password)
         let bodyJSON = try JSONEncoder().encode(login)
         
         let body = bodyJSON.convertToHTTPBody()
@@ -211,14 +211,14 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     
     func testMe() throws {
         try testActivation()
-        let loginResp = try login(withEmail: userToto.email,password:userToto.password,inside:app)
+        let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
         XCTAssertNotNil(loginResp.token)
         let token = loginResp.token
         
         try app.clientTest(.GET, "/v2/Users/me",token:token){ res in
             print(res.content)
             let me = try res.content.decode(UserDto.self).wait()
-            XCTAssertTrue(me.email == userToto.email)
+            XCTAssertTrue(me.email == userIOS.email)
             XCTAssertTrue(me.isActivated ?? false)
         }
     }

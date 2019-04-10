@@ -69,24 +69,24 @@ final class ApplicationsController:BaseController {
                 guard let _ = user else { throw Abort(.unauthorized)}
                 let context = try req.context()
                 return try findApplications(platform: platformFilter, into: context)
-                .map(transform: {ApplicationSummaryDto(from: $0)})
-                .getAllResults()
+                    .map(transform: {ApplicationSummaryDto(from: $0)})
+                    .getAllResults()
                 
                 /*
-                let query:Query
-                if let platorm = platformFilter {
-                    query = Query.valEquals(field: "platform", val: platorm.rawValue)
-                }else {
-                    query = Query()
-                }
-                return context.find(MDTApplication.self,where:query)
-                    .map(transform: { app  in
-                        return ApplicationDto.create(from: app, content:app.isAdmin(user: user) ? .full : .light , in : context)
-                    })
-                    .getAllResults()
-                    .flatMap {elements ->  Future<[ApplicationDto]> in
-                        return elements.flatten(on: context)
-                }*/
+                 let query:Query
+                 if let platorm = platformFilter {
+                 query = Query.valEquals(field: "platform", val: platorm.rawValue)
+                 }else {
+                 query = Query()
+                 }
+                 return context.find(MDTApplication.self,where:query)
+                 .map(transform: { app  in
+                 return ApplicationDto.create(from: app, content:app.isAdmin(user: user) ? .full : .light , in : context)
+                 })
+                 .getAllResults()
+                 .flatMap {elements ->  Future<[ApplicationDto]> in
+                 return elements.flatten(on: context)
+                 }*/
                 
         }
     }
@@ -106,17 +106,45 @@ final class ApplicationsController:BaseController {
     
     // @ApiMethod(method: 'DELETE', path: 'app/{appId}')
     func deleteApplication(_ req: Request) throws -> Future<MessageDto> {
-        throw "Not implemented"
+        return try findApplicationInfo(from:req, needAdmin: true)
+            .flatMap({ info  in
+                let context = try req.context()
+                return App.deleteApplication(by: info.app, into: context).map {
+                    return MessageDto(message: "Application Deleted")
+                }
+            })
     }
     
-    //@ApiMethod(method: 'PUT', path: 'app/{appId}/adminUser')
+    //@ApiMethod(method: 'PUT', path: 'app/{appId}/adminUsers/{email}')
     func addAdminUser(_ req: Request) throws -> Future<MessageDto> {
-        throw "Not implemented"
+        return try findApplicationInfo(from:req, needAdmin: true)
+            .flatMap({ info  in
+                let email = try req.parameters.next(String.self)
+                let context = try req.context()
+                //find user with email
+                return try findUser(by: email, into: context)
+                    .flatMap({user in
+                        guard let user = user else { throw ApplicationError.invalidApplicationAdministrator }
+                        return try info.app.addAdmin(user: user, into: context)
+                            .map{ _ in MessageDto(message: "Admin User Added") }
+                })
+        })
     }
     
-    //@ApiMethod(method: 'DELETE', path: 'app/{appId}/adminUser')
+    //@ApiMethod(method: 'DELETE', path: 'app/{appId}/adminUsers/{email}')
     func deleteAdminUser(_ req: Request) throws -> Future<MessageDto> {
-        throw "Not implemented"
+        return try findApplicationInfo(from:req, needAdmin: true)
+            .flatMap({ info  in
+                let email = try req.parameters.next(String.self)
+                let context = try req.context()
+                //find user with email
+                return try findUser(by: email, into: context)
+                    .flatMap({user in
+                        guard let user = user else { throw ApplicationError.invalidApplicationAdministrator }
+                        return try info.app.removeAdmin(user: user, into: context)
+                            .map{ _ in MessageDto(message: "Admin User Added") }
+                    })
+            })
     }
     
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions')
@@ -127,5 +155,22 @@ final class ApplicationsController:BaseController {
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions/last')
     func getApplicationLastVersions(_ req: Request) throws -> Future<[ArtifactDto]> {
         throw "Not implemented"
+    }
+    
+    private func findApplicationInfo(from req: Request, needAdmin:Bool) throws -> Future<(user:User,app:MDTApplication)>{
+        let uuid = try req.parameters.next(UUID.self)
+        return try retrieveUser(from:req)
+            .flatMap({ user in
+                guard let user = user else { throw Abort(.unauthorized)}
+                let context = try req.context()
+                return try App.findApplication(uuid: uuid.uuidString, into: context)
+                    .map({ app in
+                        guard let app = app else { throw ApplicationError.notFound }
+                        if needAdmin {
+                            guard app.isAdmin(user: user)  else { throw Abort(ApplicationError.notAnApplicationAdministrator)}
+                        }
+                        return (user,app)
+                })
+            })
     }
 }
