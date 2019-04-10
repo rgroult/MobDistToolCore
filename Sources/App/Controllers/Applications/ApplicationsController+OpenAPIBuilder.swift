@@ -23,7 +23,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                         APIParameter(name: "platorm", parameterLocation:.query, description: "Filter by platorm", required: false)
                                     ],
                                       responses: [
-                                        APIResponse(code: "200", description: "All applications", object: [ApplicationDto].self),
+                                        APIResponse(code: "200", description: "All applications", object: [ApplicationSummaryDto].self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                         APIResponse(code: "400", description: "Request error")
@@ -56,10 +56,29 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                     APIResponse(code: "400", description: "Request error")
                                 ],
                                 authorization: true
+                            ),
+                            APIAction(method: .get, route: generateRoute(Verb.applications.rawValue),
+                                      summary: "Get App Detail",
+                                      description: "Update new Application",
+                                      parameters: [
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: false)
+                                ],
+                                      request: APIRequest(object: ApplicationUpdateDto.self, description: "App info."),
+                                      responses: [
+                                        APIResponse(code: "200", description: "applications updated", object: ApplicationDto.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: true
                             )
                 ]
             )
         )
-        _ = apiBuilder.add([APIObject(object: ApplicationDto.sample())])
+        _ = apiBuilder.add([APIObject(object: ApplicationDto.sample()),
+                            APIObject(object: ApplicationSummaryDto.sample()),
+                            APIObject(object: ApplicationUpdateDto.sample()),
+                            APIObject(object: ApplicationCreateDto.sample())
+            ])
     }
 }

@@ -16,3 +16,9 @@ struct ApplicationCreateDto: Codable {
     var base64IconData:String?
     var enableMaxVersionCheck:Bool?
 }
+
+extension ApplicationCreateDto {
+    static func sample() -> ApplicationCreateDto {
+        return ApplicationCreateDto( name: "Awesome App", platform:.ios ,description:"",base64IconData:nil,enableMaxVersionCheck:nil)
+    }
+}

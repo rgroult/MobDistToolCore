@@ -18,5 +18,6 @@ extension ApplicationsController {
       //  protectedAppsRouter.get(Verb.applications.rawValue, /*PathComponent.parameter("platform")*/ use : self.applications)
         protectedAppsRouter.post(Verb.applications.rawValue,  use: self.createApplication)
         protectedAppsRouter.put(Verb.applications.rawValue, PathComponent.parameter("uuid"),  use: self.updateApplication)
+        protectedAppsRouter.get(Verb.applications.rawValue, PathComponent.parameter("uuid"),  use: self.applicationDetail)
     }
 }

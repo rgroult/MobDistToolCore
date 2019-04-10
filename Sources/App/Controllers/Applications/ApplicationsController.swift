@@ -53,7 +53,7 @@ final class ApplicationsController:BaseController {
         }
     }
     
-    func applications(_ req: Request) throws -> Future<[ApplicationDto]> {
+    func applications(_ req: Request) throws -> Future<[ApplicationSummaryDto]> {
         let platformFilter:Platform?
         if let queryPlaform = try? req.query.get(String.self, at: "platform") {
             if let platform = Platform(rawValue: queryPlaform)  {
@@ -66,8 +66,13 @@ final class ApplicationsController:BaseController {
         }
         return try retrieveUser(from:req)
             .flatMap{user in
-                guard let user = user else { throw Abort(.unauthorized)}
+                guard let _ = user else { throw Abort(.unauthorized)}
                 let context = try req.context()
+                return try findApplications(platform: platformFilter, into: context)
+                .map(transform: {ApplicationSummaryDto(from: $0)})
+                .getAllResults()
+                
+                /*
                 let query:Query
                 if let platorm = platformFilter {
                     query = Query.valEquals(field: "platform", val: platorm.rawValue)
@@ -81,13 +86,22 @@ final class ApplicationsController:BaseController {
                     .getAllResults()
                     .flatMap {elements ->  Future<[ApplicationDto]> in
                         return elements.flatten(on: context)
-                }
+                }*/
                 
         }
     }
     
     func applicationDetail(_ req: Request) throws -> Future<ApplicationDto> {
-         throw "Not implemented"
+        let uuid = try req.parameters.next(UUID.self)
+        return try retrieveUser(from:req)
+            .flatMap{user in
+                guard let user = user else { throw Abort(.unauthorized)}
+                let context = try req.context()
+                return try findApplication(uuid: uuid.uuidString, into: context)
+                    .flatMap({ app in
+                        guard let app = app else { throw ApplicationError.notFound }
+                        return ApplicationDto.create(from: app, content:app.isAdmin(user: user) ? .full : .light , in : context)
+                    })}
     }
     
     // @ApiMethod(method: 'DELETE', path: 'app/{appId}')

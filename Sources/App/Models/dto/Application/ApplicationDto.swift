@@ -9,6 +9,9 @@ import Foundation
 import Vapor
 import Meow
 
+
+
+
 struct ApplicationDto: Codable {
     var name:String
     var platform:Platform
@@ -49,6 +52,7 @@ extension ApplicationDto {
             maxVersionSecretKey = app.maxVersionSecretKey
         }
     }
+    
 }
 
 extension ApplicationDto : Content {}

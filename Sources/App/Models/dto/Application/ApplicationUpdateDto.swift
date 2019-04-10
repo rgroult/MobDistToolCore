@@ -24,3 +24,10 @@ extension ApplicationUpdateDto {
         self.base64IconData = iconData
     }
 }
+
+
+extension ApplicationUpdateDto {
+    static func sample() -> ApplicationUpdateDto {
+        return ApplicationUpdateDto( name: "Awesome App", description:"",maxVersionCheckEnabled:nil, base64IconData:nil)
+    }
+}

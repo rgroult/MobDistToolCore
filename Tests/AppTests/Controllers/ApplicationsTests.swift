@@ -87,13 +87,12 @@ final class ApplicationsTests: BaseAppTests {
         try app.clientTest(.GET, "/v2/Applications",token:token){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 200)
-            let apps = try res.content.decode([ApplicationDto].self).wait()
+            let apps = try res.content.decode([ApplicationSummaryDto].self).wait()
             XCTAssertTrue(apps.count == 1)
             let firstApp = apps.first
             XCTAssertEqual(firstApp?.name, appDtoiOS.name)
             XCTAssertEqual(firstApp?.platform, appDtoiOS.platform)
             XCTAssertEqual(firstApp?.description, appDtoiOS.description)
-            XCTAssertNotNil(firstApp?.apiKey)
         }
     }
     
@@ -104,11 +103,11 @@ final class ApplicationsTests: BaseAppTests {
         //find iOs App
         let appsResp = try app.clientSyncTest(.GET, "/v2/Applications", nil,["platform":Platform.ios.rawValue] ,token: token)
         XCTAssertEqual(appsResp.http.status.code , 200)
-        let apps = try appsResp.content.decode([ApplicationDto].self).wait()
+        let apps = try appsResp.content.decode([ApplicationSummaryDto].self).wait()
         XCTAssertEqual(apps.count,1)
         
         //find Android App
-        let AndroidApps = try app.clientSyncTest(.GET, "/v2/Applications", nil,["platform":Platform.ios.rawValue] ,token: token).content.decode([ApplicationDto].self).wait()
+        let AndroidApps = try app.clientSyncTest(.GET, "/v2/Applications", nil,["platform":Platform.ios.rawValue] ,token: token).content.decode([ApplicationSummaryDto].self).wait()
          XCTAssertEqual(AndroidApps.count,1)
     }
     
@@ -130,15 +129,15 @@ final class ApplicationsTests: BaseAppTests {
         try app.clientTest(.GET, "/v2/Applications",token:token){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 200)
-            let apps = try res.content.decode([ApplicationDto].self).wait()
+            let apps = try res.content.decode([ApplicationSummaryDto].self).wait()
             XCTAssertTrue(apps.count == 2)
-            apps.forEach({ app in
+           /* apps.forEach({ app in
                 if app.adminUsers.contains(where: { $0.email == userToto.email }) {
                     XCTAssertNotNil(app.apiKey)
                 }else {
                     XCTAssertNil(app.apiKey)
                 }
-            })
+            })*/
         }
     }
     
@@ -150,7 +149,7 @@ final class ApplicationsTests: BaseAppTests {
         let token = loginDto.token
         
         try app.clientTest(.GET, "/v2/Applications",token:token){ res in
-            let apps = try res.content.decode([ApplicationDto].self).wait()
+            let apps = try res.content.decode([ApplicationSummaryDto].self).wait()
             let firstApp = apps.first
             
             let uuid = firstApp?.uuid
@@ -158,9 +157,7 @@ final class ApplicationsTests: BaseAppTests {
             
             let updateDto = ApplicationUpdateDto(name: "NewName", description: "New description", maxVersionCheckEnabled: true,base64IconData: nil)
             
-            let bodyJSON = try JSONEncoder().encode(updateDto)
-            
-            let body = bodyJSON.convertToHTTPBody()
+            let body = try updateDto.convertToHTTPBody()
             try app.clientTest(.PUT, "/v2/Applications/\(uuid!)", body,token:token){ res in
                 print(res.content)
                 XCTAssertEqual(res.http.status.code , 200)
@@ -181,10 +178,10 @@ final class ApplicationsTests: BaseAppTests {
         let token = loginDto.token
         
         let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
-        let apps = try allAppsResp.content.decode([ApplicationDto].self).wait()
+        let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
         
         //find not admin app
-        let appFound = apps.first(where:{ $0.adminUsers.contains(where: {$0.email != userTiti.email})})
+        let appFound = apps.first(where:{ $0.name != appDtoAndroid.name})
         let uuid = appFound?.uuid
         XCTAssertNotNil(uuid)
         
