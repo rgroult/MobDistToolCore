@@ -7,6 +7,7 @@
 
 import Foundation
 import Vapor
+import Routing
 import Swiftgger
 import Meow
 
@@ -141,6 +142,7 @@ final class ApplicationsController:BaseController {
                 return try findUser(by: email, into: context)
                     .flatMap({user in
                         guard let user = user else { throw ApplicationError.invalidApplicationAdministrator }
+                        guard info.app.adminUsers.count > 1 else { throw ApplicationError.deleteLastApplicationAdministrator }
                         return try info.app.removeAdmin(user: user, into: context)
                             .map{ _ in MessageDto(message: "Admin User Added") }
                     })

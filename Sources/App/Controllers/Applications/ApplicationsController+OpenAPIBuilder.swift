@@ -46,7 +46,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                       summary: "Update App",
                                       description: "Update new Application",
                                       parameters: [
-                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: false)
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true)
                                 ],
                                       request: APIRequest(object: ApplicationUpdateDto.self, description: "App info."),
                                 responses: [
@@ -61,7 +61,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                       summary: "Get App Detail",
                                       description: "Update new Application",
                                       parameters: [
-                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: false)
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true)
                                 ],
                                       request: APIRequest(object: ApplicationUpdateDto.self, description: "App info."),
                                       responses: [

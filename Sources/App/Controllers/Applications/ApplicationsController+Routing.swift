@@ -20,7 +20,7 @@ extension ApplicationsController {
         protectedAppsRouter.get(Verb.applications.rawValue, PathComponent.parameter("uuid"),  use: self.applicationDetail)
         protectedAppsRouter.delete(Verb.applications.rawValue, PathComponent.parameter("uuid"),  use: self.deleteApplication)
         //admin user
-        protectedAppsRouter.put(Verb.applications.rawValue, PathComponent.parameter("uuid"),PathComponent.constant("adminUsers"),PathComponent.parameter("email"), use: self.addAdminUser)
-        protectedAppsRouter.delete(Verb.applications.rawValue, PathComponent.parameter("uuid"),PathComponent.constant("adminUsers"),PathComponent.parameter("email"), use: self.deleteAdminUser)
+        protectedAppsRouter.put(Verb.applications.rawValue, PathComponent.parameter("uuid"),PathComponent.constant("adminUsers"),String.parameter,/*PathComponent.parameter("email"),*/ use: self.addAdminUser)
+        protectedAppsRouter.delete(Verb.applications.rawValue, PathComponent.parameter("uuid"),PathComponent.constant("adminUsers"),String.parameter,/*PathComponent.parameter("email"),*/ use: self.deleteAdminUser)
     }
 }

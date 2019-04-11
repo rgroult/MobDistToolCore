@@ -6,6 +6,7 @@
 //
 
 import Foundation
+
 extension String {
     // validate an email for the right format
     func isValidEmail() -> Bool {

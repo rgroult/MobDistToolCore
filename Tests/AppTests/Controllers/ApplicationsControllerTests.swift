@@ -293,15 +293,120 @@ final class ApplicationsTests: BaseAppTests {
         XCTAssertEqual(app.adminUsers.count , 2)
         
     }
-    func testAddAdminUserKO() throws {
+    func testAddAdminUserInvalid() throws {
+        try testCreateMultiple()
+        //login
+        let token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
         
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
+        
+        let appFound = apps.first(where:{ $0.name == appDtoAndroid.name})
+        XCTAssertNotNil(appFound)
+        
+        //add invalid admin
+        let adminEscaped = "John@Doe.com".addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed)
+        let resp = try app.clientSyncTest(.PUT, "/v2/Applications/\(appFound!.uuid)/adminUsers/\(adminEscaped!)",token:token)
+        print(resp.content)
+        XCTAssertEqual(resp.http.status.code , 400)
+        let errorResp = try resp.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(errorResp.reason , "ApplicationError.invalidApplicationAdministrator")
+    }
+    
+    func testAddAdminUserUnAuthorized() throws {
+        try testCreateMultiple()
+        //login
+        let token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
+        
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
+        
+        let appFound = apps.first(where:{ $0.name == appDtoAndroid.name})
+        XCTAssertNotNil(appFound)
+        
+        //add invalid admin
+        let adminEscaped = userIOS.email.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed)
+        let resp = try app.clientSyncTest(.PUT, "/v2/Applications/\(appFound!.uuid)/adminUsers/\(adminEscaped!)",token:token)
+        print(resp.content)
+        XCTAssertEqual(resp.http.status.code , 400)
+        let errorResp = try resp.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(errorResp.reason , "ApplicationError.notAnApplicationAdministrator")
     }
     
     func testRemoveAdminUser() throws {
+        try testAddAdminUser()
+    
+        //login
+        let token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
+        
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
+        
+        let appFound = apps.first(where:{ $0.name == appDtoAndroid.name})
+        XCTAssertNotNil(appFound)
+        
+        //delete admin
+        var adminEscaped = userIOS.email.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed)
+        var resp = try app.clientSyncTest(.DELETE, "/v2/Applications/\(appFound!.uuid)/adminUsers/\(adminEscaped!)",token:token)
+        print(resp.content)
+        XCTAssertEqual(resp.http.status.code , 200)
+        
+        //check detail
+        let detailResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)",token:token)
+        XCTAssertEqual(detailResp.http.status.code , 200)
+        let appDto = try detailResp.content.decode(ApplicationDto.self).wait()
+        
+        XCTAssertEqual(appDto.adminUsers.count , 1)
+        
+        //delete last Admin
+        adminEscaped = userANDROID.email.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed)
+        resp = try app.clientSyncTest(.DELETE, "/v2/Applications/\(appFound!.uuid)/adminUsers/\(adminEscaped!)",token:token)
+        print(resp.content)
+        XCTAssertEqual(resp.http.status.code , 400)
+        let errorResp = try resp.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(errorResp.reason , "ApplicationError.deleteLastApplicationAdministrator")
         
     }
-    func testRemoveAdminUserKO() throws {
+    
+    func testRemoveAdminUserInvalid() throws {
+        try testAddAdminUser()
+        //login
+        let token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
         
+        let application = try findApp(with: appDtoAndroid.name, token: token)
+        XCTAssertNotNil(application)
+        
+        //invalid email
+        let adminEscaped = "John@Doe.com".addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed)
+        let resp = try app.clientSyncTest(.DELETE, "/v2/Applications/\(application!.uuid)/adminUsers/\(adminEscaped!)",token:token)
+        print(resp.content)
+        XCTAssertEqual(resp.http.status.code , 400)
+        let errorResp = try resp.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(errorResp.reason , "ApplicationError.invalidApplicationAdministrator")
+    }
+    
+    func testRemoveAdminUserUnAuthorized() throws {
+        try testCreateMultiple()
+        //login
+        let token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
+        
+        let application = try findApp(with: appDtoAndroid.name, token: token)
+        XCTAssertNotNil(application)
+        
+        //invalid email
+        let adminEscaped = userANDROID.email.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed)
+        let resp = try app.clientSyncTest(.DELETE, "/v2/Applications/\(application!.uuid)/adminUsers/\(adminEscaped!)",token:token)
+        print(resp.content)
+        XCTAssertEqual(resp.http.status.code , 400)
+        let errorResp = try resp.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(errorResp.reason , "ApplicationError.notAnApplicationAdministrator")
+    }
+    
+    private func findApp(with name:String, token:String) throws -> ApplicationSummaryDto?{
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
+        
+        return apps.first(where:{ $0.name == name})
     }
 }
 

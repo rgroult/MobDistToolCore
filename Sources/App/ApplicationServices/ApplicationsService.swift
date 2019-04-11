@@ -13,6 +13,7 @@ enum ApplicationError: Error {
     case alreadyExist
     case notAnApplicationAdministrator
     case invalidApplicationAdministrator
+    case deleteLastApplicationAdministrator
     case unknownPlatform
 }
 
@@ -27,6 +28,8 @@ extension ApplicationError:Debuggable {
             return "ApplicationError.invalidApplicationAdministrator"
         case .notFound:
             return "ApplicationError.notFound"
+        case .deleteLastApplicationAdministrator:
+            return "ApplicationError.deleteLastApplicationAdministrator"
         case .unknownPlatform:
             return "ApplicationError.unknownPlatform"
         }
