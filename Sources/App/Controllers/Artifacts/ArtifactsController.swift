@@ -19,16 +19,33 @@ final class ArtifactsController:BaseController  {
         super.init(version: "v2", pathPrefix: "Artifacts", apiBuilder: apiBuilder)
     }
     
-    //'artifacts/{idArtifact}
+    func createArtifact(_ req: Request) throws -> String {
+        let appUuid = try req.parameters.next(UUID.self)
+         throw "Not implemented"
+    }
+    
+/*let uuid = try req.parameters.next(UUID.self)
+ let context = try req.context()
+ return try retrieveUser(from:req)
+ .flatMap{user -> Future<ApplicationDto> in
+ guard let user = user else { throw Abort(.unauthorized)}
+ return try req.content.decode(ApplicationUpdateDto.self)*/
+    
+    //POST 'artifacts/{appUUID} // path: 'artifacts/{apiKey}/{_branch}/{_version}/{_artifactName}')
+    //PUT 'artifacts/{idArtifact}
+    //GET 'artifacts/{idArtifact}
+    //DELETE 'artifacts/{idArtifact}
+    
     func deleteArtifact(_ req: Request) throws -> String {
         throw "Not implemented"
     }
     
-    // 'artifacts/{idArtifact}/download')
+    //GET 'artifacts/{idArtifact}/file')
     func artifactDownloadInfo(_ req: Request) throws -> String {
          throw "Not implemented"
     }
     
+    //PUT artifacts/{idArtifact}/file
     func uploadArtifact(_ req: Request) throws -> String {
         return "OK"
     }

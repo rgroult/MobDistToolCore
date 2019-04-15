@@ -9,6 +9,7 @@ import Vapor
 
 extension ArtifactsController {
     enum Verb:String {
+        case createArtifact = "create"
         case artifacts = ""
     }
     func configure(with router: Router, and protectedRouter:Router){

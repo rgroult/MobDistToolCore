@@ -149,8 +149,12 @@ final class ApplicationsController:BaseController {
             })
     }
     
-    //@ApiMethod(method: 'GET', path: 'app/{appId}/versions')
+    //@ApiMethod(method: 'GET', path: 'app/{appId}/versions?pageIndex=1&limitPerPage=30&branch=master')
     func getApplicationVersions(_ req: Request) throws -> Future<[ArtifactDto]> {
+        let pageIndex = try? req.query.get(Int.self, at: "pageIndex")
+        let limitPerPage = try? req.query.get(Int.self, at: "limitPerPage")
+        let selectedBranch = try? req.query.get(String.self, at: "branch")
+        
         throw "Not implemented"
     }
     
