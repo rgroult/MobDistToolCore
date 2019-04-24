@@ -50,13 +50,13 @@ final class ArtifactsController:BaseController  {
         let context = try req.context()
         
         return try findApplication(apiKey: apiKey, into: context)
-            .flatMap({ app  in
+            .flatMap({ app throws -> Future<Artifact?> in
                 guard let app = app else { throw ApplicationError.notFound }
                 return try findArtifact(app: app, branch: branch, version: version, name: artifactName, into: context)})
-            .flatMap({ artifact in
+            .flatMap({ artifact  throws -> Future<Void> in
                 guard let artifact = artifact else { throw ArtifactError.notFound }
-                return try App.deleteArtifact(by: artifact, into: context)})
-            .map { MessageDto(message: "Artifact Deleted \($0)")}
+                return App.deleteArtifact(by: artifact, into: context)})
+            .map {_ in return  MessageDto(message: "Artifact Deleted")}
         
     }
     
