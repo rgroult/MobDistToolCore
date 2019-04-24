@@ -34,14 +34,14 @@ final class ApplicationsController:BaseController {
     }
     
     func updateApplication(_ req: Request) throws -> Future<ApplicationDto> {
-        let uuid = try req.parameters.next(UUID.self)
+        let appUuid = try req.parameters.next(String.self)
         let context = try req.context()
         return try retrieveUser(from:req)
             .flatMap{user -> Future<ApplicationDto> in
                 guard let user = user else { throw Abort(.unauthorized)}
                 return try req.content.decode(ApplicationUpdateDto.self)
                     .flatMap({ applicationUpdateDto in
-                        return try findApplication(uuid: uuid.uuidString, into: context)
+                        return try findApplication(uuid: appUuid, into: context)
                             .flatMap({ app  in
                                 guard let app = app else {throw ApplicationError.notFound }
                                 //check if user is app admin
@@ -93,12 +93,12 @@ final class ApplicationsController:BaseController {
     }
     
     func applicationDetail(_ req: Request) throws -> Future<ApplicationDto> {
-        let uuid = try req.parameters.next(UUID.self)
+        let appUuid = try req.parameters.next(String.self)
         return try retrieveUser(from:req)
             .flatMap{user in
                 guard let user = user else { throw Abort(.unauthorized)}
                 let context = try req.context()
-                return try findApplication(uuid: uuid.uuidString, into: context)
+                return try findApplication(uuid: appUuid, into: context)
                     .flatMap({ app in
                         guard let app = app else { throw ApplicationError.notFound }
                         return ApplicationDto.create(from: app, content:app.isAdmin(user: user) ? .full : .light , in : context)
@@ -164,12 +164,12 @@ final class ApplicationsController:BaseController {
     }
     
     private func findApplicationInfo(from req: Request, needAdmin:Bool) throws -> Future<(user:User,app:MDTApplication)>{
-        let uuid = try req.parameters.next(UUID.self)
+        let uuid = try req.parameters.next(String.self)
         return try retrieveUser(from:req)
             .flatMap({ user in
                 guard let user = user else { throw Abort(.unauthorized)}
                 let context = try req.context()
-                return try App.findApplication(uuid: uuid.uuidString, into: context)
+                return try App.findApplication(uuid: uuid, into: context)
                     .map({ app in
                         guard let app = app else { throw ApplicationError.notFound }
                         if needAdmin {

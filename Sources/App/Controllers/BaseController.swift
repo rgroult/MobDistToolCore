@@ -36,8 +36,9 @@ class BaseController {
         return req.meow().flatMap({ context in
             return context.findOne(User.self, where: Query.valEquals(field: "email", val: email))
         })
-        
     }
+    
+    
     /*
     func generateOpenAPI(apiBuilder:OpenAPIBuilder){
         
