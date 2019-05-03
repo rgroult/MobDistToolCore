@@ -13,5 +13,9 @@ extension ArtifactsController {
         case artifacts = ""
     }
     func configure(with router: Router, and protectedRouter:Router){
+        let artifactRouter = router.grouped("\(controllerVersion)/\(pathPrefix)")
+        //POST 'in/artifacts/{apiKey}/{branch}/{version}/{artifactName}
+        artifactRouter.post(Verb.artifacts.rawValue, String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.createArtifactByApiKey)
     }
 }
+

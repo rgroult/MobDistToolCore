@@ -14,6 +14,7 @@ import Meow
 final class ArtifactsController:BaseController  {
     static let lastVersionBranchName = "@@@@LAST####"
     static let lastVersionName = "latest"
+    let maxUploadSize = 1024*1024*1024*1024
     
     init(apiBuilder:OpenAPIBuilder) {
         super.init(version: "v2", pathPrefix: "Artifacts", apiBuilder: apiBuilder)
@@ -25,8 +26,10 @@ final class ArtifactsController:BaseController  {
         let branch = try req.parameters.next(String.self)
         let version = try req.parameters.next(String.self)
         let artifactName = try req.parameters.next(String.self)
+        let filename = req.http.headers["X_MDT_filename"].last ?? "artifact"
         let sortIdentifier = req.http.headers["X_MDT_sortIdentifier"].last
         let metaTagsHeader = req.http.headers["X_MDT_metaTags"].last
+        let contentType = req.http.headers["content-type"].last
         let metaTags:[String : String]?
         if let metaTagsHeader = metaTagsHeader {
             metaTags = try? JSONDecoder().decoder(from: metaTagsHeader.convertToData()) as! [String : String]
@@ -35,10 +38,23 @@ final class ArtifactsController:BaseController  {
         }
         let context = try req.context()
         return try findApplication(apiKey: apiKey, into: context)
-            .flatMap({ app  in
+            .flatMap({ app -> Future<Artifact>  in
                 guard let app = app else { throw ApplicationError.notFound }
-                return try createArtifact(app: app, name: artifactName, version: version, branch: branch, sortIdentifier: sortIdentifier, tags: metaTags, into: context)})
-            .map{ArtifactDto(from: $0, content: .full)}
+               // req.http.body.
+                //write file
+                //DirectoryConfig.detect().workDir
+                //guard let cacheDirectory = FileManager.default.urls(for: FileManager.SearchPathDirectory.cachesDirectory, in: FileManager.SearchPathDomainMask.allDomainsMask).first else { throw ArtifactError.storageError }
+               // let cacheDirectory = URL(fileURLWithPath: "/tmp/MDT/")
+               // let temporaryFile = cacheDirectory.appendingPathComponent("\(filename)_\(random(10)).tmp", isDirectory: false)
+                return req.http.body.consumeData(max: self.maxUploadSize, on: req.eventLoop)
+                    .flatMap({ data -> Future<Artifact> in
+                        let artifact = try createArtifact(app: app, name: artifactName, version: version, branch: branch, sortIdentifier: sortIdentifier, tags: metaTags)
+                        let storage = try req.make(StorageServiceProtocol.self)
+                        return try storeArtifactData(data: data, filename: filename, contentType: contentType, artifact: artifact, storage: storage, into: context)
+                    })
+                    .flatMap{saveArtifact(artifact: $0, into: context)}
+                })
+                .map{ArtifactDto(from: $0, content: .full)}
     }
     
     //DELETE 'in/artifacts/{apiKey}/{branch}/{version}/{artifactName}
@@ -59,6 +75,10 @@ final class ArtifactsController:BaseController  {
             .map {_ in return  MessageDto(message: "Artifact Deleted")}
         
     }
+    
+    //PUT 'artifacts/{idArtifact}/
+    
+    
     
 /*return try req.content.decode(ArtifactCreateUpdateDto.self)
  .flatMap({ artifactCreateUpdateDto in

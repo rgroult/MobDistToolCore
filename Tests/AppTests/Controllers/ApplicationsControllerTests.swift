@@ -411,4 +411,10 @@ final class ApplicationsTests: BaseAppTests {
 }
 
 extension ApplicationsTests {
+    class func createApp(with info:ApplicationCreateDto, inside app:Application) throws -> ApplicationDto {
+        let body = try info.convertToHTTPBody()
+        let result = try app.clientSyncTest(.POST, "/v2/Applications" , body)
+        print(result.content)
+        return try result.content.decode(ApplicationDto.self).wait()
+    }
 }
