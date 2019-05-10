@@ -75,7 +75,8 @@ extension Application {
         _ path: String,
         _ body: HTTPBody? = nil,
         _ query: [String: String]? = nil,
-        token: String? = nil) throws -> Response {
+        token: String? = nil,
+        beforeSend: (Request) throws -> () = { _ in }) throws -> Response {
         let config = try make(NIOServerConfig.self)
         let path = path.hasPrefix("/") ? path : "/\(path)"
         let req = Request(
@@ -92,7 +93,7 @@ extension Application {
         if let token = token {
             req.http.headers.add(name: "Authorization", value: "Bearer \(token)")
         }
-        
+        try beforeSend(req)
         return  try FoundationClient.default(on: self).send(req).wait()
     }
     

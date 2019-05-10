@@ -26,15 +26,15 @@ final class LocalStorageServiceTests: BaseAppTests {
     
     override func setUp() {
         super.setUp()
-        XCTAssertNoThrow(try storageService.initializeStore(with: ["RootDirectory":storeDirectory], into: app.eventLoop).wait())
+        XCTAssertNoThrow(try storageService.initializeStore(with: ["RootDirectory":storeDirectory]))
         
     }
     
     func testInitStoreFile() throws {
         try? FileManager.default.removeItem(atPath: "/tmp/mdtOK")
-        XCTAssertNoThrow(try storageService.initializeStore(with: ["RootDirectory":"/tmp/mdtOK"], into: app.eventLoop).wait())
-        XCTAssertNoThrow(try storageService.initializeStore(with: ["RootDirectory":"/tmp/mdtOK"], into: app.eventLoop).wait())
-        XCTAssertThrowsError(try storageService.initializeStore(with: ["RootDirectory":"/toto"], into: app.eventLoop).wait(), "") { error in
+        XCTAssertNoThrow(try storageService.initializeStore(with: ["RootDirectory":"/tmp/mdtOK"]))
+        XCTAssertNoThrow(try storageService.initializeStore(with: ["RootDirectory":"/tmp/mdtOK"]))
+        XCTAssertThrowsError(try storageService.initializeStore(with: ["RootDirectory":"/toto"]), "") { error in
             //print(error.localizedDescription)
             XCTAssertTrue(error.localizedDescription.contains("permission"))
         }
@@ -101,27 +101,26 @@ final class LocalStorageServiceTests: BaseAppTests {
             XCTAssertTrue(false)
         }
     }
-    
-    
-    func createRandomFile(size:Int, randomData:Bool = true)->FileHandle {
-        //let data = random(size).data(using: .utf8)
-        let filename = "/tmp/test\(random(10))"
-        XCTAssertTrue(FileManager.default.createFile(atPath:filename , contents:nil , attributes: nil))
-        let file = FileHandle(forWritingAtPath: filename)
-        var remaining = size
-        let bufferSize = 1024*1014 // 1M
-        while (remaining > 0) {
-            let tmpSize = min(remaining,bufferSize)
-            let data:Data
-            if randomData {
-                data = random(tmpSize).data(using: .utf8)!
-            }else {
-                data = Data(count: tmpSize)
-            }
-            file?.write(data)
-            remaining = remaining - tmpSize
+}
+
+func createRandomFile(size:Int, randomData:Bool = true)->FileHandle {
+    //let data = random(size).data(using: .utf8)
+    let filename = "/tmp/test\(random(10))"
+    XCTAssertTrue(FileManager.default.createFile(atPath:filename , contents:nil , attributes: nil))
+    let file = FileHandle(forWritingAtPath: filename)
+    var remaining = size
+    let bufferSize = 1024*1014 // 1M
+    while (remaining > 0) {
+        let tmpSize = min(remaining,bufferSize)
+        let data:Data
+        if randomData {
+            data = random(tmpSize).data(using: .utf8)!
+        }else {
+            data = Data(count: tmpSize)
         }
-        
-        return FileHandle(forReadingAtPath: filename)!
+        file?.write(data)
+        remaining = remaining - tmpSize
     }
+    
+    return FileHandle(forReadingAtPath: filename)!
 }

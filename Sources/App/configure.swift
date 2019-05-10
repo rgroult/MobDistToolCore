@@ -58,6 +58,25 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     services.register(signers)
     let authenticationMiddleware = JWTAuthenticationMiddleware(JWTTokenPayload.self,signers:signers)
     
+    //Storage
+     let storageProtocol:StorageServiceProtocol
+    switch configuration.storageMode {
+    case .local:
+        //need to register instance of concrete class, not interface
+        let storage = LocalStorageService()
+        storageProtocol = storage
+        services.register(storage, as: StorageServiceProtocol.self)
+        
+    case .testing:
+        //need to register instance of concrete class, not interface
+        let storage = TestingStorageService()
+        storageProtocol = storage
+        services.register(storage, as: StorageServiceProtocol.self)
+    }
+        //initialization
+    if !(try storageProtocol.initializeStore(with: configuration.storageConfiguration ?? [:])) {
+        throw "Unable to initialize storage"
+    }
     // Register routes to the router
     let router = EngineRouter.default()
     try routes(router,authenticateMiddleware: authenticationMiddleware)

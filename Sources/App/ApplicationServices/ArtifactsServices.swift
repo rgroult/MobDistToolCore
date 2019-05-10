@@ -10,8 +10,10 @@ import Meow
 import Foundation
 
 enum ArtifactError: Error {
+    case alreadyExist
     case notFound
     case storageError
+    case invalidContentType
 }
 
 extension ArtifactError:Debuggable {
@@ -21,6 +23,10 @@ extension ArtifactError:Debuggable {
             return "ArtifactError.notFound"
         case .storageError:
             return "ArtifactError.storageError"
+        case .invalidContentType:
+            return "ArtifactError.invalidContentType"
+        case .alreadyExist:
+            return "ArtifactError.alreadyExist"
         }
     }
     
@@ -35,11 +41,17 @@ func findArtifact(byUUID:String,into context:Meow.Context) throws -> Future<Arti
 
 func findArtifact(app:MDTApplication,branch:String,version:String,name:String,into context:Meow.Context) throws -> Future<Artifact?>{
     let userQuery: Document = ["$eq": app._id]
-    let query = Query.and([Query.custom(userQuery),
+    let query = Query.and([//Query.custom(userQuery),
+                            Query.valEquals(field: "application", val: app._id),
                            Query.valEquals(field: "branch", val: branch),
                            Query.valEquals(field: "version", val: version),
                            Query.valEquals(field: "name", val: name)])
      return context.findOne(Artifact.self, where: query)
+}
+
+func isArtifactAlreadyExist(app:MDTApplication,branch:String,version:String,name:String,into context:Meow.Context) throws -> Future<Bool>{
+    return try findArtifact(app: app, branch: branch, version: version, name: name, into: context)
+        .map{$0 != nil }
 }
 
 func deleteArtifact(by artifact:Artifact,into context:Meow.Context) -> Future<Void>{
@@ -66,12 +78,12 @@ func createArtifact(app:MDTApplication,name:String,version:String,branch:String,
 
 func storeArtifactData(data:Data,filename:String,contentType:String?, artifact:Artifact, storage:StorageServiceProtocol,into context:Meow.Context) throws -> Future<Artifact>{
     //let cacheDirectory = URL(fileURLWithPath: "/tmp/MDT/")
-    let temporaryFile = "/tmp/MDT/\(filename)_\(random(10)).tmp"  // cacheDirectory.appendingPathComponent("\(filename)_\(random(10)).tmp", isDirectory: false)
+    let temporaryFile = "\(NSTemporaryDirectory())\(filename)_\(random(10)).tmp"  // cacheDirectory.appendingPathComponent("\(filename)_\(random(10)).tmp", isDirectory: false)
     
-    guard let file =  FileHandle(forWritingAtPath: temporaryFile) else {throw ArtifactError.storageError}
-    //write to temprary Data
-    file.write(data)
-    //try file.data.write(to: temporaryFile)
+    let temporaryFileUrl = URL(fileURLWithPath: temporaryFile)
+    try data.write(to: temporaryFileUrl)
+    
+    guard let file =  FileHandle(forReadingAtPath: temporaryFile) else {throw ArtifactError.storageError}
     //TO DO Extract metadata
     
     return artifact.application.resolve(in: context)

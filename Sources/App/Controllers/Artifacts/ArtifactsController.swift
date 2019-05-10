@@ -10,6 +10,8 @@ import Vapor
 import Swiftgger
 import Meow
 
+let IPA_CONTENT_TYPE = "application/octet-stream ipa"
+let APK_CONTENT_TYPE = "application/vnd.android.package-archive"
 
 final class ArtifactsController:BaseController  {
     static let lastVersionBranchName = "@@@@LAST####"
@@ -20,7 +22,7 @@ final class ArtifactsController:BaseController  {
         super.init(version: "v2", pathPrefix: "Artifacts", apiBuilder: apiBuilder)
     }
     
-    //POST 'in/artifacts/{apiKey}/{branch}/{version}/{artifactName}
+    //POST '{apiKey}/{branch}/{version}/{artifactName}
     func createArtifactByApiKey(_ req: Request) throws -> Future<ArtifactDto> {
         let apiKey = try req.parameters.next(String.self)
         let branch = try req.parameters.next(String.self)
@@ -34,30 +36,39 @@ final class ArtifactsController:BaseController  {
         if let metaTagsHeader = metaTagsHeader {
             metaTags = try? JSONDecoder().decoder(from: metaTagsHeader.convertToData()) as! [String : String]
         }else {
-           metaTags = nil
+            metaTags = nil
         }
         let context = try req.context()
         return try findApplication(apiKey: apiKey, into: context)
             .flatMap({ app -> Future<Artifact>  in
                 guard let app = app else { throw ApplicationError.notFound }
-               // req.http.body.
-                //write file
-                //DirectoryConfig.detect().workDir
-                //guard let cacheDirectory = FileManager.default.urls(for: FileManager.SearchPathDirectory.cachesDirectory, in: FileManager.SearchPathDomainMask.allDomainsMask).first else { throw ArtifactError.storageError }
-               // let cacheDirectory = URL(fileURLWithPath: "/tmp/MDT/")
-               // let temporaryFile = cacheDirectory.appendingPathComponent("\(filename)_\(random(10)).tmp", isDirectory: false)
-                return req.http.body.consumeData(max: self.maxUploadSize, on: req.eventLoop)
-                    .flatMap({ data -> Future<Artifact> in
-                        let artifact = try createArtifact(app: app, name: artifactName, version: version, branch: branch, sortIdentifier: sortIdentifier, tags: metaTags)
-                        let storage = try req.make(StorageServiceProtocol.self)
-                        return try storeArtifactData(data: data, filename: filename, contentType: contentType, artifact: artifact, storage: storage, into: context)
+                //test contentType
+                switch app.platform {
+                case .android:
+                    guard contentType == APK_CONTENT_TYPE else { throw ArtifactError.invalidContentType}
+                case .ios:
+                    guard contentType == IPA_CONTENT_TYPE else { throw ArtifactError.invalidContentType}
+                }
+                
+                //already Exist
+                return try isArtifactAlreadyExist(app: app, branch: branch, version: version, name: artifactName, into: context)
+                    .flatMap({ isExist  in
+                        guard isExist == false else { throw ArtifactError.alreadyExist}
+                        return req.http.body.consumeData(max: self.maxUploadSize, on: req.eventLoop)
+                            .flatMap({ data -> Future<Artifact> in
+                                let artifact = try createArtifact(app: app, name: artifactName, version: version, branch: branch, sortIdentifier: sortIdentifier, tags: metaTags)
+                                let storage = try req.make(StorageServiceProtocol.self)
+                                return try storeArtifactData(data: data, filename: filename, contentType: contentType, artifact: artifact, storage: storage, into: context)
+                            })
+                            .flatMap{saveArtifact(artifact: $0, into: context)}
                     })
-                    .flatMap{saveArtifact(artifact: $0, into: context)}
-                })
-                .map{ArtifactDto(from: $0, content: .full)}
+                
+                
+            })
+            .map{ArtifactDto(from: $0, content: .full)}
     }
     
-    //DELETE 'in/artifacts/{apiKey}/{branch}/{version}/{artifactName}
+    //DELETE '{apiKey}/{branch}/{version}/{artifactName}
     func deleteArtifactByApiKey(_ req: Request) throws -> Future<MessageDto> {
         let apiKey = try req.parameters.next(String.self)
         let branch = try req.parameters.next(String.self)
@@ -80,21 +91,21 @@ final class ArtifactsController:BaseController  {
     
     
     
-/*return try req.content.decode(ArtifactCreateUpdateDto.self)
- .flatMap({ artifactCreateUpdateDto in
- return try findApplication(apiKey: apiKey, into: context)
- .flatMap({ app  in
- guard let app = app else { throw ApplicationError.notFound }
- return try createArtifact(app: app, name: artifactCreateUpdateDto.name, version: artifactCreateUpdateDto.version, branch: artifactCreateUpdateDto.branch, sortIdentifier: artifactCreateUpdateDto.sortIdentifier, tags: artifactCreateUpdateDto.metaDataTags, into: context)})})
- .map{ArtifactDto(from: $0, content: .full)}
- */
+    /*return try req.content.decode(ArtifactCreateUpdateDto.self)
+     .flatMap({ artifactCreateUpdateDto in
+     return try findApplication(apiKey: apiKey, into: context)
+     .flatMap({ app  in
+     guard let app = app else { throw ApplicationError.notFound }
+     return try createArtifact(app: app, name: artifactCreateUpdateDto.name, version: artifactCreateUpdateDto.version, branch: artifactCreateUpdateDto.branch, sortIdentifier: artifactCreateUpdateDto.sortIdentifier, tags: artifactCreateUpdateDto.metaDataTags, into: context)})})
+     .map{ArtifactDto(from: $0, content: .full)}
+     */
     
-/*let uuid = try req.parameters.next(UUID.self)
- let context = try /Users/rgroult/Developments/Perso/MobDistToolSwift/Sources/App/Controllers/Artifacts/ArtifactsController+Routing.swiftreq.context()
- return try retrieveUser(from:req)
- .flatMap{user -> Future<ApplicationDto> in
- guard let user = user else { throw Abort(.unauthorized)}
- return try req.content.decode(ApplicationUpdateDto.self)*/
+    /*let uuid = try req.parameters.next(UUID.self)
+     let context = try /Users/rgroult/Developments/Perso/MobDistToolSwift/Sources/App/Controllers/Artifacts/ArtifactsController+Routing.swiftreq.context()
+     return try retrieveUser(from:req)
+     .flatMap{user -> Future<ApplicationDto> in
+     guard let user = user else { throw Abort(.unauthorized)}
+     return try req.content.decode(ApplicationUpdateDto.self)*/
     
     //POST 'artifacts/{appUUID} // path: 'artifacts/{apiKey}/{_branch}/{_version}/{_artifactName}')
     //PUT 'artifacts/{idArtifact}/info
@@ -109,7 +120,7 @@ final class ArtifactsController:BaseController  {
     
     //GET 'artifacts/{idArtifact}/file')
     func artifactDownloadInfo(_ req: Request) throws -> String {
-         throw "Not implemented"
+        throw "Not implemented"
     }
     
     //PUT artifacts/{idArtifact}/file
@@ -121,16 +132,16 @@ final class ArtifactsController:BaseController  {
     
     //MARK: - ApiKey methods
     
-//    @ApiMethod( method: 'POST', path: 'artifacts/{apiKey}/{_branch}/{_version}/{_artifactName}')
+    //    @ApiMethod( method: 'POST', path: 'artifacts/{apiKey}/{_branch}/{_version}/{_artifactName}')
     
-//    @ApiMethod(method: 'DELETE', path: 'artifacts/{apiKey}/{_branch}/{_version}/{_artifactName}')
+    //    @ApiMethod(method: 'DELETE', path: 'artifacts/{apiKey}/{_branch}/{_version}/{_artifactName}')
     
     
-//@ApiMethod(method: 'POST', path: 'artifacts/{apiKey}/last/{_artifactName}')
+    //@ApiMethod(method: 'POST', path: 'artifacts/{apiKey}/last/{_artifactName}')
     
- // @ApiMethod(method: 'DELETE', path: 'artifacts/{apiKey}/last/{_artifactName}')
+    // @ApiMethod(method: 'DELETE', path: 'artifacts/{apiKey}/last/{_artifactName}')
     
- //@ApiMethod(method: 'GET', path: 'app/{appId}/icon')
+    //@ApiMethod(method: 'GET', path: 'app/{appId}/icon')
     
     //@ApiMethod(method: 'GET', path: 'artifacts/{idArtifact}/ios_plist')
     
@@ -149,9 +160,9 @@ final class ArtifactsController:BaseController  {
             })
         
         return artifactFile
-          /*  .flatMap { artifact -> EventLoopFuture<T> in
-                print(artifact)
-                
-        }*/
+        /*  .flatMap { artifact -> EventLoopFuture<T> in
+         print(artifact)
+         
+         }*/
     }
 }

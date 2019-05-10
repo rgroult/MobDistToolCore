@@ -22,7 +22,7 @@ final class LocalStorageService: StorageServiceProtocol {
     private var rootStoragePath = ""
     let fileQueue = DispatchQueue.init(label: "LocalStorageService", qos: .`default`)
     
-    func initializeStore(with config: [String : String], into eventLoop:EventLoop) throws -> Future<Bool> {
+    func initializeStore(with config: [String : String]) throws -> Bool {
         guard let rootPath = config["RootDirectory"] else  { throw "not implemented" }
         rootStoragePath = rootPath
         //test if rootPath exist
@@ -40,7 +40,7 @@ final class LocalStorageService: StorageServiceProtocol {
         //check if directory seems to be writable
         //guard fileManager.isWritableFile(atPath: "\(rootPath)/testLocalStorage") else { throw "\(rootPath) does not seems to be a writable directory" }
         
-        return eventLoop.newSucceededFuture(result: true)
+        return true
     }
     
     func store(file: Foundation.FileHandle, with info:StorageInfo, into eventLoop:EventLoop) throws -> EventLoopFuture<StorageAccessUrl> {

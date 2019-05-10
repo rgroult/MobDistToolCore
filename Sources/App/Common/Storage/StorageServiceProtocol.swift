@@ -23,7 +23,7 @@ enum StorageError:Error {
 protocol StorageServiceProtocol: Service  {
     var storageIdentifier:String { get }
     
-    func  initializeStore(with config:[String:String], into eventLoop:EventLoop) throws-> Future<Bool>
+    func  initializeStore(with config:[String:String]) throws-> Bool
     
     func store(file:Foundation.FileHandle, with info:StorageInfo, into eventLoop:EventLoop) throws-> Future<StorageAccessUrl>
     
