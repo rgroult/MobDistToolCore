@@ -50,6 +50,13 @@ final class ArtifactsController:BaseController  {
                     guard contentType == IPA_CONTENT_TYPE else { throw ArtifactError.invalidContentType}
                 }
                 
+             
+                    ///         let stream = try req.fileio().chunkedStream(file: "/path/to/file.txt")
+                    ///         var res = HTTPResponse(status: .ok, body: stream)
+                    ///         res.contentType = .plainText
+                    ///         return res
+                    ///     }
+                
                 //already Exist
                 return try isArtifactAlreadyExist(app: app, branch: branch, version: version, name: artifactName, into: context)
                     .flatMap({ isExist  in

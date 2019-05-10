@@ -127,6 +127,12 @@ final class ArtifactsContollerTests: BaseAppTests {
         XCTAssertEqual(errorResp.reason , "ArtifactError.invalidContentType")
     }
     
+    func testBadContentType2() throws{
+        
+        let errorResp = try type(of: self).uploadArtifactError(contentFile: try type(of:self).fileData(name: "calculator", ext: "ipa"), apiKey: iOSApiKey!, branch: "master", version: "1.2.3", name: "prod", contentType:apkContentType, inside: app)
+        XCTAssertEqual(errorResp.reason , "ArtifactError.invalidContentType")
+    }
+    
     func testDeleteArtifact() throws {
         try testCreateArtifact()
         let resp = try type(of:self).deleteArtifactSucess(apiKey: iOSApiKey!, branch: "master", version: "1.2.3", name: "prod", inside: app)
@@ -152,7 +158,9 @@ final class ArtifactsContollerTests: BaseAppTests {
     }
     
     class func fileData(name:String,ext:String) throws -> Data {
-        let filePath =  Bundle.init(for: ArtifactsContollerTests.self).url(forResource: name, withExtension: ext)
-        return try Data(contentsOf: filePath!)
+        let dirConfig = DirectoryConfig.detect()
+       let filePath = dirConfig.workDir+"Ressources/\(name).\(ext)"
+      //  let filePath =  Bundle.init(for: ArtifactsContollerTests.self).url(forResource: name, withExtension: ext)
+        return try Data(contentsOf: URL(fileURLWithPath: filePath))
     }
 }
