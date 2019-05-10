@@ -16,6 +16,8 @@ extension ArtifactsController {
         let artifactRouter = router.grouped("\(controllerVersion)/\(pathPrefix)")
         //POST '{apiKey}/{branch}/{version}/{artifactName}
         artifactRouter.post(Verb.artifacts.rawValue, String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.createArtifactByApiKey)
+        //DELETE '{apiKey}/{branch}/{version}/{artifactName}
+         artifactRouter.delete(Verb.artifacts.rawValue, String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.deleteArtifactByApiKey)
     }
 }
 
