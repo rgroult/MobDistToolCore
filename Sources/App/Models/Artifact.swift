@@ -42,6 +42,18 @@ final class Artifact: Model {
         size = nil
         contentType = nil
     }
+    
+    func addMetaData(metaData:[String:String]){
+        var allTags:[String:String]
+        if let existingData = metaDataTags?.convertToData(), let existingTags = try? JSONDecoder().decode([String : String].self,from: existingData)  {
+            allTags = existingTags.merging(metaData, uniquingKeysWith: { (_, new) in new})
+        }else {
+            allTags = metaData
+        }
+        if let encodedTags = try? JSONEncoder().encode(allTags) {
+            metaDataTags = String(data: encodedTags, encoding: .utf8)
+        }
+    }
 }
 
 /// Allows `Todo` to be used as a dynamic migration.

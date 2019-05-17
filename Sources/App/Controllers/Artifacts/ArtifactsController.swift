@@ -34,7 +34,7 @@ final class ArtifactsController:BaseController  {
         let contentType = req.http.headers["content-type"].last
         let metaTags:[String : String]?
         if let metaTagsHeader = metaTagsHeader {
-            metaTags = try? JSONDecoder().decoder(from: metaTagsHeader.convertToData()) as! [String : String]
+            metaTags = try? JSONDecoder().decode([String : String].self,from: metaTagsHeader.convertToData())
         }else {
             metaTags = nil
         }
@@ -67,11 +67,9 @@ final class ArtifactsController:BaseController  {
                                 let storage = try req.make(StorageServiceProtocol.self)
                                 return try storeArtifactData(data: data, filename: filename, contentType: contentType, artifact: artifact, storage: storage, into: context)
                             })
-                            .flatMap{saveArtifact(artifact: $0, into: context)}
                     })
-                
-                
             })
+            .flatMap{try saveArtifact(artifact: $0, into: context)}
             .map{ArtifactDto(from: $0, content: .full)}
     }
     

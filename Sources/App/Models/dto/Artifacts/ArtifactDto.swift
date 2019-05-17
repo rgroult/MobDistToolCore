@@ -33,11 +33,9 @@ extension ArtifactDto {
         sortIdentifier = artifact.sortIdentifier
         
         if let tagsData = artifact.metaDataTags?.convertToData() {
-            let tags = try? JSONDecoder().decoder(from: tagsData) as! [String : String]
+            let tags = (try? JSONDecoder().decode([String:String].self, from: tagsData))
             metaDataTags = tags
         }
-        
-        
     }
 }
 
