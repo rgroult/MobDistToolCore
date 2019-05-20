@@ -8,16 +8,21 @@
 import Vapor
 
 extension ArtifactsController {
-    enum Verb:String {
-        case createArtifact = "create"
-        case artifacts = ""
+    enum Verb {
+        case artifacts(apiKeyPathName:String,branchPathName:String,versionPathName:String,namePathName:String)
+        var uri:String {
+            switch self {
+            case .artifacts(let apiKeyPathName, let branchPathName, let versionPathName,let namePathName):
+                return "{\(apiKeyPathName)}/{\(branchPathName)}/{\(versionPathName)}/{\(namePathName)}"
+            }
+        }
     }
     func configure(with router: Router, and protectedRouter:Router){
         let artifactRouter = router.grouped("\(controllerVersion)/\(pathPrefix)")
         //POST '{apiKey}/{branch}/{version}/{artifactName}
-        artifactRouter.post(Verb.artifacts.rawValue, String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.createArtifactByApiKey)
+        artifactRouter.post("", String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.createArtifactByApiKey)
         //DELETE '{apiKey}/{branch}/{version}/{artifactName}
-         artifactRouter.delete(Verb.artifacts.rawValue, String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.deleteArtifactByApiKey)
+         artifactRouter.delete("", String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.deleteArtifactByApiKey)
     }
 }
 

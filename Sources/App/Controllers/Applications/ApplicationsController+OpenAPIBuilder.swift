@@ -16,11 +16,11 @@ extension ApplicationsController:APIBuilderControllerProtocol {
             APIController(name: pathPrefix,
                           description: "Controller for Aplications",
                           actions: [
-                            APIAction(method: .get, route: generateRoute(Verb.applications.rawValue),
+                            APIAction(method: .get, route: generateRoute(Verb.allApplications.uri),
                                       summary: "Apps",
                                       description: "Retrieve Applications",
                                       parameters: [
-                                        APIParameter(name: "platorm", parameterLocation:.query, description: "Filter by platorm", required: false)
+                                        APIParameter(name: "platform", parameterLocation:.query, description: "Filter by platorm", required: false)
                                     ],
                                       responses: [
                                         APIResponse(code: "200", description: "All applications", object: [ApplicationSummaryDto].self),
@@ -30,7 +30,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                 ],
                                       authorization: true
                             ),
-                            APIAction(method: .post, route: generateRoute(Verb.applications.rawValue),
+                            APIAction(method: .post, route: generateRoute(Verb.allApplications.uri),
                                       summary: "Create App",
                                       description: "Create new Application",
                                       request: APIRequest(object: ApplicationCreateDto.self, description: "App info."),
@@ -42,7 +42,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                 ],
                                       authorization: true
                             ),
-                            APIAction(method: .put, route: generateRoute(Verb.applications.rawValue),
+                            APIAction(method: .put, route: generateRoute(Verb.specificApp(pathName: "uuid").uri),
                                       summary: "Update App",
                                       description: "Update new Application",
                                       parameters: [
@@ -57,7 +57,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                 ],
                                 authorization: true
                             ),
-                            APIAction(method: .get, route: generateRoute(Verb.applications.rawValue),
+                            APIAction(method: .get, route: generateRoute(Verb.specificApp(pathName: "uuid").uri),
                                       summary: "Get App Detail",
                                       description: "Update new Application",
                                       parameters: [
@@ -66,6 +66,50 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                       request: APIRequest(object: ApplicationUpdateDto.self, description: "App info."),
                                       responses: [
                                         APIResponse(code: "200", description: "applications updated", object: ApplicationDto.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: true
+                            ),
+                            APIAction(method: .delete, route: generateRoute(Verb.specificApp(pathName: "uuid").uri),
+                                      summary: "Delete App",
+                                      description: "Delete existing Application",
+                                      parameters: [
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true)
+                                ],
+                                      responses: [
+                                        APIResponse(code: "200", description: "sucess", object: MessageDto.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: true
+                            ),
+                            APIAction(method: .put, route: generateRoute(Verb.specificAppAdmins(pathName: "uuid", email:"email").uri),
+                                      summary: "Add admin Users",
+                                      description: "Add admin user for this Application",
+                                      parameters: [
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true),
+                                        APIParameter(name: "email", parameterLocation:.path, description: "Admin email", required: true)
+                                ],
+                                      responses: [
+                                        APIResponse(code: "200", description: "applications updated", object: MessageDto.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: true
+                            ),
+                            APIAction(method: .delete, route: generateRoute(Verb.specificAppAdmins(pathName: "uuid", email:"email").uri),
+                                      summary: "Delete admin Users",
+                                      description: "Delete admin user for this Application",
+                                      parameters: [
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true),
+                                        APIParameter(name: "email", parameterLocation:.path, description: "Admin email", required: true)
+                                ],
+                                      responses: [
+                                        APIResponse(code: "200", description: "applications updated", object: MessageDto.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                         APIResponse(code: "400", description: "Request error")

@@ -27,11 +27,12 @@ final class ArtifactsContollerTests: BaseAppTests {
         let uri = "/v2/Artifacts/\(apiKey)/\(branch)/\(version)/\(name)"
         let beforeSend:(Request) throws -> () = { req in
             req.http.headers.add(name: "X_MDT_filename", value: "test.ipa")
-            req.http.contentType = contentType
+            req.http.headers.add(name: "x-mimetype", value: contentType?.description ?? "")
+            req.http.contentType = .binary
             if let sortIdentifier = sortIdentifier {
                 req.http.headers.add(name: "X_MDT_sortIdentifier", value: sortIdentifier)
             }
-            if let tags = metaTags,let tagsAsData = try? JSONEncoder().encode(metaTags) {
+            if let tags = metaTags,let tagsAsData = try? JSONEncoder().encode(tags) {
                 
                 req.http.headers.add(name: "X_MDT_metaTags", value: String(data: tagsAsData,encoding: .utf8)!)
             }

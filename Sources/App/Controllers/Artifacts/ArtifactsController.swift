@@ -11,6 +11,7 @@ import Swiftgger
 import Meow
 
 let IPA_CONTENT_TYPE = "application/octet-stream ipa"
+let BINARY_CONTENT_TYPE = "application/octet-stream"
 let APK_CONTENT_TYPE = "application/vnd.android.package-archive"
 
 final class ArtifactsController:BaseController  {
@@ -31,7 +32,8 @@ final class ArtifactsController:BaseController  {
         let filename = req.http.headers["X_MDT_filename"].last ?? "artifact"
         let sortIdentifier = req.http.headers["X_MDT_sortIdentifier"].last
         let metaTagsHeader = req.http.headers["X_MDT_metaTags"].last
-        let contentType = req.http.headers["content-type"].last
+        guard req.http.headers["content-type"].last == BINARY_CONTENT_TYPE else { throw ArtifactError.invalidContentType}
+        let mimeType = req.http.headers["x-mimetype"].last
         let metaTags:[String : String]?
         if let metaTagsHeader = metaTagsHeader {
             metaTags = try? JSONDecoder().decode([String : String].self,from: metaTagsHeader.convertToData())
@@ -45,9 +47,9 @@ final class ArtifactsController:BaseController  {
                 //test contentType
                 switch app.platform {
                 case .android:
-                    guard contentType == APK_CONTENT_TYPE else { throw ArtifactError.invalidContentType}
+                    guard mimeType == APK_CONTENT_TYPE else { throw ArtifactError.invalidContentType}
                 case .ios:
-                    guard contentType == IPA_CONTENT_TYPE else { throw ArtifactError.invalidContentType}
+                    guard mimeType == IPA_CONTENT_TYPE else { throw ArtifactError.invalidContentType}
                 }
                 
              
@@ -65,7 +67,7 @@ final class ArtifactsController:BaseController  {
                             .flatMap({ data -> Future<Artifact> in
                                 let artifact = try createArtifact(app: app, name: artifactName, version: version, branch: branch, sortIdentifier: sortIdentifier, tags: metaTags)
                                 let storage = try req.make(StorageServiceProtocol.self)
-                                return try storeArtifactData(data: data, filename: filename, contentType: contentType, artifact: artifact, storage: storage, into: context)
+                                return try storeArtifactData(data: data, filename: filename, contentType: mimeType, artifact: artifact, storage: storage, into: context)
                             })
                     })
             })
