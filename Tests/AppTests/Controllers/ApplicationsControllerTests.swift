@@ -13,7 +13,7 @@ import XCTest
 let appDtoiOS = ApplicationCreateDto(name: "test App iOS", platform: Platform.ios, description: "bla bla", base64IconData: nil, enableMaxVersionCheck:  nil)
 let appDtoAndroid = ApplicationCreateDto(name: "test App Android", platform: Platform.android, description: "bla bla", base64IconData: nil, enableMaxVersionCheck:  nil)
 
-final class ApplicationsTests: BaseAppTests {
+final class ApplicationsControllerTests: BaseAppTests {
     func testCreate() throws{
         _ = try register(registerInfo: userIOS, inside: app)
         let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
@@ -410,7 +410,7 @@ final class ApplicationsTests: BaseAppTests {
     }
 }
 
-extension ApplicationsTests {
+extension ApplicationsControllerTests {
     class func createApp(with info:ApplicationCreateDto, inside app:Application,token:String?) throws -> ApplicationDto {
         let body = try info.convertToHTTPBody()
         let result = try app.clientSyncTest(.POST, "/v2/Applications" , body,token:token)

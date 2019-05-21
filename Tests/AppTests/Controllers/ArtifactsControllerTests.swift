@@ -97,7 +97,7 @@ final class ArtifactsContollerTests: BaseAppTests {
         //login
         token = try? login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
         do {
-            iOSApiKey = try ApplicationsTests.createApp(with: appDtoiOS, inside: app,token: token).apiKey
+            iOSApiKey = try ApplicationsControllerTests.createApp(with: appDtoiOS, inside: app,token: token).apiKey
         }catch{
             print("Error \(error)")
         }
@@ -147,7 +147,8 @@ final class ArtifactsContollerTests: BaseAppTests {
         let tempFile = createRandomFile(size: Int(bigSize),randomData:false)
         
         let fileData = tempFile.readDataToEndOfFile()
-        try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: iOSApiKey!, branch: "master", version: "1.2.3", name: "prod", contentType:ipaContentType,inside: app)
+        let error = try type(of:self).uploadArtifactError(contentFile: fileData, apiKey: iOSApiKey!, branch: "master", version: "1.2.3", name: "prod", contentType:ipaContentType,inside: app)
+         XCTAssertEqual(error.reason,"ArtifactError.invalidContent")
     }
     
     func testCreateArtifactBadApiKey() throws{
