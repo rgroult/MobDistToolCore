@@ -127,13 +127,15 @@ private func  extractIpaMetaData(IpaFilePath:String,into context:Meow.Context)th
     //IPA : unzip -p pathIPA *.app/Info.plist
     let iosPlistKeysToExtract = ["CFBundleIdentifier","CFBundleVersion","MinimumOSVersion","CFBundleShortVersionString"]
     let task = Process()
-    task.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+   // task.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+    task.launchPath = "/usr/bin/unzip"
     task.arguments = ["-p",IpaFilePath,"*.app/Info.plist"]
     let outputPipe = Pipe()
     task.standardOutput = outputPipe
     
     do {
-        try task.run()
+       // try task.run()
+        task.launch()
         let plistBinary = outputPipe.fileHandleForReading.readDataToEndOfFile()
         var plistFormat = PropertyListSerialization.PropertyListFormat.binary
         let propertyList = try PropertyListSerialization.propertyList(from: plistBinary, options: [], format: &plistFormat) as! [String:Any]
@@ -150,7 +152,7 @@ private func  extractIpaMetaData(IpaFilePath:String,into context:Meow.Context)th
 private func  extractApkMetaData(ApkFilePath:String,into context:Meow.Context)throws -> Future<[String:String]>{
     throw "not implemented"
 }
-
+/*
 func extractFileMetaData(filePath:String) throws /*-> Future<[String:String]> */{
     let iosPlistKeysToExtract = ["CFBundleIdentifier","CFBundleVersion","MinimumOSVersion","CFBundleShortVersionString"]
     
@@ -178,5 +180,5 @@ func extractFileMetaData(filePath:String) throws /*-> Future<[String:String]> */
         throw ArtifactError.invalidContent
     }
     print("End of function")
-}
+}*/
 
