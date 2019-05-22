@@ -1,4 +1,4 @@
-FROM swift:4.2
+FROM swift:4.2.4
 WORKDIR /BUILD
 ADD . ./
 RUN swift package clean
@@ -11,5 +11,6 @@ RUN ls /app/bin/Run
 RUN ls /app/config/config.json
 WORKDIR /app
 RUN rm -fr /BUILD
+RUN ls -lh /app/bin/
 # ENTRYPOINT ./bin/Run serve -e production -b 0.0.0.0
-ENTRYPOINT ./bin/Run serve -e production -b 0.0.0.0
+CMD /app/bin/Run serve -e production -b 0.0.0.0
