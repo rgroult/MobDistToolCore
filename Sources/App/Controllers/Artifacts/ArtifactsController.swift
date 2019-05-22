@@ -14,6 +14,13 @@ let IPA_CONTENT_TYPE = "application/octet-stream ipa"
 let BINARY_CONTENT_TYPE = "application/octet-stream"
 let APK_CONTENT_TYPE = "application/vnd.android.package-archive"
 
+enum customHeadersName:String {
+    case filename = "x-filename"
+    case sortIdentifier = "x-sortidentifier"
+    case metaTags = "x-metatags"
+    case mimeType = "x-mimetype"
+}
+
 final class ArtifactsController:BaseController  {
     static let lastVersionBranchName = "@@@@LAST####"
     static let lastVersionName = "latest"
@@ -29,11 +36,11 @@ final class ArtifactsController:BaseController  {
         let branch = try req.parameters.next(String.self)
         let version = try req.parameters.next(String.self)
         let artifactName = try req.parameters.next(String.self)
-        let filename = req.http.headers["X_MDT_filename"].last ?? "artifact"
-        let sortIdentifier = req.http.headers["X_MDT_sortIdentifier"].last
-        let metaTagsHeader = req.http.headers["X_MDT_metaTags"].last
+        let filename = req.http.headers[customHeadersName.filename.rawValue].last ?? "artifact"
+        let sortIdentifier = req.http.headers[customHeadersName.sortIdentifier.rawValue].last
+        let metaTagsHeader = req.http.headers[customHeadersName.metaTags.rawValue].last
         guard req.http.headers["content-type"].last == BINARY_CONTENT_TYPE else { throw ArtifactError.invalidContentType}
-        let mimeType = req.http.headers["x-mimetype"].last
+        let mimeType = req.http.headers[customHeadersName.mimeType.rawValue].last
         let metaTags:[String : String]?
         if let metaTagsHeader = metaTagsHeader {
             metaTags = try? JSONDecoder().decode([String : String].self,from: metaTagsHeader.convertToData())
