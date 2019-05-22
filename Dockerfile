@@ -1,4 +1,4 @@
-FROM swift
+FROM swift:4.2
 WORKDIR /BUILD
 ADD . ./
 RUN swift package clean
