@@ -22,12 +22,12 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     services.register(Logger.self) { container throws -> MdtFileLogger in
          return try MdtFileLogger(logDirectory: configuration.logDirectory, includeTimestamps: true)
     }
-    
+    config.prefer(MdtFileLogger.self, for: Logger.self)
     //logger
-    switch env {
+   /* switch env {
     case .production: config.prefer(MdtFileLogger.self, for: Logger.self)
     default: config.prefer(PrintLogger.self, for: Logger.self)
-    }
+    }*/
     
     services.register(configuration)
     

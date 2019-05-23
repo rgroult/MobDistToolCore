@@ -43,6 +43,9 @@ public final class MdtFileLogger: Logger {
     public init(logDirectory:String? = nil , includeTimestamps: Bool = false) throws{
         let logdir = logDirectory ?? "./logs"
         self.includeTimestamps = includeTimestamps
+        //create directory if needed
+        try createLogDirectoryIfNeeded(rootPath: logdir)
+        
         //create log file
         try createLogFile(logDirectory: logdir)
     }
@@ -50,7 +53,21 @@ public final class MdtFileLogger: Logger {
     deinit {
         logFileHandle.closeFile()
     }
-        
+    
+    private func createLogDirectoryIfNeeded(rootPath:String) throws{
+        let fileManager = FileManager.default
+        var isDirectory:ObjCBool = false
+        if !fileManager.fileExists(atPath: rootPath, isDirectory: &isDirectory) {
+            //create directory
+            try fileManager.createDirectory(atPath: rootPath, withIntermediateDirectories: true, attributes: nil)
+        }else {
+            //check if it'a a directory
+            guard isDirectory.boolValue else { throw "\(rootPath) does not seems to be a directory"}
+            //check if directory seems to be writable
+            guard fileManager.createFile(atPath: "\(rootPath)/testLocalStorage", contents: nil, attributes: nil) else { throw "\(rootPath) does not seems to be a writable directory" }
+        }
+    }
+    
     private func createLogFile(logDirectory:String) throws {
         let baseURL = URL(fileURLWithPath:logDirectory)
         let dateFormatter = DateFormatter()

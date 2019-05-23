@@ -1,3 +1,8 @@
 import App
 
-try app(.detect()).run()
+do {
+    try app(.detect()).run()
+}catch {
+    print("Unexpected error :\(error)")
+}
+
