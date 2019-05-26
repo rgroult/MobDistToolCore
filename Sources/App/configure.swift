@@ -19,15 +19,18 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
         throw error
     }
     
+    try MdtFileLogger.initialize(logDirectory: configuration.logDirectory, includeTimestamps: true)
+    
     services.register(Logger.self) { container throws -> MdtFileLogger in
-         return try MdtFileLogger(logDirectory: configuration.logDirectory, includeTimestamps: true)
+        return MdtFileLogger.shared
+         //return try MdtFileLogger(logDirectory: configuration.logDirectory, includeTimestamps: true)
     }
-    config.prefer(MdtFileLogger.self, for: Logger.self)
+   // config.prefer(MdtFileLogger.self, for: Logger.self)
     //logger
-   /* switch env {
+    switch env {
     case .production: config.prefer(MdtFileLogger.self, for: Logger.self)
     default: config.prefer(PrintLogger.self, for: Logger.self)
-    }*/
+    }
     
     services.register(configuration)
     

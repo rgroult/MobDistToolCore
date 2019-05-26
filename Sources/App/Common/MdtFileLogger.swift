@@ -8,12 +8,17 @@
 import Vapor
 
 public final class MdtFileLogger: Logger {
+    static var shared:MdtFileLogger!
     
     let includeTimestamps: Bool
     let fileManager = FileManager.default
     let fileQueue = DispatchQueue.init(label: "MdtFileLogger", qos: .utility)
-    var logFileHandle:Foundation.FileHandle!
+    var logFileHandle:Foundation.FileHandle?
     
+    class func initialize(logDirectory:String? = nil , includeTimestamps: Bool = false) throws{
+        shared = try MdtFileLogger(logDirectory: logDirectory, includeTimestamps: includeTimestamps)
+        //
+    }
     
     /*var fileHandles = [URL: Foundation.FileHandle]()
     lazy var logDirectoryURL: URL? = {
@@ -40,42 +45,44 @@ public final class MdtFileLogger: Logger {
         return baseURL
     }()
     */
-    public init(logDirectory:String? = nil , includeTimestamps: Bool = false) throws{
-        let logdir = logDirectory ?? "./logs"
+    private init(logDirectory:String? = nil , includeTimestamps: Bool = false) throws{
+        let logdir = logDirectory ?? FileManager.default.currentDirectoryPath + "/logs"
         self.includeTimestamps = includeTimestamps
-        //create directory if needed
-        try createLogDirectoryIfNeeded(rootPath: logdir)
         
         //create log file
         try createLogFile(logDirectory: logdir)
     }
     
     deinit {
-        logFileHandle.closeFile()
+        logFileHandle?.closeFile()
     }
     
-    private func createLogDirectoryIfNeeded(rootPath:String) throws{
+    private func createLogFileIfNeeded(fileName:String) throws{
         let fileManager = FileManager.default
         var isDirectory:ObjCBool = false
-        if !fileManager.fileExists(atPath: rootPath, isDirectory: &isDirectory) {
-            //create directory
-            try fileManager.createDirectory(atPath: rootPath, withIntermediateDirectories: true, attributes: nil)
+        if !fileManager.fileExists(atPath: fileName, isDirectory: &isDirectory) {
+            //create file
+            guard fileManager.createFile(atPath: fileName, contents: nil, attributes: nil) else { throw "\(fileName) unable to create file" }
+            
+          //  try fileManager.createDirectory(atPath: fileName, withIntermediateDirectories: true, attributes: nil)
         }else {
-            //check if it'a a directory
-            guard isDirectory.boolValue else { throw "\(rootPath) does not seems to be a directory"}
-            //check if directory seems to be writable
-            guard fileManager.createFile(atPath: "\(rootPath)/testLocalStorage", contents: nil, attributes: nil) else { throw "\(rootPath) does not seems to be a writable directory" }
+            //check if it'a a file
+            guard !isDirectory.boolValue else { throw "\(fileName) does not seems to be a file"}
         }
     }
     
     private func createLogFile(logDirectory:String) throws {
         let baseURL = URL(fileURLWithPath:logDirectory)
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "YYYY_MM_dd_HH_MM"
-       let logFileUrl = baseURL.appendingPathComponent("MDT_\(dateFormatter.string(from:Date()))", isDirectory: false)
+        dateFormatter.dateFormat = "YYYY_MM_dd_HH_mm"
+        let logFileUrl = baseURL.appendingPathComponent("MDT_\(dateFormatter.string(from:Date())).log", isDirectory: false)
+        
+        //create file
+        try createLogFileIfNeeded(fileName: logFileUrl.path)
         
         logFileHandle = try FileHandle(forWritingTo: logFileUrl)
-        
+        guard logFileHandle != nil else { throw "Unable to create log file :\(logFileUrl.absoluteString)"}
+        print("Log file create \(logFileUrl)")
     }
     
     public func log(_ string: String, at level: LogLevel, file: String, function: String, line: UInt, column: UInt) {
@@ -91,7 +98,7 @@ public final class MdtFileLogger: Logger {
         fileQueue.async {[weak self] in
             let output = string + "\n"
             if let data = output.data(using: .utf8) {
-                self?.logFileHandle.write(data)
+                self?.logFileHandle?.write(data)
             }
         }
       /*  guard let baseURL = logDirectoryURL else { return }
