@@ -44,6 +44,6 @@ extension ArtifactsController:APIBuilderControllerProtocol {
                 ]
             )
         )
-        _ = apiBuilder.add([APIObject(object: ApplicationDto.sample())])
+        _ = apiBuilder.add([APIObject(object: ArtifactDto.sample())])
     }
 }

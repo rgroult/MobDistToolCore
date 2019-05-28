@@ -72,23 +72,6 @@ final class ApplicationsController:BaseController {
                 return try findApplications(platform: platformFilter, into: context)
                     .map(transform: {ApplicationSummaryDto(from: $0)})
                     .getAllResults()
-                
-                /*
-                 let query:Query
-                 if let platorm = platformFilter {
-                 query = Query.valEquals(field: "platform", val: platorm.rawValue)
-                 }else {
-                 query = Query()
-                 }
-                 return context.find(MDTApplication.self,where:query)
-                 .map(transform: { app  in
-                 return ApplicationDto.create(from: app, content:app.isAdmin(user: user) ? .full : .light , in : context)
-                 })
-                 .getAllResults()
-                 .flatMap {elements ->  Future<[ApplicationDto]> in
-                 return elements.flatten(on: context)
-                 }*/
-                
         }
     }
     
@@ -149,18 +132,38 @@ final class ApplicationsController:BaseController {
             })
     }
     
+    func getApplicationVersionsWithParameters(_ req: Request,uuid:String,pageIndex:Int?,limitPerPage:Int?,selectedBranch:String?,isLatestBranch:Bool = false) throws -> Future<[ArtifactDto]> {
+        let context = try req.context()
+        return try retrieveUser(from:req)
+            .flatMap{ user in
+                guard let _ = user else { throw Abort(.unauthorized)}
+                return try App.findApplication(uuid: uuid, into: context)
+            }
+            .flatMap{ (app:MDTApplication?) -> Future<[ArtifactDto]> in
+                guard let app = app else { throw ApplicationError.notFound }
+                let excludedBranch = isLatestBranch ? lastVersionBranchName : nil
+                return try findArtifacts(app: app, pageIndex: pageIndex, limitPerPage: limitPerPage, selectedBranch:selectedBranch, excludedBranch: excludedBranch , into: context)
+                    .map(transform: {ArtifactDto(from: $0)})
+                    .getAllResults()
+            }
+    }
+    
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions?pageIndex=1&limitPerPage=30&branch=master')
     func getApplicationVersions(_ req: Request) throws -> Future<[ArtifactDto]> {
+        let uuid = try req.parameters.next(String.self)
+        //parameters
         let pageIndex = try? req.query.get(Int.self, at: "pageIndex")
         let limitPerPage = try? req.query.get(Int.self, at: "limitPerPage")
         let selectedBranch = try? req.query.get(String.self, at: "branch")
         
-        throw "Not implemented"
+        return try getApplicationVersionsWithParameters(req, uuid:uuid , pageIndex: pageIndex, limitPerPage: limitPerPage, selectedBranch: selectedBranch, isLatestBranch: false)
     }
     
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions/last')
     func getApplicationLastVersions(_ req: Request) throws -> Future<[ArtifactDto]> {
-        throw "Not implemented"
+         let uuid = try req.parameters.next(String.self)
+        
+        return try getApplicationVersionsWithParameters(req, uuid:uuid , pageIndex: nil, limitPerPage: nil, selectedBranch: lastVersionBranchName, isLatestBranch: true)
     }
     
     private func findApplicationInfo(from req: Request, needAdmin:Bool) throws -> Future<(user:User,app:MDTApplication)>{

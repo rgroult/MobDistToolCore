@@ -16,6 +16,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
             APIController(name: pathPrefix,
                           description: "Controller for Aplications",
                           actions: [
+                            //All apps
                             APIAction(method: .get, route: generateRoute(Verb.allApplications.uri),
                                       summary: "Apps",
                                       description: "Retrieve Applications",
@@ -30,6 +31,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                 ],
                                       authorization: true
                             ),
+                            //Manage App
                             APIAction(method: .post, route: generateRoute(Verb.allApplications.uri),
                                       summary: "Create App",
                                       description: "Create new Application",
@@ -59,11 +61,10 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                             ),
                             APIAction(method: .get, route: generateRoute(Verb.specificApp(pathName: "uuid").uri),
                                       summary: "Get App Detail",
-                                      description: "Update new Application",
+                                      description: "Get all Application Info",
                                       parameters: [
                                         APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true)
                                 ],
-                                      request: APIRequest(object: ApplicationUpdateDto.self, description: "App info."),
                                       responses: [
                                         APIResponse(code: "200", description: "applications updated", object: ApplicationDto.self),
                                         APIResponse(code: "500", description: "Internal Error"),
@@ -86,6 +87,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                 ],
                                       authorization: true
                             ),
+                            //Admins
                             APIAction(method: .put, route: generateRoute(Verb.specificAppAdmins(pathName: "uuid", email:"email").uri),
                                       summary: "Add admin Users",
                                       description: "Add admin user for this Application",
@@ -110,6 +112,39 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                 ],
                                       responses: [
                                         APIResponse(code: "200", description: "applications updated", object: MessageDto.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: true
+                            ),
+                            //App versions
+                            APIAction(method: .get, route: generateRoute(Verb.specificAppVersions(pathName: "uuid").uri),
+                                      summary: "Application versions",
+                                      description: "Retrieve versions for specified app",
+                                      parameters: [
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true),
+                                        APIParameter(name: "pageIndex", parameterLocation:.query, description: "Number of page (only work if limitPerPage is also provided)", required: false),
+                                        APIParameter(name: "limitPerPage", parameterLocation:.query, description: "Max Number results (only work if pageIndex is also provided)", required: false),
+                                        APIParameter(name: "branch", parameterLocation:.query, description: "Specific branch", required: false)
+                                ],
+                                      responses: [
+                                        APIResponse(code: "200", description: "applications updated", object: ArtifactDto.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: true
+                            ),
+                            //App versions latest
+                            APIAction(method: .get, route: generateRoute(Verb.specificAppLatestVersions(pathName: "uuid").uri),
+                                      summary: "Application latest versions",
+                                      description: "Retrieve latest versions for specified app",
+                                      parameters: [
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true)
+                                ],
+                                      responses: [
+                                        APIResponse(code: "200", description: "applications updated", object: ArtifactDto.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                         APIResponse(code: "400", description: "Request error")

@@ -24,11 +24,12 @@ extension ArtifactDto {
         return ArtifactDto(branch:"master",name:"prod",contentType:nil,size:nil,version:"X.Y.Z",sortIdentifier:nil,metaDataTags:nil)
     }
     
-    init(from artifact:Artifact, content:ModelVisibility){
-        branch = artifact.branch
+    init(from artifact:Artifact){
+        let isLatestBranch = artifact.branch == lastVersionBranchName
+        branch = isLatestBranch ? "" : artifact.branch
         name = artifact.name
         contentType = artifact.contentType
-        version = artifact.version
+        version = isLatestBranch ? lastVersionName : artifact.version
         size = artifact.size
         sortIdentifier = artifact.sortIdentifier
         

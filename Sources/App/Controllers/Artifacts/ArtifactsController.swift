@@ -22,20 +22,14 @@ enum customHeadersName:String {
 }
 
 final class ArtifactsController:BaseController  {
-    static let lastVersionBranchName = "@@@@LAST####"
-    static let lastVersionName = "latest"
+  
     let maxUploadSize = 1024*1024*1024*1024
     
     init(apiBuilder:OpenAPIBuilder) {
         super.init(version: "v2", pathPrefix: "Artifacts", apiBuilder: apiBuilder)
     }
     
-    //POST '{apiKey}/{branch}/{version}/{artifactName}
-    func createArtifactByApiKey(_ req: Request) throws -> Future<ArtifactDto> {
-        let apiKey = try req.parameters.next(String.self)
-        let branch = try req.parameters.next(String.self)
-        let version = try req.parameters.next(String.self)
-        let artifactName = try req.parameters.next(String.self)
+    private func createArtifactWithInfo(_ req: Request,apiKey:String,branch:String,version:String,artifactName:String) throws -> Future<ArtifactDto> {
         let filename = req.http.headers[customHeadersName.filename.rawValue].last ?? "artifact"
         let sortIdentifier = req.http.headers[customHeadersName.sortIdentifier.rawValue].last
         let metaTagsHeader = req.http.headers[customHeadersName.metaTags.rawValue].last
@@ -59,12 +53,12 @@ final class ArtifactsController:BaseController  {
                     guard mimeType == IPA_CONTENT_TYPE else { throw ArtifactError.invalidContentType}
                 }
                 
-             
-                    ///         let stream = try req.fileio().chunkedStream(file: "/path/to/file.txt")
-                    ///         var res = HTTPResponse(status: .ok, body: stream)
-                    ///         res.contentType = .plainText
-                    ///         return res
-                    ///     }
+                
+                ///         let stream = try req.fileio().chunkedStream(file: "/path/to/file.txt")
+                ///         var res = HTTPResponse(status: .ok, body: stream)
+                ///         res.contentType = .plainText
+                ///         return res
+                ///     }
                 
                 //already Exist
                 return try isArtifactAlreadyExist(app: app, branch: branch, version: version, name: artifactName, into: context)
@@ -79,15 +73,20 @@ final class ArtifactsController:BaseController  {
                     })
             })
             .flatMap{try saveArtifact(artifact: $0, into: context)}
-            .map{ArtifactDto(from: $0, content: .full)}
+            .map{ArtifactDto(from: $0)}
     }
     
-    //DELETE '{apiKey}/{branch}/{version}/{artifactName}
-    func deleteArtifactByApiKey(_ req: Request) throws -> Future<MessageDto> {
+    //POST '{apiKey}/{branch}/{version}/{artifactName}
+    func createArtifactByApiKey(_ req: Request) throws -> Future<ArtifactDto> {
         let apiKey = try req.parameters.next(String.self)
         let branch = try req.parameters.next(String.self)
         let version = try req.parameters.next(String.self)
         let artifactName = try req.parameters.next(String.self)
+        
+        return try createArtifactWithInfo(req, apiKey: apiKey, branch: branch, version: version, artifactName: artifactName)
+    }
+    
+    private func deleteArtifactWithInfo(_ req: Request,apiKey:String,branch:String,version:String,artifactName:String) throws -> Future<MessageDto> {
         let context = try req.context()
         
         return try findApplication(apiKey: apiKey, into: context)
@@ -98,8 +97,39 @@ final class ArtifactsController:BaseController  {
                 guard let artifact = artifact else { throw ArtifactError.notFound }
                 return App.deleteArtifact(by: artifact, into: context)})
             .map {_ in return  MessageDto(message: "Artifact Deleted")}
-        
     }
+    
+    //DELETE '{apiKey}/{branch}/{version}/{artifactName}
+    func deleteArtifactByApiKey(_ req: Request) throws -> Future<MessageDto> {
+        let apiKey = try req.parameters.next(String.self)
+        let branch = try req.parameters.next(String.self)
+        let version = try req.parameters.next(String.self)
+        let artifactName = try req.parameters.next(String.self)
+       
+        return try deleteArtifactWithInfo(req, apiKey: apiKey, branch: branch, version: version, artifactName: artifactName)
+    }
+    
+    //POST  '{apiKey}/last/{_artifactName}
+    func createLastArtifactByApiKey(_ req: Request) throws -> Future<ArtifactDto> {
+        let apiKey = try req.parameters.next(String.self)
+        let artifactName = try req.parameters.next(String.self)
+        let branch = lastVersionBranchName
+        let version = lastVersionName
+        
+        return try createArtifactWithInfo(req, apiKey: apiKey, branch: branch, version: version, artifactName: artifactName)
+    }
+    
+    //DELETE  '{apiKey}/last/{_artifactName}
+    func deleteLastArtifactByApiKey(_ req: Request) throws -> Future<MessageDto> {
+        let apiKey = try req.parameters.next(String.self)
+        let artifactName = try req.parameters.next(String.self)
+        let branch = lastVersionBranchName
+        let version = lastVersionName
+        
+        return try deleteArtifactWithInfo(req, apiKey: apiKey, branch: branch, version: version, artifactName: artifactName)
+    }
+    
+    
     
     //PUT 'artifacts/{idArtifact}/
     

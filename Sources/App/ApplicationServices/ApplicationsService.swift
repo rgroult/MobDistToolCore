@@ -8,6 +8,9 @@
 import Vapor
 import Meow
 
+let lastVersionBranchName = "@@@@LAST####"
+let lastVersionName = "latest"
+
 enum ApplicationError: Error {
     case notFound
     case alreadyExist

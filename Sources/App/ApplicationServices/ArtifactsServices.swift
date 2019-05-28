@@ -43,7 +43,7 @@ func findArtifact(byUUID:String,into context:Meow.Context) throws -> Future<Arti
 }
 
 func findArtifact(app:MDTApplication,branch:String,version:String,name:String,into context:Meow.Context) throws -> Future<Artifact?>{
-    let userQuery: Document = ["$eq": app._id]
+   // let userQuery: Document = ["$eq": app._id]
     let query = Query.and([//Query.custom(userQuery),
                             Query.valEquals(field: "application", val: app._id),
                            Query.valEquals(field: "branch", val: branch),
@@ -51,6 +51,41 @@ func findArtifact(app:MDTApplication,branch:String,version:String,name:String,in
                            Query.valEquals(field: "name", val: name)])
      return context.findOne(Artifact.self, where: query)
 }
+
+// NB: Pagination is made by creationDate
+func findArtifacts(app:MDTApplication,pageIndex:Int?,limitPerPage:Int?,selectedBranch:String?, excludedBranch:String?,into context:Meow.Context) throws -> MappedCursor<FindCursor, Artifact>{
+    var queryConditions = [Query.valEquals(field: "application", val: app._id)]
+    
+    if let branch = selectedBranch {
+        queryConditions.append(Query.valEquals(field: "branch", val: branch))
+    }
+    
+    if let excludedBranch = excludedBranch {
+        queryConditions.append(Query.valNotEquals(field: "branch", val: excludedBranch))
+    }
+    
+    let query = Query.and(queryConditions)
+    
+    var mappedCursorResult = context.find(Artifact.self, where: query).sort(Sort([("creationDate", SortOrder.descending)]))
+    
+    //both of them are needed: How to compute page index without size
+    if let pageIndex = pageIndex, let limitPerPage = limitPerPage {
+        let page = max(0,pageIndex)
+        let numberToSkip = (page)*limitPerPage
+        mappedCursorResult = mappedCursorResult.skip(numberToSkip).limit(limitPerPage)
+    }
+    return mappedCursorResult
+}
+
+// NB: Search max artifact version sort by "sortIdentifier"
+func searchMaxArtifact(app:MDTApplication,branch:String,artifactName:String,into context:Meow.Context) ->  Future<Artifact?> {
+    let query = Query.and([Query.valEquals(field: "application", val: app._id),
+        Query.valEquals(field: "branch", val: branch),
+        Query.valEquals(field: "name", val: artifactName)])
+    
+    return context.find(Artifact.self, where: query).sort(Sort([("sortIdentifier", SortOrder.descending)])).getFirstResult()
+}
+
 
 func isArtifactAlreadyExist(app:MDTApplication,branch:String,version:String,name:String,into context:Meow.Context) throws -> Future<Bool>{
     return try findArtifact(app: app, branch: branch, version: version, name: name, into: context)
