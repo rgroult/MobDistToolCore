@@ -1,7 +1,7 @@
 {
     "serverListeningPort":8080,
     "serverExternalUrl":"http://localhost:8080",
-    "mongoServerUrl":"mongodb://localhost:27017/mobdisttool",
+    "mongoServerUrl":"mongodb://mongo:27017/mobdisttool",
     "jwtSecretToken":"qsdqsdqsdqs",
     "loginResponseDelay":0,
     "storageMode":"TestingStorage",

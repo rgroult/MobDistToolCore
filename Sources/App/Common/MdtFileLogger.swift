@@ -58,9 +58,14 @@ public final class MdtFileLogger: Logger {
     }
     
     private func createLogFileIfNeeded(fileName:String) throws{
+        let directory = URL(fileURLWithPath: fileName).deletingLastPathComponent().path
+        
         let fileManager = FileManager.default
         var isDirectory:ObjCBool = false
         if !fileManager.fileExists(atPath: fileName, isDirectory: &isDirectory) {
+            //create directory if needed
+            try fileManager.createDirectory(atPath: directory, withIntermediateDirectories: true, attributes: nil)
+            
             //create file
             guard fileManager.createFile(atPath: fileName, contents: nil, attributes: nil) else { throw "\(fileName) unable to create file" }
             
