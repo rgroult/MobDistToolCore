@@ -31,7 +31,7 @@ extension ArtifactDto {
         contentType = artifact.contentType
         version = isLatestBranch ? lastVersionName : artifact.version
         size = artifact.size
-        sortIdentifier = artifact.sortIdentifier
+        sortIdentifier = isLatestBranch ? nil : artifact.sortIdentifier
         
         if let tagsData = artifact.metaDataTags?.convertToData() {
             let tags = (try? JSONDecoder().decode([String:String].self, from: tagsData))

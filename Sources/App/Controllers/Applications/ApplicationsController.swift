@@ -166,6 +166,8 @@ final class ApplicationsController:BaseController {
         return try getApplicationVersionsWithParameters(req, uuid:uuid , pageIndex: nil, limitPerPage: nil, selectedBranch: lastVersionBranchName, isLatestBranch: true)
     }
     
+    //@ApiMethod(method: 'GET', path: 'app/{appId}/icon')
+    
     private func findApplicationInfo(from req: Request, needAdmin:Bool) throws -> Future<(user:User,app:MDTApplication)>{
         let uuid = try req.parameters.next(String.self)
         return try retrieveUser(from:req)

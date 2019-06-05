@@ -18,13 +18,21 @@ let apkContentType = MediaType.parse(APK_CONTENT_TYPE.data(using: .utf8)!)
 
 final class ArtifactsContollerTests: BaseAppTests {
     //MARK: - Tools
-    class func uploadArtifactRequest(contentFile:Data,apiKey:String,branch:String,version:String,name:String,
+    class func uploadArtifactRequest(contentFile:Data,apiKey:String,branch:String?,version:String?,name:String,
                                      contentType:MediaType?,
                                      sortIdentifier:String? = nil,
                                      metaTags:[String:String]? = nil,
                                      inside app:Application ) throws ->Response {
         //POST '{apiKey}/{branch}/{version}/{artifactName}
-        let uri = "/v2/Artifacts/\(apiKey)/\(branch)/\(version)/\(name)"
+        var uri = "/v2/Artifacts/\(apiKey)"
+        if let branch = branch {
+            uri =  uri + "/" + branch
+        }
+        if let version = version {
+            uri =  uri + "/" + version
+        }
+        uri =  uri + "/" + name
+        
         let beforeSend:(Request) throws -> () = { req in
             req.http.headers.add(name: "x-filename", value: "test.ipa")
             req.http.headers.add(name: "x-mimetype", value: contentType?.description ?? "")
@@ -43,21 +51,27 @@ final class ArtifactsContollerTests: BaseAppTests {
         // XCTAssertEqual(resp.http.status.code , 200)
     }
     
-    class func uploadArtifactError(contentFile:Data,apiKey:String,branch:String,version:String,name:String, contentType:MediaType?,inside app:Application ) throws ->ErrorDto {
+    class func uploadArtifactError(contentFile:Data,apiKey:String,branch:String?,version:String?,name:String, contentType:MediaType?,inside app:Application ) throws ->ErrorDto {
         let resp = try uploadArtifactRequest(contentFile: contentFile, apiKey: apiKey, branch: branch, version: version, name: name, contentType:contentType, inside: app)
         XCTAssertEqual(resp.http.status.code , 400)
         return try resp.content.decode(ErrorDto.self).wait()
     }
     
-    class func uploadArtifactSuccess(contentFile:Data,apiKey:String,branch:String,version:String,name:String, contentType:MediaType?,
+    class func uploadArtifactSuccess(contentFile:Data,apiKey:String,branch:String?,version:String?,name:String, contentType:MediaType?,
                                      sortIdentifier:String? = nil,
                                      metaTags:[String:String]? = nil,
                                      inside app:Application ) throws ->ArtifactDto {
         let resp = try uploadArtifactRequest(contentFile: contentFile, apiKey: apiKey, branch: branch, version: version, name: name, contentType:contentType, sortIdentifier: sortIdentifier, metaTags: metaTags, inside: app)
         XCTAssertEqual(resp.http.status.code , 200)
         let result = try resp.content.decode(ArtifactDto.self).wait()
-        XCTAssertEqual(result.branch , branch)
-        XCTAssertEqual(result.version , version)
+        if let _ = branch, let _ = version {
+            XCTAssertEqual(result.branch , branch)
+            XCTAssertEqual(result.version , version)
+        }else {
+            //latest version
+            XCTAssertEqual(result.version , "latest")
+            XCTAssertEqual(result.branch , "")
+        }
         XCTAssertEqual(result.name , name)
         XCTAssertNotNil(result.contentType)
         XCTAssertEqual(result.size,contentFile.count)
@@ -118,6 +132,7 @@ final class ArtifactsContollerTests: BaseAppTests {
         XCTAssertEqual(metadata?["CFBundleIdentifier"],"com.petri.calculator.calculator")
         XCTAssertEqual(artifact.sortIdentifier,artifact.version)
     }
+    
     
     func testCreateArtifactFullArgs() throws{
         XCTAssertNotNil(iOSApiKey)
@@ -198,6 +213,29 @@ final class ArtifactsContollerTests: BaseAppTests {
         try testDeleteArtifact()
         let error = try type(of:self).deleteArtifactError(apiKey: "BadApiKey", branch: "master", version: "1.2.3", name: "prod", inside: app)
         XCTAssertEqual(error.reason , "ApplicationError.notFound")
+    }
+    
+    func testCreateLastArtifact() throws{
+        XCTAssertNotNil(iOSApiKey)
+        
+        let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
+        let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: iOSApiKey!, branch: nil, version: "last", name: "prod", contentType:ipaContentType, inside: app)
+        let metadata = artifact.metaDataTags
+        XCTAssertEqual(metadata?["CFBundleShortVersionString"],"1.0")
+        XCTAssertEqual(metadata?["CFBundleIdentifier"],"com.petri.calculator.calculator")
+        XCTAssertEqual(artifact.sortIdentifier,nil)
+    }
+    
+    func testCreateLastArtifactFullArgs() throws{
+        XCTAssertNotNil(iOSApiKey)
+        
+        let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
+        let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: iOSApiKey!, branch:nil, version: "last", name: "prod", contentType:ipaContentType, sortIdentifier: "Fake",metaTags: ["Hello":"World"], inside: app)
+        let metadata = artifact.metaDataTags
+        XCTAssertEqual(metadata?["CFBundleShortVersionString"],"1.0")
+        XCTAssertEqual(metadata?["CFBundleIdentifier"],"com.petri.calculator.calculator")
+        XCTAssertEqual(metadata?["Hello"],"World")
+        XCTAssertEqual(artifact.sortIdentifier,nil)
     }
     
     class func fileData(name:String,ext:String) throws -> Data {

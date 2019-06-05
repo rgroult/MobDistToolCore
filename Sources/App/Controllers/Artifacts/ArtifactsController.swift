@@ -129,7 +129,10 @@ final class ArtifactsController:BaseController  {
         return try deleteArtifactWithInfo(req, apiKey: apiKey, branch: branch, version: version, artifactName: artifactName)
     }
     
+    //GET {idArtifact}/ios_manifest?token='
     
+    
+    //GET {idArtifact}/file?token='
     
     //PUT 'artifacts/{idArtifact}/
     
