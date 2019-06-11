@@ -14,4 +14,13 @@ final class TokenInfo: Model {
     var uuid:String
     var expirationDate:Date
     var value:[String:String]
+    var isExpired:Bool{
+        return Date() >= expirationDate
+    }
+    
+    init(durationInSecs:TimeInterval,value:[String:String]){
+        expirationDate = Date().addingTimeInterval(durationInSecs)
+        uuid = UUID().uuidString
+        self.value = value
+    }
 }
