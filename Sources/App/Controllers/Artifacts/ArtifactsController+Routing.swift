@@ -16,7 +16,7 @@ extension ArtifactsController {
             case .artifacts(let apiKeyPathName, let branchPathName, let versionPathName,let namePathName):
                 return "{\(apiKeyPathName)}/{\(branchPathName)}/{\(versionPathName)}/{\(namePathName)}"
             case .lastArtifacts(let apiKeyPathName,let namePathName):
-                return "{\(apiKeyPathName)}/last/{\(namePathName)}"
+                return "{\(apiKeyPathName)}/latest/{\(namePathName)}"
             }
         }
     }
@@ -29,9 +29,9 @@ extension ArtifactsController {
          artifactRouter.delete("", String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.deleteArtifactByApiKey)
         
         //POST '{apiKey}/last/{artifactName}
-        artifactRouter.post("", String.parameter ,PathComponent.constant("last"),String.parameter,  use: self.createLastArtifactByApiKey)
+        artifactRouter.post("", String.parameter ,PathComponent.constant("latest"),String.parameter,  use: self.createLastArtifactByApiKey)
         //DELETE '{apiKey}/last/{artifactName}
-        artifactRouter.delete("", String.parameter ,PathComponent.constant("last"),String.parameter,  use: self.deleteLastArtifactByApiKey)
+        artifactRouter.delete("", String.parameter ,PathComponent.constant("latest"),String.parameter,  use: self.deleteLastArtifactByApiKey)
     }
 }
 

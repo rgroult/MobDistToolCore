@@ -219,7 +219,7 @@ final class ArtifactsContollerTests: BaseAppTests {
         XCTAssertNotNil(iOSApiKey)
         
         let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
-        let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: iOSApiKey!, branch: nil, version: "last", name: "prod", contentType:ipaContentType, inside: app)
+        let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: iOSApiKey!, branch: nil, version: "latest", name: "prod", contentType:ipaContentType, inside: app)
         let metadata = artifact.metaDataTags
         XCTAssertEqual(metadata?["CFBundleShortVersionString"],"1.0")
         XCTAssertEqual(metadata?["CFBundleIdentifier"],"com.petri.calculator.calculator")
@@ -230,7 +230,7 @@ final class ArtifactsContollerTests: BaseAppTests {
         XCTAssertNotNil(iOSApiKey)
         
         let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
-        let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: iOSApiKey!, branch:nil, version: "last", name: "prod", contentType:ipaContentType, sortIdentifier: "Fake",metaTags: ["Hello":"World"], inside: app)
+        let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: iOSApiKey!, branch:nil, version: "latest", name: "prod", contentType:ipaContentType, sortIdentifier: "Fake",metaTags: ["Hello":"World"], inside: app)
         let metadata = artifact.metaDataTags
         XCTAssertEqual(metadata?["CFBundleShortVersionString"],"1.0")
         XCTAssertEqual(metadata?["CFBundleIdentifier"],"com.petri.calculator.calculator")

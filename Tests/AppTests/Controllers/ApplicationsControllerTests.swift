@@ -456,6 +456,17 @@ final class ApplicationsControllerTests: BaseAppTests {
         }
     }
     
+    func uploadLatestArtifact(numberOfUpload:Int,apiKey:String) throws {
+        let formatter = NumberFormatter()
+        formatter.minimumIntegerDigits = 3
+        
+        for idx in 0..<numberOfUpload {
+            let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
+            let version = formatter.string(from: NSNumber(value: idx))
+            _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: apiKey, branch: "latest", version: nil, name: "prod_\(version!)", contentType:ipaContentType, inside: app)
+        }
+    }
+    
     func testRetrieveVersions() throws {
         let (token,appDetail) = try createAndReturnAppDetail()
         try uploadArtifact(branches: ["master"], numberPerBranches: 50, apiKey: appDetail.apiKey!)
@@ -508,6 +519,25 @@ final class ApplicationsControllerTests: BaseAppTests {
             }
             XCTAssertEqual(versions.last?.version, "1.2.009")
         }
+    }
+    func testRetrieveVersionsByBranchAndLatest() throws {
+        let (token,appDetail) = try createAndReturnAppDetail()
+        try uploadLatestArtifact(numberOfUpload: 10, apiKey: appDetail.apiKey!)
+        
+        try uploadArtifact(branches: ["master"] , numberPerBranches: 10, apiKey: appDetail.apiKey!)
+        let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions",token:token)
+        let versions = try allVersions.content.decode([ArtifactDto].self).wait()
+        XCTAssertEqual(versions.count, 10)
+    }
+    
+    func testRetrieveVersionsLatest() throws {
+        let (token,appDetail) = try createAndReturnAppDetail()
+        try uploadLatestArtifact(numberOfUpload: 10, apiKey: appDetail.apiKey!)
+        
+        let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions/latest",token:token)
+        print(allVersions)
+        let versions = try allVersions.content.decode([ArtifactDto].self).wait()
+        XCTAssertEqual(versions.count, 10)
     }
 }
 

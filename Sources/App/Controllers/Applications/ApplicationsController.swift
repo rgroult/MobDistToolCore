@@ -141,7 +141,7 @@ final class ApplicationsController:BaseController {
             }
             .flatMap{ (app:MDTApplication?) -> Future<[ArtifactDto]> in
                 guard let app = app else { throw ApplicationError.notFound }
-                let excludedBranch = isLatestBranch ? lastVersionBranchName : nil
+                let excludedBranch = isLatestBranch ? nil : lastVersionBranchName
                 return try findArtifacts(app: app, pageIndex: pageIndex, limitPerPage: limitPerPage, selectedBranch:selectedBranch, excludedBranch: excludedBranch , into: context)
                     .map(transform: {ArtifactDto(from: $0)})
                     .getAllResults()
