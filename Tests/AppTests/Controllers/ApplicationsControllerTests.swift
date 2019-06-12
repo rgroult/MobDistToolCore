@@ -408,6 +408,107 @@ final class ApplicationsControllerTests: BaseAppTests {
         
         return apps.first(where:{ $0.name == name})
     }
+    
+    private func createAndReturnAppDetail() throws -> (String,ApplicationDto) {
+        try testCreate()
+        //login
+        let token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
+        
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
+        
+        let appFound = apps.first
+        
+        //check detail
+        let detailResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)",token:token)
+        print(detailResp.content)
+        XCTAssertEqual(detailResp.http.status.code , 200)
+        let appDetail = try detailResp.content.decode(ApplicationDto.self).wait()
+        
+        return (token,appDetail)
+    }
+    
+    func testRetrieveVersion() throws {
+        let (token,appDetail) = try createAndReturnAppDetail()
+        
+        let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
+        _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: appDetail.apiKey!, branch: "master", version: "1.2.3", name: "prod", contentType:ipaContentType, inside: app)
+        
+        let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions",token:token)
+        let versions = try allVersions.content.decode([ArtifactDto].self).wait()
+        XCTAssertEqual(versions.count, 1)
+        XCTAssertEqual(versions.first?.branch, "master")
+        XCTAssertEqual(versions.first?.version,"1.2.3")
+        XCTAssertEqual(versions.first?.name,"prod")
+       // app/{appId}/versions?pageIndex=1&limitPerPage=30&branch=master'
+    }
+    
+    func uploadArtifact(branches:[String], numberPerBranches:Int,apiKey:String) throws {
+        let formatter = NumberFormatter()
+        formatter.minimumIntegerDigits = 3
+        
+        for branch in branches {
+            for idx in 0..<numberPerBranches {
+                let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
+                let version = formatter.string(from: NSNumber(value: idx))
+                _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: apiKey, branch: branch, version: "1.2.\(version!)", name: "prod", contentType:ipaContentType, inside: app)
+            }
+        }
+    }
+    
+    func testRetrieveVersions() throws {
+        let (token,appDetail) = try createAndReturnAppDetail()
+        try uploadArtifact(branches: ["master"], numberPerBranches: 50, apiKey: appDetail.apiKey!)
+        /*
+        for idx in 0..<50 {
+            let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
+            _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: appDetail.apiKey!, branch: "master", version: "1.2.\(idx)", name: "prod", contentType:ipaContentType, inside: app)
+        }*/
+        
+        let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions",token:token)
+        let versions = try allVersions.content.decode([ArtifactDto].self).wait()
+        XCTAssertEqual(versions.count, 50)
+        // app/{appId}/versions?pageIndex=1&limitPerPage=30&branch=master'
+    }
+    
+    func testRetrieveVersionsByPages() throws {
+        let (token,appDetail) = try createAndReturnAppDetail()
+        try uploadArtifact(branches: ["master"], numberPerBranches: 20, apiKey: appDetail.apiKey!)
+        
+        var allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions?pageIndex=0&limitPerPage=15",token:token)
+        var versions = try allVersions.content.decode([ArtifactDto].self).wait()
+        XCTAssertEqual(versions.count, 15)
+        XCTAssertEqual(versions.first?.version, "1.2.000")
+        
+        allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions?pageIndex=1&limitPerPage=15",token:token)
+        versions = try allVersions.content.decode([ArtifactDto].self).wait()
+        XCTAssertEqual(versions.count, 5)
+        XCTAssertEqual(versions.first?.version, "1.2.015")
+        
+        allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions?pageIndex=2&limitPerPage=15",token:token)
+        versions = try allVersions.content.decode([ArtifactDto].self).wait()
+        XCTAssertEqual(versions.count, 0)
+    }
+    
+    func testRetrieveVersionsByBranch() throws {
+        let (token,appDetail) = try createAndReturnAppDetail()
+        let branches = ["master","dev","release"]
+        try uploadArtifact(branches: branches , numberPerBranches: 10, apiKey: appDetail.apiKey!)
+        
+        let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions",token:token)
+        let versions = try allVersions.content.decode([ArtifactDto].self).wait()
+        XCTAssertEqual(versions.count, 30)
+        
+        for branch in branches {
+            let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions?branch=\(branch)",token:token)
+            let versions = try allVersions.content.decode([ArtifactDto].self).wait()
+            XCTAssertEqual(versions.count, 10)
+            for version in versions {
+                XCTAssertEqual(version.branch, branch)
+            }
+            XCTAssertEqual(versions.last?.version, "1.2.009")
+        }
+    }
 }
 
 extension ApplicationsControllerTests {
