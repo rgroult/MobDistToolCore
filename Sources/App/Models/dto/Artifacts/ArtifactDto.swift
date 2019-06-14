@@ -9,6 +9,7 @@ import Foundation
 import Vapor
 
 struct ArtifactDto: Codable {
+    var uuid:String
     var branch:String
     var name:String
     var contentType:String?
@@ -21,10 +22,11 @@ struct ArtifactDto: Codable {
 
 extension ArtifactDto {
     static func sample() -> ArtifactDto {
-        return ArtifactDto(branch:"master",name:"prod",contentType:nil,size:nil,version:"X.Y.Z",sortIdentifier:nil,metaDataTags:nil)
+        return ArtifactDto(uuid:"uuid",branch:"master",name:"prod",contentType:nil,size:nil,version:"X.Y.Z",sortIdentifier:nil,metaDataTags:nil)
     }
     
     init(from artifact:Artifact){
+        uuid = artifact.uuid
         let isLatestBranch = artifact.branch == lastVersionBranchName
         branch = isLatestBranch ? "" : artifact.branch
         name = artifact.name

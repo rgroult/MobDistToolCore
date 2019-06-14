@@ -11,12 +11,21 @@ extension ArtifactsController {
     enum Verb {
         case artifacts(apiKeyPathName:String,branchPathName:String,versionPathName:String,namePathName:String)
         case lastArtifacts(apiKeyPathName:String,namePathName:String)
+        case artifact(uuid:String)
+        case artifactFile(uuid:String)
+        case artifactiOSManifest(uuid:String)
         var uri:String {
             switch self {
             case .artifacts(let apiKeyPathName, let branchPathName, let versionPathName,let namePathName):
                 return "{\(apiKeyPathName)}/{\(branchPathName)}/{\(versionPathName)}/{\(namePathName)}"
             case .lastArtifacts(let apiKeyPathName,let namePathName):
                 return "{\(apiKeyPathName)}/latest/{\(namePathName)}"
+            case .artifact(let uuid):
+                return "\(uuid)"
+            case .artifactFile(let uuid):
+                return "\(uuid)/file"
+            case .artifactiOSManifest(let uuid):
+                return "\(uuid)/ios_plist"
             }
         }
     }

@@ -37,7 +37,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     //email if needed
     if !configuration.automaticRegistration {
         guard let smtpConfig = configuration.smtpConfiguration else { throw "Smtp configuration needed if automaticRegistration is disabled" }
-        let emailService = try EmailService(with: smtpConfig, externalServerUrl: configuration.serverExternalUrl)
+        let emailService = try EmailService(with: smtpConfig, externalServerUrl: configuration.serverUrl)
         services.register(emailService)
     }
     

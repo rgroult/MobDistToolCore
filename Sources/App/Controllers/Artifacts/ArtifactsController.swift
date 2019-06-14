@@ -129,6 +129,49 @@ final class ArtifactsController:BaseController  {
         return try deleteArtifactWithInfo(req, apiKey: apiKey, branch: branch, version: version, artifactName: artifactName)
     }
     
+    //GET 'artifacts/{idArtifact}/download'
+    func downloadInfo(_ req: Request) throws -> Future<DownloadInfoDto> {
+        let config = try req.make(MdtConfiguration.self)
+        let artifactId = try req.parameters.next(String.self)
+        let context = try req.context()
+        return try retrieveUser(from:req)
+            .flatMap{user in
+                guard let user = user else { throw Abort(.unauthorized)}
+                
+                return try findArtifact(byUUID: artifactId, into: context)
+                    .flatMap({[unowned self] artifact in
+                        guard let artifact = artifact else { throw ArtifactError.notFound }
+                        return artifact.application.resolve(in: context)
+                            .flatMap{application in
+                                return try self.generateDownloadInfo(user: user, for: artifact._id.hexString, platform: application.platform, config: config, into: context)
+                        }
+                    })
+        }
+    }
+    
+    func generateDownloadInfo(user:User,for artifactID:String, platform:Platform, config:MdtConfiguration,into context:Context) throws -> Future<DownloadInfoDto>{
+        // let config = try req.make(MdtConfiguration.self)
+        let validity = 3 // 3 mins
+        let baseArtifactPath = config.serverUrl.absoluteString
+        
+        let durationInSecs = validity * 60
+        
+        //create token with Info
+        let tokenInfo = ["user":user.email, "artifactId":artifactID]
+        return store(info: tokenInfo, durationInSecs: TimeInterval(durationInSecs) , into: context)
+            .map{[unowned self] token  in
+                let downloadUrl = baseArtifactPath + self.generateRoute(Verb.artifactFile(uuid: artifactID).uri) + "?token=\(token)"
+                let installUrl:String
+                if platform == .ios {
+                    installUrl = baseArtifactPath + self.generateRoute(Verb.artifactiOSManifest(uuid: artifactID).uri) + "?token=\(token)"
+                }else {
+                    installUrl = downloadUrl
+                }
+                
+                return DownloadInfoDto(directLinkUrl: downloadUrl, installUrl: installUrl, validity: validity)
+        }
+    }
+    
     //GET {idArtifact}/ios_manifest?token='
     
     

@@ -14,7 +14,10 @@ struct MdtConfiguration: Codable {
         case testing = "TestingStorage"
     }
     var serverListeningPort:Int
-    var serverExternalUrl:URL
+    var serverExternalUrl:URL?
+    var serverUrl:URL {
+        return serverExternalUrl ?? URL(string: "http://localhost:8080")!
+    }
     var mongoServerUrl:URL
     var jwtSecretToken:String?
     //delay (in ms) before login resquest response (limit brut attack).
