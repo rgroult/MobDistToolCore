@@ -42,6 +42,10 @@ func findArtifact(byUUID:String,into context:Meow.Context) throws -> Future<Arti
     return context.findOne(Artifact.self, where: Query.valEquals(field: "uuid", val: byUUID))
 }
 
+func findArtifact(byID:String,into context:Meow.Context) throws -> Future<Artifact?> {
+    return context.findOne(Artifact.self, where: Query.valEquals(field: "_id", val: try ObjectId(byID)))
+}
+
 func findArtifact(app:MDTApplication,branch:String,version:String,name:String,into context:Meow.Context) throws -> Future<Artifact?>{
    // let userQuery: Document = ["$eq": app._id]
     let query = Query.and([//Query.custom(userQuery),

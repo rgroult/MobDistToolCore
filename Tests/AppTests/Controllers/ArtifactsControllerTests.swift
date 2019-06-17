@@ -238,6 +238,31 @@ final class ArtifactsContollerTests: BaseAppTests {
         XCTAssertEqual(artifact.sortIdentifier,nil)
     }
     
+    func testDownloadInfo() throws {
+        XCTAssertNotNil(iOSApiKey)
+        let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
+        let dwInfo = try donwloadInfo(apiKey: iOSApiKey!, fileData: fileData)
+        print(dwInfo)
+    }
+    
+    func donwloadInfo(apiKey:String, fileData:Data) throws -> DownloadInfoDto{
+    let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: iOSApiKey!, branch: "master", version: "1.2.3", name: "prod", contentType:ipaContentType, inside: app)
+    
+    //retrieve download info
+    let uri = "/v2/Artifacts/\(artifact.uuid)/download"
+    
+    let response = try app.clientSyncTest(.GET, uri,token:token)
+    return try response.content.decode(DownloadInfoDto.self).wait()
+    }
+    
+    func testDownloadiOSManifest() throws {
+        let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
+        let dwInfo = try donwloadInfo(apiKey: iOSApiKey!, fileData: fileData)
+        
+        let manifestPlist = try app.clientSyncTest(.GET, dwInfo.installUrl,isAbsoluteUrl:true)
+        print(manifestPlist.content)
+    }
+    
     class func fileData(name:String,ext:String) throws -> Data {
         let dirConfig = DirectoryConfig.detect()
        let filePath = dirConfig.workDir+"Ressources/\(name).\(ext)"

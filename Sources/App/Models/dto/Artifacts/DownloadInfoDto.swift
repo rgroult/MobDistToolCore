@@ -6,9 +6,12 @@
 //
 
 import Foundation
+import Vapor
+
 
 struct DownloadInfoDto: Codable {
     let directLinkUrl:String
     let installUrl:String
     let validity:Int
 }
+extension DownloadInfoDto: Content {}

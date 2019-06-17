@@ -172,10 +172,30 @@ final class ArtifactsController:BaseController  {
         }
     }
     
-    //GET {idArtifact}/ios_manifest?token='
-    
+    //GET {idArtifact}/ios_plist?token='
+    func downloadArtifactManifest(_ req: Request) throws -> Future<String> {
+        let reqToken = try? req.query.get(String.self, at: "token")
+        guard let token = reqToken else { throw  Abort(.badRequest, reason: "Token not found") }
+        let context = try req.context()
+        return findInfo(with: token, into: context)
+            .flatMap{ info in
+                guard let info = info, let id = info["artifactId"] else { throw  Abort(.badRequest, reason: "Token not found or expired") }
+                return try findArtifact(byID: id, into: context)
+                    .map {artifact -> String in
+                        guard let artifact = artifact else { throw  Abort(.serviceUnavailable, reason: "Artifact not found for ID") }
+                        return "TO DO \(artifact.uuid)"
+                    }
+            }
+            /*.map {artifact -> String in
+                guard let artifact = artifact else { throw  Abort(.serviceUnavailable, reason: "Artifact not found for ID") }
+                return "TO DO \(artifact.uuid)"
+            }*/
+    }
     
     //GET {idArtifact}/file?token='
+    func downloadArtifactFile(_ req: Request) throws -> Future<MessageDto> {
+        throw "not implemented"
+    }
     
     //PUT 'artifacts/{idArtifact}/
     

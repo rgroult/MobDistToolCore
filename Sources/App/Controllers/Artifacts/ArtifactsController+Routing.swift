@@ -35,12 +35,22 @@ extension ArtifactsController {
         //POST '{apiKey}/{branch}/{version}/{artifactName}
         artifactRouter.post("", String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.createArtifactByApiKey)
         //DELETE '{apiKey}/{branch}/{version}/{artifactName}
-         artifactRouter.delete("", String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.deleteArtifactByApiKey)
+        artifactRouter.delete("", String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.deleteArtifactByApiKey)
         
         //POST '{apiKey}/last/{artifactName}
         artifactRouter.post("", String.parameter ,PathComponent.constant("latest"),String.parameter,  use: self.createLastArtifactByApiKey)
         //DELETE '{apiKey}/last/{artifactName}
         artifactRouter.delete("", String.parameter ,PathComponent.constant("latest"),String.parameter,  use: self.deleteLastArtifactByApiKey)
+        
+        //GET {artifact uuid}/file
+        artifactRouter.get("", String.parameter ,PathComponent.constant("file"),  use: self.downloadArtifactFile)
+        //GET {artifact uuid}/ios_plist
+        artifactRouter.get("", String.parameter ,PathComponent.constant("ios_plist"),  use: self.downloadArtifactManifest)
+        
+        //protected
+        //GET {artifact uuid}/download
+        let protectedArtifactRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
+        protectedArtifactRouter.get("",String.parameter,PathComponent.constant("download"), use:self.downloadInfo)
     }
 }
 

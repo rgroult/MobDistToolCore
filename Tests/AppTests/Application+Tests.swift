@@ -76,11 +76,18 @@ extension Application {
         _ body: HTTPBody? = nil,
         _ query: [String: String]? = nil,
         token: String? = nil,
-        beforeSend: (Request) throws -> () = { _ in }) throws -> Response {
+        beforeSend: (Request) throws -> () = { _ in },
+        isAbsoluteUrl:Bool = false) throws -> Response {
         let config = try make(NIOServerConfig.self)
-        let path = path.hasPrefix("/") ? path : "/\(path)"
+        let urlString:String
+        if isAbsoluteUrl {
+           urlString = path
+        }else {
+            let path = path.hasPrefix("/") ? path : "/\(path)"
+            urlString = "http://localhost:\(config.port)" + path
+        }
         let req = Request(
-            http: .init(method: method, url: "http://localhost:\(config.port)" + path),
+            http: .init(method: method, url: urlString),
             using: self
         )
         if let body = body {
