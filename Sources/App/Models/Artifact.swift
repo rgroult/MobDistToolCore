@@ -54,6 +54,14 @@ final class Artifact: Model {
             metaDataTags = String(data: encodedTags, encoding: .utf8)
         }
     }
+    
+    func retrieveMetaData() -> [String:String]? {
+        if let tagsData = metaDataTags?.convertToData() {
+            let tags = (try? JSONDecoder().decode([String:String].self, from: tagsData))
+            return tags
+        }
+        return nil
+    }
 }
 
 /// Allows `Todo` to be used as a dynamic migration.

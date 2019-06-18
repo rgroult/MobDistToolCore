@@ -143,24 +143,30 @@ final class ArtifactsController:BaseController  {
                         guard let artifact = artifact else { throw ArtifactError.notFound }
                         return artifact.application.resolve(in: context)
                             .flatMap{application in
-                                return try self.generateDownloadInfo(user: user, for: artifact._id.hexString, platform: application.platform, config: config, into: context)
+                                return try self.generateDownloadInfo(user: user, for: artifact._id.hexString, platform: application.platform,applicationName:application.name, config: config, into: context)
                         }
                     })
         }
     }
-    
-    func generateDownloadInfo(user:User,for artifactID:String, platform:Platform, config:MdtConfiguration,into context:Context) throws -> Future<DownloadInfoDto>{
+    enum ArtifactTokenKeys:String {
+        case user, appName, artifactId, baseDownloadUrl
+    }
+    func generateDownloadInfo(user:User,for artifactID:String, platform:Platform, applicationName:String, config:MdtConfiguration,into context:Context) throws -> Future<DownloadInfoDto>{
         // let config = try req.make(MdtConfiguration.self)
         let validity = 3 // 3 mins
         let baseArtifactPath = config.serverUrl.absoluteString
         
         let durationInSecs = validity * 60
-        
+        //base download URL
+        let baseDownloadUrl = baseArtifactPath + self.generateRoute(Verb.artifactFile(uuid: artifactID).uri)
         //create token with Info
-        let tokenInfo = ["user":user.email, "artifactId":artifactID]
+        let tokenInfo = [ArtifactTokenKeys.user.rawValue:user.email,
+                         ArtifactTokenKeys.appName.rawValue:applicationName,
+                         ArtifactTokenKeys.artifactId.rawValue:artifactID,
+                         ArtifactTokenKeys.baseDownloadUrl.rawValue: baseDownloadUrl]
         return store(info: tokenInfo, durationInSecs: TimeInterval(durationInSecs) , into: context)
             .map{[unowned self] token  in
-                let downloadUrl = baseArtifactPath + self.generateRoute(Verb.artifactFile(uuid: artifactID).uri) + "?token=\(token)"
+                let downloadUrl = baseDownloadUrl + "?token=\(token)"
                 let installUrl:String
                 if platform == .ios {
                     installUrl = baseArtifactPath + self.generateRoute(Verb.artifactiOSManifest(uuid: artifactID).uri) + "?token=\(token)"
@@ -173,33 +179,72 @@ final class ArtifactsController:BaseController  {
     }
     
     //GET {idArtifact}/ios_plist?token='
-    func downloadArtifactManifest(_ req: Request) throws -> Future<String> {
+    func downloadArtifactManifest(_ req: Request) throws -> Future<Response> {
         let reqToken = try? req.query.get(String.self, at: "token")
         guard let token = reqToken else { throw  Abort(.badRequest, reason: "Token not found") }
         let context = try req.context()
         return findInfo(with: token, into: context)
             .flatMap{ info in
-                guard let info = info, let id = info["artifactId"] else { throw  Abort(.badRequest, reason: "Token not found or expired") }
+                guard let info = info, let id = info[ArtifactTokenKeys.artifactId.rawValue], let baseDwUrl = info[ArtifactTokenKeys.baseDownloadUrl.rawValue] , let name = info[ArtifactTokenKeys.appName.rawValue] else { throw  Abort(.badRequest, reason: "Token not found or expired") }
                 return try findArtifact(byID: id, into: context)
-                    .map {artifact -> String in
+                    .map {artifact -> Response in
                         guard let artifact = artifact else { throw  Abort(.serviceUnavailable, reason: "Artifact not found for ID") }
-                        return "TO DO \(artifact.uuid)"
+                        //file download
+                        let downloadUrl = baseDwUrl + "?token=\(token)"
+                        let metaData = artifact.retrieveMetaData()
+                        guard let bundleID = metaData?["CFBundleIdentifier"], let bundleVersion = metaData?["CFBundleVersion"] else { throw  Abort(.serviceUnavailable, reason: "Artifact infos not found for ID") }
+                        let manifest = ArtifactsController.generateiOsManifest(absoluteIpaUrl: downloadUrl, bundleIdentifier: bundleID, bundleVersion: bundleVersion, ApplicationName: name)
+                        
+                        return req.response(manifest, as: .xml)
                     }
             }
-            /*.map {artifact -> String in
-                guard let artifact = artifact else { throw  Abort(.serviceUnavailable, reason: "Artifact not found for ID") }
-                return "TO DO \(artifact.uuid)"
-            }*/
     }
     
     //GET {idArtifact}/file?token='
-    func downloadArtifactFile(_ req: Request) throws -> Future<MessageDto> {
-        throw "not implemented"
+    func downloadArtifactFile(_ req: Request) throws -> Future<Response> {
+        let reqToken = try? req.query.get(String.self, at: "token")
+        guard let token = reqToken else { throw  Abort(.badRequest, reason: "Token not found") }
+        let context = try req.context()
+        let storage = try req.make(StorageServiceProtocol.self)
+        
+        return findInfo(with: token, into: context)
+            .flatMap{ info -> Future<Artifact?> in
+                guard let info = info, let id = info[ArtifactTokenKeys.artifactId.rawValue] else { throw  Abort(.badRequest, reason: "Token not found or expired") }
+                return try findArtifact(byID: id, into: context)
+                // throw "not implemented"
+            }
+            .flatMap{ artifact in
+                guard let artifact = artifact else { throw  Abort(.serviceUnavailable, reason: "Artifact not found for ID") }
+                return try retrieveArtifactData(artifact: artifact, storage: storage, into: context)
+                //return req.response("not implemented", as: .xml)
+                    .map{ storeResult  in
+                        switch storeResult {
+                        case .asFile(let file):
+                            ()
+                        case .asUrI(let url):
+                            ()
+                        }
+                        let response = req.response()
+                        guard let mediaType = MediaType.parse(artifact.contentType ?? "") else { throw  Abort(.internalServerError, reason: "invalid Artifact mime Type") }
+                        response.http.contentType = mediaType
+                        response.http.body = 
+                        return req.response("not implemented", as: .xml)
+                        //throw "not implemented"
+                }
+            }
+        
     }
-    
+    /*
+ var body = new Body(stream);
+ var headers = {"Content-Type":artifact.contentType,"Content-length":"${artifact.size}","Content-Disposition":"attachment; filename=${artifact.filename}"};
+ var response = new shelf.Response(200,body:body,headers:headers);
+ */
     //PUT 'artifacts/{idArtifact}/
     
-    
+/*enum StoredResult {
+ case asFile(file:Foundation.FileHandle)
+ case asUrI(url:URL)
+ }*/
     
     /*return try req.content.decode(ArtifactCreateUpdateDto.self)
      .flatMap({ artifactCreateUpdateDto in

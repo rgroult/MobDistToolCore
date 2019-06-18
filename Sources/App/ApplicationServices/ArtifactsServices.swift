@@ -118,6 +118,11 @@ func createArtifact(app:MDTApplication,name:String,version:String,branch:String,
     return createdArtifact
 }
 
+func retrieveArtifactData(artifact:Artifact,storage:StorageServiceProtocol,into context:Meow.Context) throws -> Future<StoredResult> {
+    guard let storageUrl = artifact.storageInfos else {throw ArtifactError.storageError}
+    return try storage.getStoredFile(storedIn: storageUrl, into: context.eventLoop)
+}
+
 func storeArtifactData(data:Data,filename:String,contentType:String?, artifact:Artifact, storage:StorageServiceProtocol,into context:Meow.Context) throws -> Future<Artifact>{
     //let cacheDirectory = URL(fileURLWithPath: "/tmp/MDT/")
     let temporaryFile = "\(NSTemporaryDirectory())\(filename)_\(random(10)).tmp"  // cacheDirectory.appendingPathComponent("\(filename)_\(random(10)).tmp", isDirectory: false)

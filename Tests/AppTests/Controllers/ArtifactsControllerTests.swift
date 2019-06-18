@@ -260,6 +260,7 @@ final class ArtifactsContollerTests: BaseAppTests {
         let dwInfo = try donwloadInfo(apiKey: iOSApiKey!, fileData: fileData)
         
         let manifestPlist = try app.clientSyncTest(.GET, dwInfo.installUrl,isAbsoluteUrl:true)
+        XCTAssertEqual(manifestPlist.http.contentType, .xml)
         print(manifestPlist.content)
     }
     
