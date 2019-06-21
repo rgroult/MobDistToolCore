@@ -217,18 +217,29 @@ final class ArtifactsController:BaseController  {
                 guard let artifact = artifact else { throw  Abort(.serviceUnavailable, reason: "Artifact not found for ID") }
                 return try retrieveArtifactData(artifact: artifact, storage: storage, into: context)
                 //return req.response("not implemented", as: .xml)
-                    .map{ storeResult  in
+                    .flatMap{ storeResult  in
+                      /*  guard let mediaType = MediaType.parse(artifact.contentType ?? "") else { throw  Abort(.internalServerError, reason: "invalid Artifact mime Type") }
+                        response.http.contentType = mediaType*/
+                        let response:Response
                         switch storeResult {
                         case .asFile(let file):
                             ()
+                            response = req.response("not implemented", as: .xml)
+                            //TO DO
                         case .asUrI(let url):
-                            ()
+                            if url.scheme == "file"{ //local files
+                                return try req.streamFile(at: url.absoluteString)
+                            }else {
+                                //redirect to it
+                                response = req.redirect(to: url.absoluteString)
+                            }
+                            
                         }
-                        let response = req.response()
-                        guard let mediaType = MediaType.parse(artifact.contentType ?? "") else { throw  Abort(.internalServerError, reason: "invalid Artifact mime Type") }
-                        response.http.contentType = mediaType
-                        response.http.body = 
-                        return req.response("not implemented", as: .xml)
+                        return req.eventLoop.newSucceededFuture(result: response)
+                        //let response = req.response()
+                       
+                        //response.http.body = 
+                     //   return req.response("not implemented", as: .xml)
                         //throw "not implemented"
                 }
             }

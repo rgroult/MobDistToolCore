@@ -13,8 +13,8 @@ import XCTest
 //Samples App found here :https://github.com/bitbar/bitbar-samples/
 //Thank to him
 
-let ipaContentType = MediaType.parse(IPA_CONTENT_TYPE.data(using: .utf8)!)
-let apkContentType = MediaType.parse(APK_CONTENT_TYPE.data(using: .utf8)!)
+let ipaContentType = MediaType.parse(IPA_CONTENT_TYPE.data(using: .utf8)!)!
+let apkContentType = MediaType.parse(APK_CONTENT_TYPE.data(using: .utf8)!)!
 
 final class ArtifactsContollerTests: BaseAppTests {
     //MARK: - Tools
@@ -34,7 +34,7 @@ final class ArtifactsContollerTests: BaseAppTests {
         uri =  uri + "/" + name
         
         let beforeSend:(Request) throws -> () = { req in
-            req.http.headers.add(name: "x-filename", value: "test.ipa")
+            req.http.headers.add(name: "x-filename", value: "testArtifact.zip")
             req.http.headers.add(name: "x-mimetype", value: contentType?.description ?? "")
             req.http.contentType = .binary
             if let sortIdentifier = sortIdentifier {
@@ -102,6 +102,7 @@ final class ArtifactsContollerTests: BaseAppTests {
     
     //MARK: - Tests
     private var iOSApiKey:String?
+    private var androidApiKey:String?
     private var token:String?
 
     override func setUp() {
@@ -112,6 +113,7 @@ final class ArtifactsContollerTests: BaseAppTests {
         token = try? login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
         do {
             iOSApiKey = try ApplicationsControllerTests.createApp(with: appDtoiOS, inside: app,token: token).apiKey
+            androidApiKey = try ApplicationsControllerTests.createApp(with: appDtoAndroid, inside: app,token: token).apiKey
         }catch{
             print("Error \(error)")
         }
@@ -122,7 +124,7 @@ final class ArtifactsContollerTests: BaseAppTests {
         XCTAssertNotNil(iOSApiKey)
     }
     
-    func testCreateArtifact() throws{
+    func testCreateIpaArtifact() throws{
         XCTAssertNotNil(iOSApiKey)
         
         let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
@@ -133,8 +135,23 @@ final class ArtifactsContollerTests: BaseAppTests {
         XCTAssertEqual(artifact.sortIdentifier,artifact.version)
     }
     
+    func testCreateApkArtifact() throws{
+        XCTAssertNotNil(androidApiKey)
+        
+        let fileData = try type(of:self).fileData(name: "testdroid-sample-app", ext: "apk")
+        let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: androidApiKey!, branch: "master", version: "1.2.3", name: "prod", contentType:apkContentType, inside: app)
+        let metadata = artifact.metaDataTags
+        // TODO check metadata
+        XCTAssertEqual(metadata?["PACKAGE_NAME"],"com.testdroid.sample.android")
+        XCTAssertEqual(metadata?["MIN_SDK"],"14")
+        XCTAssertEqual(metadata?["VERSION_CODE"],"1")
+        XCTAssertEqual(metadata?["VERSION_NAME"],"0.3")
+        XCTAssertEqual(metadata?["TARGET_SDK"],"19")
+        XCTAssertEqual(artifact.sortIdentifier,artifact.version)
+    }
     
-    func testCreateArtifactFullArgs() throws{
+    
+    func testCreateIpaArtifactFullArgs() throws{
         XCTAssertNotNil(iOSApiKey)
         
         let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
@@ -146,7 +163,22 @@ final class ArtifactsContollerTests: BaseAppTests {
         XCTAssertEqual(artifact.sortIdentifier,"Fake")
     }
     
-    func testCreateArtifactWithSortIdentifier() throws{
+    func testCreateApkArtifactFullArgs() throws{
+        XCTAssertNotNil(androidApiKey)
+        
+        let fileData = try type(of:self).fileData(name: "testdroid-sample-app", ext: "apk")
+        let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: androidApiKey!, branch: "master", version: "1.2.3", name: "prod", contentType:apkContentType, sortIdentifier: "Fake",metaTags: ["Hello":"World"], inside: app)
+        let metadata = artifact.metaDataTags
+        XCTAssertEqual(metadata?["PACKAGE_NAME"],"com.testdroid.sample.android")
+        XCTAssertEqual(metadata?["MIN_SDK"],"14")
+        XCTAssertEqual(metadata?["VERSION_CODE"],"1")
+        XCTAssertEqual(metadata?["VERSION_NAME"],"0.3")
+        XCTAssertEqual(metadata?["TARGET_SDK"],"19")
+        XCTAssertEqual(metadata?["Hello"],"World")
+        XCTAssertEqual(artifact.sortIdentifier,"Fake")
+    }
+    
+    func testCreateIpaArtifactWithSortIdentifier() throws{
         XCTAssertNotNil(iOSApiKey)
         
         let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
@@ -173,7 +205,7 @@ final class ArtifactsContollerTests: BaseAppTests {
     }
     
     func testCreateSameArtifact() throws{
-        try testCreateArtifact()
+        try testCreateIpaArtifact()
         
         let errorResp = try type(of: self).uploadArtifactError(contentFile: try type(of:self).fileData(name: "calculator", ext: "ipa"), apiKey: iOSApiKey!, branch: "master", version: "1.2.3", name: "prod", contentType: ipaContentType, inside: app)
         XCTAssertEqual(errorResp.reason , "ArtifactError.alreadyExist")
@@ -192,7 +224,7 @@ final class ArtifactsContollerTests: BaseAppTests {
     }
     
     func testDeleteArtifact() throws {
-        try testCreateArtifact()
+        try testCreateIpaArtifact()
         let resp = try type(of:self).deleteArtifactSucess(apiKey: iOSApiKey!, branch: "master", version: "1.2.3", name: "prod", inside: app)
     }
     
@@ -245,8 +277,8 @@ final class ArtifactsContollerTests: BaseAppTests {
         print(dwInfo)
     }
     
-    func donwloadInfo(apiKey:String, fileData:Data) throws -> DownloadInfoDto{
-    let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: iOSApiKey!, branch: "master", version: "1.2.3", name: "prod", contentType:ipaContentType, inside: app)
+    func donwloadInfo(apiKey:String, fileData:Data,contentType:MediaType = ipaContentType) throws -> DownloadInfoDto{
+    let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: apiKey, branch: "master", version: "1.2.3", name: "prod", contentType:contentType, inside: app)
     
     //retrieve download info
     let uri = "/v2/Artifacts/\(artifact.uuid)/download"
@@ -261,7 +293,31 @@ final class ArtifactsContollerTests: BaseAppTests {
         
         let manifestPlist = try app.clientSyncTest(.GET, dwInfo.installUrl,isAbsoluteUrl:true)
         XCTAssertEqual(manifestPlist.http.contentType, .xml)
+        //download url must be in manifest
+        XCTAssertTrue("\(manifestPlist.content)".contains(dwInfo.directLinkUrl))
         print(manifestPlist.content)
+    }
+    
+    func testDownloadiOSDownloadFile() throws {
+        let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
+        let dwInfo = try donwloadInfo(apiKey: iOSApiKey!, fileData: fileData)
+        print(dwInfo.directLinkUrl)
+        let ipaFile = try app.clientSyncTest(.GET, dwInfo.directLinkUrl,isAbsoluteUrl:true)
+        XCTAssertTrue(ipaFile.http.contentType == .binary)
+        XCTAssertEqual(ipaFile.http.body.count,fileData.count)
+        //print(ipaFile.http.headers)
+      //  print(ipaFile.content)
+    }
+    
+    func testDownloadAndroidDownloadFile() throws {
+        let fileData = try type(of:self).fileData(name: "testdroid-sample-app", ext: "apk")
+        let dwInfo = try donwloadInfo(apiKey: androidApiKey!, fileData: fileData,contentType:apkContentType)
+        print(dwInfo.directLinkUrl)
+        let ipaFile = try app.clientSyncTest(.GET, dwInfo.directLinkUrl,isAbsoluteUrl:true)
+        XCTAssertTrue(ipaFile.http.contentType == .binary)
+        XCTAssertEqual(ipaFile.http.body.count,fileData.count)
+        //print(ipaFile.http.headers)
+        //  print(ipaFile.content)
     }
     
     class func fileData(name:String,ext:String) throws -> Data {

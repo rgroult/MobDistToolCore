@@ -18,6 +18,7 @@ enum StorageError:Error {
     case notFound
     case storeError(from:Error)
     case deleteError(from:Error)
+    case internalError
 }
 
 protocol StorageServiceProtocol: Service  {

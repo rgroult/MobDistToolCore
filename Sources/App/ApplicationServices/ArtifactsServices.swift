@@ -194,35 +194,71 @@ private func  extractIpaMetaData(IpaFilePath:String,into context:Meow.Context)th
 }
 
 private func  extractApkMetaData(ApkFilePath:String,into context:Meow.Context)throws -> Future<[String:String]>{
-    throw "not implemented"
-}
-/*
-func extractFileMetaData(filePath:String) throws /*-> Future<[String:String]> */{
-    let iosPlistKeysToExtract = ["CFBundleIdentifier","CFBundleVersion","MinimumOSVersion","CFBundleShortVersionString"]
-    
-    //APK : aapk d xmltree pathAPK AndroidManifest.xml
     let task = Process()
-    task.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
-    task.arguments = ["-p",filePath,"*.app/Info.plist"]
+    task.launchPath = "/usr/local/bin/aapt"
+    task.arguments = ["d", "xmltree",ApkFilePath, "AndroidManifest.xml"]
     let outputPipe = Pipe()
     task.standardOutput = outputPipe
-    
-    
     do {
-        task.terminationHandler = { process  in
-            print("Task Done")
+        task.launch()
+        let manifestContent = String(data:outputPipe.fileHandleForReading.readDataToEndOfFile(),encoding: .utf8)
+        guard let allLines = manifestContent?.split(separator: "\n") else { throw ArtifactError.invalidContent }
+        var metaDataResult = [String:String]()
+        for rawLine in allLines {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            switch line {
+            case _ where  line.hasPrefix("A: package"):
+                //A: package="com.testdroid.sample.android" (Raw: "com.testdroid.sample.android")
+                guard let packageName = apkExtractString(from: line) else { continue }
+                metaDataResult["PACKAGE_NAME"] = packageName
+                
+            case _ where  line.hasPrefix("A: android:versionCode"):
+                //A: android:versionCode(0x0101021b)=(type 0x10)0x1
+                guard let versionCode = apkExtractHexVersion(from:line) else { continue }
+                metaDataResult["VERSION_CODE"] = versionCode
+            
+            case _ where  line.hasPrefix("A: android:versionName"):
+                //A: android:versionName(0x0101021c)="0.3" (Raw: "0.3")
+                guard let version = apkExtractString(from: line) else { continue }
+                metaDataResult["VERSION_NAME"] = version
+                
+            case _ where  line.hasPrefix("A: android:minSdkVersion"):
+                // A: android:minSdkVersion(0x0101020c)=(type 0x10)0xe
+                guard let versionCode = apkExtractHexVersion(from:line) else { continue }
+                metaDataResult["MIN_SDK"] = versionCode
+                
+            case _ where  line.hasPrefix("A: android:maxSdkVersion"):
+                //A: android:maxSdkVersion(0x01010330)=(type 0x10)0x12
+                guard let versionCode = apkExtractHexVersion(from:line) else { continue }
+                metaDataResult["MAX_SDK"] = versionCode
+                
+            case _ where  line.hasPrefix("A: android:targetSdkVersion"):
+                //A: android:targetSdkVersion(0x01010270)=(type 0x10)0x13
+                guard let versionCode = apkExtractHexVersion(from:line) else { continue }
+                metaDataResult["TARGET_SDK"] = versionCode
+                
+            default:
+                ()
+            }
         }
         
-     try task.run()
-        let plistBinary = outputPipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(decoding: plistBinary, as: UTF8.self)
-        var plistFormat = PropertyListSerialization.PropertyListFormat.binary
-        let propertyList = try PropertyListSerialization.propertyList(from: plistBinary, options: [], format: &plistFormat) as? [String:Any]
-        print("Output : \(propertyList)")
+        return context.eventLoop.newSucceededFuture(result:metaDataResult)
         
     }catch {
         throw ArtifactError.invalidContent
     }
-    print("End of function")
-}*/
+}
+private func apkExtractHexVersion(from stringValue:String) -> String? {
+    guard let lastIndex = stringValue.lastIndex(of: ")") else { return nil }
+    guard let hexVersion = Int( stringValue[stringValue.index(lastIndex,offsetBy: 3 /* remove')' and the 0x */)..<stringValue.endIndex], radix: 16) else { return nil }
+    return  "\(hexVersion)"
+}
+
+private func apkExtractString(from line:String) -> String? {
+    //remove prefix
+    var removedPrefix = line.drop { $0 != "\""}
+    removedPrefix = removedPrefix.dropFirst()
+    guard let nextIndex = removedPrefix.firstIndex(of: "\"") else { return nil }
+    return String(removedPrefix[removedPrefix.startIndex..<nextIndex])
+}
 

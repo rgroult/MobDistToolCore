@@ -56,8 +56,9 @@ final class LocalStorageServiceTests: BaseAppTests {
             let data = file.readDataToEndOfFile()
             XCTAssertEqual(tempFile.readDataToEndOfFile(), data)
             XCTAssertEqual(data.count, 1024)
-        default:
-            XCTAssertTrue(false)
+        case .asUrI(let url):
+            let data = try Data(contentsOf: url)
+            XCTAssertEqual(1024, UInt64( data.count))
         }
     }
     
@@ -97,8 +98,9 @@ final class LocalStorageServiceTests: BaseAppTests {
             let endIdx = file.seekToEndOfFile()
             XCTAssertEqual(bigSize, endIdx)
             print("Size :\(bigSize)")
-        default:
-            XCTAssertTrue(false)
+        case .asUrI(let url):
+            let data = try Data(contentsOf: url)
+            XCTAssertEqual(bigSize, UInt64( data.count))
         }
     }
 }

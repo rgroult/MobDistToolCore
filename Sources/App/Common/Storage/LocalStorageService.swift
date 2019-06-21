@@ -87,14 +87,17 @@ final class LocalStorageService: StorageServiceProtocol {
     }
     
     func getStoredFile(storedIn :StorageAccessUrl, into eventLoop:EventLoop) throws -> EventLoopFuture<StoredResult> {
-        guard let filename = URL(string:  try extractStorageId(storageInfo: storedIn)) else { throw StorageError.badFormat }
-        do {
+        guard let filenameUrl = URL(string:  try extractStorageId(storageInfo: storedIn)) else { throw StorageError.badFormat }
+        guard FileManager.default.fileExists(atPath: filenameUrl.path) else { throw StorageError.notFound }
+        guard let url = URL(string:  "file://\(filenameUrl.path)") else { throw StorageError.internalError }
+        return eventLoop.newSucceededFuture(result:StoredResult.asUrI(url:url))
+      /*  do {
             let fileHandler = try Foundation.FileHandle(forReadingFrom: filename)
             //print(fileHandler.readDataToEndOfFile())
             return eventLoop.newSucceededFuture(result:StoredResult.asFile(file: fileHandler))
         }catch {
             return eventLoop.newFailedFuture(error: StorageError.notFound)
-        }
+        }*/
     }
     
     func deleteStoredFileStorageId(storedIn:StorageAccessUrl, into eventLoop:EventLoop) throws-> Future<Void>{
