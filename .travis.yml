@@ -9,6 +9,7 @@ before_script:
 - brew install libressl
 - brew install mongodb
 - mkdir -p $PWD/data/db
+- cp binaries/aapt /usr/local/bin && chmod +x /usr/local/bin/aapt
 ## start mongo
 - mongod --dbpath $PWD/data/db --fork --syslog
 - swift package generate-xcodeproj
