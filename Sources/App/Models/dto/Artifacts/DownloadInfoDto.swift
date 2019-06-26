@@ -15,3 +15,9 @@ struct DownloadInfoDto: Codable {
     let validity:Int
 }
 extension DownloadInfoDto: Content {}
+
+extension DownloadInfoDto {
+    static func sample() -> DownloadInfoDto {
+        return DownloadInfoDto(directLinkUrl: "http://mdtHost/XXXXX/artifactFile", installUrl: "http://mdtHost/XXXXX/installArtifact", validity: 3)
+    }
+}

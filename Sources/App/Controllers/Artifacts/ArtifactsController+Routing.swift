@@ -11,7 +11,7 @@ extension ArtifactsController {
     enum Verb {
         case artifacts(apiKeyPathName:String,branchPathName:String,versionPathName:String,namePathName:String)
         case lastArtifacts(apiKeyPathName:String,namePathName:String)
-        case artifact(uuid:String)
+        case artifactDownloadInfo
         case artifactFile(uuid:String)
         case artifactiOSManifest(uuid:String)
         var uri:String {
@@ -20,12 +20,12 @@ extension ArtifactsController {
                 return "{\(apiKeyPathName)}/{\(branchPathName)}/{\(versionPathName)}/{\(namePathName)}"
             case .lastArtifacts(let apiKeyPathName,let namePathName):
                 return "{\(apiKeyPathName)}/latest/{\(namePathName)}"
-            case .artifact(let uuid):
-                return "\(uuid)"
+            case .artifactDownloadInfo:
+                return "{uuid}/download"
             case .artifactFile(let uuid):
-                return "\(uuid)/file"
+                return "{\(uuid)}/file"
             case .artifactiOSManifest(let uuid):
-                return "\(uuid)/ios_plist"
+                return "{\(uuid)}/ios_plist"
             }
         }
     }

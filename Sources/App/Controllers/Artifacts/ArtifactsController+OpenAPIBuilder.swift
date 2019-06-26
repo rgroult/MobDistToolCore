@@ -94,10 +94,54 @@ extension ArtifactsController:APIBuilderControllerProtocol {
                                         APIResponse(code: "400", description: "Request error")
                                 ],
                                       authorization: false
+                            ),
+                            APIAction(method: .get, route: generateRoute(Verb.artifactDownloadInfo.uri),
+                                      summary: "Download/intall info",
+                                      description: "Retieve download/intall info for specific artifact",
+                                      parameters: [
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Artifact UUID", required: true)
+                                ],
+                                      responses: [
+                                        APIResponse(code: "200", description: "Artifact download info", object: DownloadInfoDto.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: true
+                            ),
+                            APIAction(method: .get, route: generateRoute(Verb.artifactiOSManifest(uuid: "uuid").uri),
+                                      summary: "iOS OTA  Manifest file",
+                                      description: "Retieve iOS OTA manifest artifact file",
+                                      parameters: [
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Artifact UUID", required: true),
+                                        APIParameter(name: "token", parameterLocation:.query, description: "token ", required: false)
+                                ],
+                                      responses: [
+                                        APIResponse(code: "200", description: "OTA Manifest file", object: String.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: false
+                            ),
+                            APIAction(method: .get, route: generateRoute(Verb.artifactFile(uuid: "uuid").uri),
+                                      summary: "Artifact binary file file",
+                                      description: "Retrieve binary file file",
+                                      parameters: [
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Artifact UUID", required: true),
+                                        APIParameter(name: "token", parameterLocation:.query, description: "token ", required: false)
+                                ],
+                                      responses: [
+                                        APIResponse(code: "200", description: "OTA binary file", object: Data.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: false
                             )
                 ]
             )
         )
-        _ = apiBuilder.add([APIObject(object: ArtifactDto.sample())])
+        _ = apiBuilder.add([APIObject(object: ArtifactDto.sample()),APIObject(object: DownloadInfoDto.sample())])
     }
 }
