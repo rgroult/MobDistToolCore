@@ -15,7 +15,7 @@ enum ModelVisibility:Int {
 enum Platform:String,Codable {
     case ios, android
 }
-
+/*
 extension Platform {
     static func create(from value:String) throws -> Platform {
         guard let platform = Platform(rawValue:value) else {
@@ -23,4 +23,4 @@ extension Platform {
             throw error }
         return platform
     }
-}
+}*/

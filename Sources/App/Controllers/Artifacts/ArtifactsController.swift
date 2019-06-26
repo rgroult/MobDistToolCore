@@ -233,7 +233,6 @@ final class ArtifactsController:BaseController  {
                                 //redirect to it
                                 response = req.redirect(to: url.absoluteString)
                             }
-                            
                         }
                         return req.eventLoop.newSucceededFuture(result: response)
                         //let response = req.response()

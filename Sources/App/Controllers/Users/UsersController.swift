@@ -86,13 +86,13 @@ final class UsersController:BaseController {
                             })
                     })
             })
-       // throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
+        // throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
     }
     
     func login(_ req: Request) throws -> Future<LoginRespDto> {
         return try req.content.decode(LoginReqDto.self)
-        .flatMap{ loginDto -> Future<LoginRespDto>  in
-             return req.meow().flatMap{context in
+            .flatMap{ loginDto -> Future<LoginRespDto>  in
+                let context = try req.context()
                 return try findUser(by: loginDto.email, and: loginDto.password, updateLastLogin: true, into: context)
                     .flatMap({ user in
                         // user is activated ?
@@ -107,29 +107,8 @@ final class UsersController:BaseController {
                                 return LoginRespDto( email: user.email, name: user.name,token:token)
                         }
                     })
-            }
         }
     }
-//    func loginOLD(_ req: Request) throws -> Future<LoginRespDto> {
-//        return try req.content.decode(LoginReqDto.self)
-//            .flatMap({ loginDto -> Future<LoginRespDto>  in
-//                return req.meow().flatMap{context in
-//                    return context.find(User.self, where:  Query.valEquals(field: "email", val: loginDto.email)).getFirstResult()
-//                        .flatMap({ user in
-//                            guard let user = user else { throw Abort(.notFound)}
-//                            //generate token in header
-//                            let signers = try req.make(JWTSigners.self)
-//                            return try signers.get(kid: signerIdentifier, on: req)
-//                                .map{ signer in
-//                                    let jwt = JWT(header: .init(kid: signerIdentifier), payload: JWTTokenPayload(email: user.email))
-//                                    let signatureData = try jwt.sign(using: signer)
-//                                    let token = String(bytes: signatureData, encoding: .utf8)!
-//                                    return LoginRespDto( email: user.email, name: user.name,token:token)
-//                            }
-//                        })
-//                }
-//            })
-//    }
     
     func me(_ req: Request) throws -> Future<UserDto> {
         return try retrieveUser(from:req)
@@ -155,75 +134,5 @@ final class UsersController:BaseController {
             throw Abort(.badRequest, reason: "Invalid activationToken")
         }
     }
-    
-    /*
-     func index(_ req: Request) throws -> Future<[User]> {
-     return req.meow().flatMap({ context -> Future<[User]> in
-     // Start using Meow!
-     return context.find(User.self).getAllResults()
-     })
-     //return Todo.query(on: req).all()
-     }
-     
-     func apps(_ req: Request) throws -> Future<[MDTApplication]> {
-     print("Retrieve Apps")
-     
-     
-     return req.meow().flatMap({ context -> Future<[MDTApplication]> in
-     // Start using Meow!
-     return context.find(MDTApplication.self).getAllResults()
-     })
-     }
-     
-     func app(_ req: Request) throws -> Future<MDTApplication> {
-     print("Retrieve first App")
-     
-     return req.meow().flatMap({ context -> Future<MDTApplication> in
-     // Start using Meow!
-     return context.find(MDTApplication.self).getFirstResult()
-     .map({$0!})
-     })
-     }*/
-    /*
-     func test(_ req: Request) throws -> Future<MDTApplication2> {
-     return req.meow().flatMap { context -> EventLoopFuture<MDTApplication2> in
-     return context.find(User.self).getFirstResult().flatMap({ user in
-     let appJson:Document = ["_id" : ObjectId() , "name" : "testAppNew"]
-     let app = try MDTApplication2.decoder.decode(MDTApplication2.self, from: appJson)
-     if let user = user {
-     app.adminUsers = [Reference(to: user)]
-     }
-     return app.save(to: context).map({_ in return app
-     })
-     })
-     }
-     }*/
-    
-    /*
-     func artifacts(_ req: Request) throws -> Future<[Artifact]> {
-     return req.meow().flatMap({ context -> Future<[Artifact]> in
-     // Start using Meow!
-     return context.find(Artifact.self).getAllResults()
-     })
-     //return Todo.query(on: req).all()
-     }
-     
-     func findAppsForUser(_ req: Request) throws -> Future<[MDTApplication]> {
-     guard let email = req.query[String.self, at: "email"] else {
-     throw Abort(.badRequest)
-     }
-     
-     return req.meow().flatMap {context -> Future<[MDTApplication]> in
-     return context.findOne(User.self, where: Query.valEquals(field: "email", val: email))
-     .flatMap({ user -> Future<[MDTApplication]> in
-     guard let user = user else {throw Abort(.badRequest)}
-     let query: Document = ["$eq": user._id]
-     return context.find(MDTApplication.self, where: Query.containsElement(field: "adminUsers", match: Query.custom(query))).getAllResults()
-     })
-     }
-     }*/
 }
-//extension Array : PrimitiveConvertible {}
-/*
- db.getCollection("MDTApplication").find({ "adminUsers": { $elemMatch: {$eq: ObjectId("575984927f637070cbd41360") } } })
- */
+

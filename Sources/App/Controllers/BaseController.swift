@@ -33,9 +33,8 @@ class BaseController {
     func retrieveUser(from req:Request) throws -> Future<User?>  {
         let jwt = try req.authenticated(JWTTokenPayload.self)
         guard let email = jwt?.email else { throw Abort(.notFound)}
-        return req.meow().flatMap({ context in
-            return context.findOne(User.self, where: Query.valEquals(field: "email", val: email))
-        })
+        let context = try req.context()
+        return context.findOne(User.self, where: Query.valEquals(field: "email", val: email))
     }
     
     
