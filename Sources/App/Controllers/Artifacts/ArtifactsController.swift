@@ -158,7 +158,7 @@ final class ArtifactsController:BaseController  {
         
         let durationInSecs = validity * 60
         //base download URL
-        let baseDownloadUrl = baseArtifactPath + self.generateRoute(Verb.artifactFile(uuid: artifactID).uri)
+        let baseDownloadUrl = baseArtifactPath + self.generateRoute(Verb.artifactFile(uuid: artifactID).path)
         //create token with Info
         let tokenInfo = [ArtifactTokenKeys.user.rawValue:user.email,
                          ArtifactTokenKeys.appName.rawValue:applicationName,
@@ -169,7 +169,7 @@ final class ArtifactsController:BaseController  {
                 let downloadUrl = baseDownloadUrl + "?token=\(token)"
                 let installUrl:String
                 if platform == .ios {
-                    installUrl = baseArtifactPath + self.generateRoute(Verb.artifactiOSManifest(uuid: artifactID).uri) + "?token=\(token)"
+                    installUrl = baseArtifactPath + self.generateRoute(Verb.artifactiOSManifest(uuid: artifactID).path) + "?token=\(token)"
                 }else {
                     installUrl = downloadUrl
                 }

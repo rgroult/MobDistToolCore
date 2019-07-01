@@ -28,6 +28,22 @@ extension ArtifactsController {
                 return "{\(uuid)}/ios_plist"
             }
         }
+        var path:String {
+            switch self {
+          /*  case .artifacts(let apiKeyPathName, let branchPathName, let versionPathName,let namePathName):
+                return "\(apiKeyPathName)}/{\(branchPathName)/\(versionPathName)/\(namePathName)"
+            case .lastArtifacts(let apiKeyPathName,let namePathName):
+                return "\(apiKeyPathName)/latest/\(namePathName)"
+            case .artifactDownloadInfo:
+                return "{uuid}/download"*/
+            case .artifactFile(let uuid):
+                return "\(uuid)/file"
+            case .artifactiOSManifest(let uuid):
+                return "\(uuid)/ios_plist"
+            default:
+                return "XXX"
+            }
+        }
     }
     
     func configure(with router: Router, and protectedRouter:Router){
