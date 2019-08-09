@@ -93,6 +93,16 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     }
     middlewares.use(FileMiddleware.self) // Serves files from `Public/` directory
     middlewares.use(ErrorMiddleware.self) // Catches errors and converts to HTTP response
+    
+    //CORS
+    let corsConfiguration = CORSMiddleware.Configuration(
+        allowedOrigin: .all,
+        allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
+        allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, .userAgent, .accessControlAllowOrigin]
+    )
+    let corsMiddleware = CORSMiddleware(configuration: corsConfiguration)
+    middlewares.use(corsMiddleware)
+
     services.register(middlewares)
    
     //custom config
@@ -100,7 +110,10 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     myServerConfig.port = configuration.serverListeningPort
     myServerConfig.maxBodySize = 2_000_000_000
     services.register(myServerConfig)
-
+    
+    
+    
+    
     // Configure a SQLite database
     /*let sqlite = try SQLiteDatabase(storage: .memory)
 
