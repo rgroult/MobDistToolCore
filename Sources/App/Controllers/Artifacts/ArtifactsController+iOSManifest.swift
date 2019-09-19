@@ -42,6 +42,6 @@ let manifestTemplate = """
 """
 extension ArtifactsController {
     class func generateiOsManifest(absoluteIpaUrl:String,bundleIdentifier:String,bundleVersion:String,ApplicationName:String) -> String {
-        return String(format: manifestTemplate, absoluteIpaUrl,bundleIdentifier,bundleVersion,ApplicationName)
+        return NSString(format: manifestTemplate as NSString, absoluteIpaUrl,bundleIdentifier,bundleVersion,ApplicationName) as String
     }
 }
