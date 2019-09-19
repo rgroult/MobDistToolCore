@@ -21,19 +21,19 @@ let manifestTemplate = """
                                         <key>kind</key>
                                         <string>software-package</string>
                                         <key>url</key>
-                                        <string>%@</string>
+                                        <string>%s</string>
                                 </dict>
                         </array>
                         <key>metadata</key>
                         <dict>
                                 <key>bundle-identifier</key>
-                                <string>%@</string>
+                                <string>%s</string>
                                 <key>bundle-version</key>
-                                <string>%@</string>
+                                <string>%s</string>
                                 <key>kind</key>
                                 <string>software</string>
                                 <key>title</key>
-                                <string>%@</string>
+                                <string>%s</string>
                         </dict>
                 </dict>
         </array>
@@ -42,6 +42,7 @@ let manifestTemplate = """
 """
 extension ArtifactsController {
     class func generateiOsManifest(absoluteIpaUrl:String,bundleIdentifier:String,bundleVersion:String,ApplicationName:String) -> String {
-        return NSString(format: manifestTemplate as NSString, absoluteIpaUrl,bundleIdentifier,bundleVersion,ApplicationName) as String
+      //  NSLog("test %s",bundleVersion.getCS)
+        return String(format: NSString(string: manifestTemplate) as String, absoluteIpaUrl.withCString{$0},bundleIdentifier.withCString{$0},bundleVersion.withCString{$0},ApplicationName.withCString{$0})
     }
 }
