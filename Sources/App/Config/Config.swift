@@ -117,8 +117,8 @@ extension MdtConfiguration {
         return MdtConfiguration(serverListeningPort: 0, serverExternalUrl: URL(string: "http://host.com")!, mongoServerUrl: URL(string: "mongodb://host")!, jwtSecretToken: "", loginResponseDelay: 0, storageMode: .testing, storageConfiguration: nil, registrationWhiteDomains: nil, automaticRegistration: true, smtpConfiguration:[String:String](), minimumPasswordStrength: 0, initialAdminEmail: "", initialAdminPassword: "", logDirectory:"")
     }
     
-    private func convert<T>(from value:String, into:T) throws -> T {
-        let result:T?
+    private func convert<T>(from value:String, into:T) throws -> Any {
+        let result:Any?
         switch into {
         case is String, is URL:
             result = value as? T
@@ -132,6 +132,9 @@ extension MdtConfiguration {
             result = try JSONDecoder().decode([String].self, from: value.convertToData()) as? T
         case is [String:String]:
             result = try JSONDecoder().decode([String:String].self, from: value.convertToData()) as? T
+        case is StorageManager:
+            guard let storage = (StorageManager(rawValue: value) as? StorageManager)?.rawValue else { throw "Unable to convert \(value) into \(into.self)"}
+            result = storage
         default:
             throw "Invalid Value Type \(T.self)"
         }
