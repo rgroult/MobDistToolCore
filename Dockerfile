@@ -5,6 +5,7 @@ RUN swift package clean
 RUN swift build -c release
 RUN mkdir -p /app/bin
 ADD ./Sources/App/Config/envs/production/configDockerFull.json /app/config/config.json
+ADD ./Public /app/
 RUN mv `swift build -c release --show-bin-path`/Run /app/bin/
 EXPOSE 8080
 RUN ls /app/bin/Run
