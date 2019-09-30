@@ -1,4 +1,4 @@
-import FluentSQLite
+//import FluentSQLite
 import Vapor
 import MeowVapor
 import JWTAuth
@@ -110,6 +110,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     //custom config
     var myServerConfig = NIOServerConfig.default()
     myServerConfig.port = configuration.serverListeningPort
+    myServerConfig.hostname = "0.0.0.0"
     myServerConfig.maxBodySize = 2_000_000_000
     services.register(myServerConfig)
     

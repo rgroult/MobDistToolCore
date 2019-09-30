@@ -303,8 +303,8 @@
         "repositoryURL": "https://github.com/asensei/vapor-auth-jwt",
         "state": {
           "branch": null,
-          "revision": "9685c6f364aa06a4314eda7f24bed5b7a1f6f1df",
-          "version": "1.0.2"
+          "revision": "9a3cc0ce287b3eeb3da733eaa7b2c0b99cfda46d",
+          "version": "1.1.0"
         }
       },
       {

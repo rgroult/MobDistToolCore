@@ -1,7 +1,9 @@
 FROM swift:5.1
+RUN apt-get install libssl-dev zlib1g-dev
 WORKDIR /BUILD
 ADD . ./
 RUN swift package clean
+RUN swift package resolve
 RUN swift build -c release
 RUN mkdir -p /app/bin
 ADD ./Sources/App/Config/envs/production/configDockerFull.json /app/config/config.json
