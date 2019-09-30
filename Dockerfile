@@ -1,5 +1,5 @@
-FROM swift:5.1
-RUN apt-get install libssl-dev zlib1g-dev
+FROM swift:5.0
+RUN apt-get  update && apt-get install libssl-dev zlib1g-dev
 WORKDIR /BUILD
 ADD . ./
 RUN swift package clean

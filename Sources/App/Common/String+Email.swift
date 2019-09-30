@@ -21,7 +21,7 @@ extension String {
         let patternNormal = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}"
         
         #if os(Linux)
-        let regex = try? RegularExpression(pattern: patternNormal, options: .caseInsensitive)
+        let regex = try? NSRegularExpression(pattern: patternNormal, options: .caseInsensitive)
         #else
         let regex = try? NSRegularExpression(pattern: patternNormal, options: .caseInsensitive)
         #endif
