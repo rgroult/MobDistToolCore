@@ -1,0 +1,10 @@
+modisttool-core:
+  build:
+    image: mobdisttool-testing
+    dockerfile: DockerfileForTesting
+  depends_on:
+    - mongo
+  environment:
+    - MDT_mongoServerUrl=mongodb://mongo:27017/mobdisttoolXcode
+mongo:
+  image: mongo:3.4
