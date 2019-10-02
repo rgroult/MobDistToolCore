@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/rgroult/MobDistToolCore.svg?branch=master)](https://travis-ci.org/rgroult/MobDistToolCore)  [![codecov](https://codecov.io/gh/rgroult/MobDistToolCore/branch/master/graph/badge.svg)](https://codecov.io/gh/rgroult/MobDistToolCore)[![Codeship Status for rgroult/MobDistToolCore](https://app.codeship.com/projects/7efb12e0-2d85-0137-a3bd-5a69e62a0223/status?branch=master)](https://app.codeship.com/projects/331534)
+[![Build Status](https://travis-ci.org/rgroult/MobDistToolCore.svg?branch=master)](https://travis-ci.org/rgroult/MobDistToolCore)  [![codecov](https://codecov.io/gh/rgroult/MobDistToolCore/branch/master/graph/badge.svg)](https://codecov.io/gh/rgroult/MobDistToolCore)  [![Codeship Status for rgroult/MobDistToolCore](https://app.codeship.com/projects/7efb12e0-2d85-0137-a3bd-5a69e62a0223/status?branch=master)](https://app.codeship.com/projects/331534)
 
 
 # Mobile Distribution Tool Core
