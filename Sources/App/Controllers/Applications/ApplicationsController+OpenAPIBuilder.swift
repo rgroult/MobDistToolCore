@@ -21,7 +21,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                       summary: "Apps",
                                       description: "Retrieve Applications",
                                       parameters: [
-                                        APIParameter(name: "platform", parameterLocation:.query, description: "Filter by platorm", required: false)
+                                        APIParameter(name: "platform", parameterLocation:.query, description: "Filter by platorm -  [\(Platform.android),\(Platform.ios)]", required: false)
                                     ],
                                       responses: [
                                         APIResponse(code: "200", description: "All applications", array: ApplicationSummaryDto.self),
