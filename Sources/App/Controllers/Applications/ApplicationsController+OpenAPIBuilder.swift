@@ -24,7 +24,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                         APIParameter(name: "platform", parameterLocation:.query, description: "Filter by platorm", required: false)
                                     ],
                                       responses: [
-                                        APIResponse(code: "200", description: "All applications", object: [ApplicationSummaryDto].self),
+                                        APIResponse(code: "200", description: "All applications", array: ApplicationSummaryDto.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                         APIResponse(code: "400", description: "Request error")
@@ -129,7 +129,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                         APIParameter(name: "branch", parameterLocation:.query, description: "Specific branch", required: false)
                                 ],
                                       responses: [
-                                        APIResponse(code: "200", description: "applications updated", object: ArtifactDto.self),
+                                        APIResponse(code: "200", description: "applications updated", array: ArtifactDto.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                         APIResponse(code: "400", description: "Request error")
@@ -144,7 +144,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                         APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true)
                                 ],
                                       responses: [
-                                        APIResponse(code: "200", description: "applications updated", object: ArtifactDto.self),
+                                        APIResponse(code: "200", description: "applications updated", array: ArtifactDto.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                         APIResponse(code: "400", description: "Request error")
