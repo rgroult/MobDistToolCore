@@ -80,11 +80,22 @@ func createApplication(name:String,platform:Platform,description:String,adminUse
     return try findApplication(name: name, platform: platform, into: context)
         .flatMap({ app  in
             guard app == nil else { throw ApplicationError.alreadyExist }
+            
+            return ImageDto.create(within: context.eventLoop, base64Image: base64Icon)
+                .flatMap({icon in
+                    //base64Icon AND icon ?
+                    if let _ = base64Icon {
+                        guard let _ = icon  else { throw ApplicationError.invalidIconFormat }
+                    }
+                    let createdApplication = MDTApplication(name: name, platform: platform, adminUser: adminUser, description: description, base64Icon: base64Icon)
+                    return  createdApplication.save(to: context).map{ createdApplication}
+                })
+            /*
             if let iconData = base64Icon {
                 guard let _ = ImageDto(from: iconData) else { throw ApplicationError.invalidIconFormat }
             }
             let createdApplication = MDTApplication(name: name, platform: platform, adminUser: adminUser, description: description, base64Icon: base64Icon)
-            return  createdApplication.save(to: context).map{ createdApplication}
+            return  createdApplication.save(to: context).map{ createdApplication}*/
         })
 }
 

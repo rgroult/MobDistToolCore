@@ -11,7 +11,8 @@ import Vapor
 struct ImageDto {
     let contentType:String
     let data:Data
-    init?(from base64Image:String){
+    private init?(from base64Image:String?){
+        guard let base64Image = base64Image else { return nil }
         //TO DO : Performance
         //format: data:image/png;base64,iVBORw0K
         let pattern = "^data:(.*);base64,(.*)"
@@ -26,6 +27,21 @@ struct ImageDto {
         //data
         guard let decodeData = Data(base64Encoded: String(base64Image.dropFirst(imageData.startIndex))) else { return nil}
         data = decodeData
+    }
+    
+    static func create(within eventLoop:EventLoop, base64Image:String?) -> Future<ImageDto?> {
+        let promise = eventLoop.newPromise(ImageDto?.self)
+        
+        /// Dispatch  work to happen on a background thread
+        DispatchQueue.global().async {
+            let imageDecoded = ImageDto(from: base64Image)
+            promise.succeed(result: imageDecoded)
+        }
+        
+        return promise.futureResult
+    }
+    static func create(for req:Request, base64Image:String?) -> Future<ImageDto?> {
+        return create(within: req.eventLoop, base64Image: base64Image)
     }
 }
 
