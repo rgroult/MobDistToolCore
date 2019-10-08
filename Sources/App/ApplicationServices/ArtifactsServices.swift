@@ -178,8 +178,11 @@ private func  extractIpaMetaData(IpaFilePath:String,into context:Meow.Context)th
     task.standardOutput = outputPipe
     
     do {
-       // try task.run()
-        task.launch()
+        #if os(Linux)
+            try task.run()
+        #else
+            task.launch()
+        #endif
         let plistBinary = outputPipe.fileHandleForReading.readDataToEndOfFile()
         var plistFormat = PropertyListSerialization.PropertyListFormat.binary
         let propertyList = try PropertyListSerialization.propertyList(from: plistBinary, options: [], format: &plistFormat) as! [String:Any]
@@ -200,7 +203,11 @@ private func  extractApkMetaData(ApkFilePath:String,into context:Meow.Context)th
     let outputPipe = Pipe()
     task.standardOutput = outputPipe
     do {
+        #if os(Linux)
+        try task.run()
+        #else
         task.launch()
+        #endif
         let manifestContent = String(data:outputPipe.fileHandleForReading.readDataToEndOfFile(),encoding: .utf8)
         guard let allLines = manifestContent?.split(separator: "\n") else { throw ArtifactError.invalidContent }
         var metaDataResult = [String:String]()

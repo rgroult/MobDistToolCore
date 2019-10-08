@@ -17,6 +17,8 @@ enum ApplicationError: Error {
     case notAnApplicationAdministrator
     case invalidApplicationAdministrator
     case deleteLastApplicationAdministrator
+    case iconNotFound
+    case invalidIconFormat
     case unknownPlatform
 }
 
@@ -35,6 +37,10 @@ extension ApplicationError:Debuggable {
             return "ApplicationError.deleteLastApplicationAdministrator"
         case .unknownPlatform:
             return "ApplicationError.unknownPlatform"
+        case .iconNotFound:
+            return "ApplicationError.iconNotFound"
+        case .invalidIconFormat:
+            return "ApplicationError.invalidIconFormat"
         }
     }
     
@@ -74,6 +80,9 @@ func createApplication(name:String,platform:Platform,description:String,adminUse
     return try findApplication(name: name, platform: platform, into: context)
         .flatMap({ app  in
             guard app == nil else { throw ApplicationError.alreadyExist }
+            if let iconData = base64Icon {
+                guard let _ = ImageDto(from: iconData) else { throw ApplicationError.invalidIconFormat }
+            }
             let createdApplication = MDTApplication(name: name, platform: platform, adminUser: adminUser, description: description, base64Icon: base64Icon)
             return  createdApplication.save(to: context).map{ createdApplication}
         })

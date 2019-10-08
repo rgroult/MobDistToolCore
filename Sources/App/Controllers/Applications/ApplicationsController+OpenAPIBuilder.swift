@@ -59,6 +59,19 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                 ],
                                 authorization: true
                             ),
+                            APIAction(method: .get, route: generateRoute(Verb.specificAppIcon(pathName: "uuid").uri),
+                                      summary: "Application icon",
+                                      description: "Retrieve Application icon",
+                                      parameters: [
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true)
+                                ],
+                                      responses: [
+                                        APIResponse(code: "200", description: "applications updated", object: Data.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: true
+                            ),
                             APIAction(method: .get, route: generateRoute(Verb.specificApp(pathName: "uuid").uri),
                                       summary: "Get App Detail",
                                       description: "Get all Application Info",

@@ -15,11 +15,35 @@ let appDtoAndroid = ApplicationCreateDto(name: "test App Android", platform: Pla
 
 final class ApplicationsControllerTests: BaseAppTests {
     func testCreate() throws{
-        _ = try register(registerInfo: userIOS, inside: app)
+        try createApplication(appData: appDtoiOS)
+     /*   _ = try register(registerInfo: userIOS, inside: app)
         let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         let token = loginDto.token
         
         let appCreation = appDtoiOS
+        let bodyJSON = try JSONEncoder().encode(appCreation)
+        
+        let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Applications", body,token:token){ res in
+            print(res.content)
+            let app = try res.content.decode(ApplicationDto.self).wait()
+            XCTAssertTrue(app.description == appDtoiOS.description)
+            XCTAssertTrue(app.maxVersionSecretKey == nil)
+            XCTAssertTrue(app.name == appDtoiOS.name)
+            XCTAssertTrue(app.platform == appDtoiOS.platform)
+            XCTAssertNotNil(app.uuid)
+            XCTAssertNotNil(app.apiKey)
+            XCTAssertTrue(app.adminUsers.first?.email == userIOS.email)
+            XCTAssertEqual(res.http.status.code , 200)
+        }*/
+    }
+    
+    private func createApplication(appData:ApplicationCreateDto) throws{
+        _ = try register(registerInfo: userIOS, inside: app)
+        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
+        let token = loginDto.token
+        
+        let appCreation = appData
         let bodyJSON = try JSONEncoder().encode(appCreation)
         
         let body = bodyJSON.convertToHTTPBody()
@@ -428,6 +452,27 @@ final class ApplicationsControllerTests: BaseAppTests {
         return (token,appDetail)
     }
     
+    func testApplicationIcon() throws {
+        let base64EncodedData = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAnCAYAAABuf0pMAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAACXBIWXMAAAsTAAALEwEAmpwYAAADSGlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS40LjAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iCiAgICAgICAgICAgIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIgogICAgICAgICAgICB4bWxuczpleGlmPSJodHRwOi8vbnMuYWRvYmUuY29tL2V4aWYvMS4wLyI+CiAgICAgICAgIDx4bXA6TW9kaWZ5RGF0ZT4yMDE2LTAyLTI0VDIyOjAyOjAyPC94bXA6TW9kaWZ5RGF0ZT4KICAgICAgICAgPHhtcDpDcmVhdG9yVG9vbD5QaXhlbG1hdG9yIDMuNC4yPC94bXA6Q3JlYXRvclRvb2w+CiAgICAgICAgIDx0aWZmOk9yaWVudGF0aW9uPjE8L3RpZmY6T3JpZW50YXRpb24+CiAgICAgICAgIDx0aWZmOlJlc29sdXRpb25Vbml0PjI8L3RpZmY6UmVzb2x1dGlvblVuaXQ+CiAgICAgICAgIDx0aWZmOkNvbXByZXNzaW9uPjU8L3RpZmY6Q29tcHJlc3Npb24+CiAgICAgICAgIDxleGlmOlBpeGVsWERpbWVuc2lvbj44MDI8L2V4aWY6UGl4ZWxYRGltZW5zaW9uPgogICAgICAgICA8ZXhpZjpDb2xvclNwYWNlPjE8L2V4aWY6Q29sb3JTcGFjZT4KICAgICAgICAgPGV4aWY6UGl4ZWxZRGltZW5zaW9uPjk4MzwvZXhpZjpQaXhlbFlE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"
+        let appDto = ApplicationCreateDto(name: "test App iOS", platform: Platform.ios, description: "bla bla", base64IconData: "data:image/png;base64,\(base64EncodedData)", enableMaxVersionCheck:  nil)
+        
+        
+        try createApplication(appData: appDto)
+        //login
+        let token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
+        
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
+        
+        let appFound = apps.first
+        
+        //check detail
+        let iconResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)/icon")
+        let responseData = try iconResp.http.body.data
+        XCTAssertEqual(responseData,Data(base64Encoded: base64EncodedData))
+        XCTAssertEqual(iconResp.http.contentType?.serialize() , "image/png")
+    }
+    
     func testRetrieveVersion() throws {
         let (token,appDetail) = try createAndReturnAppDetail()
         
@@ -469,7 +514,7 @@ final class ApplicationsControllerTests: BaseAppTests {
     
     func testRetrieveVersions() throws {
         let (token,appDetail) = try createAndReturnAppDetail()
-        try uploadArtifact(branches: ["master"], numberPerBranches: 50, apiKey: appDetail.apiKey!)
+        try uploadArtifact(branches: ["master","dev"], numberPerBranches: 25, apiKey: appDetail.apiKey!)
         /*
         for idx in 0..<50 {
             let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")

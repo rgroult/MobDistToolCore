@@ -11,6 +11,7 @@ extension ApplicationsController {
     enum Verb {
         case allApplications
         case specificApp(pathName:String)
+        case specificAppIcon(pathName:String)
         case specificAppVersions(pathName:String)
         case specificAppLatestVersions(pathName:String)
         case specificAppAdmins(pathName:String,email:String)
@@ -20,6 +21,8 @@ extension ApplicationsController {
                 return ""
             case .specificApp(let pathName):
                 return "{\(pathName)}"
+            case .specificAppIcon(let pathName):
+                return "{\(pathName)}/icon"
             case .specificAppVersions(let pathName):
                 return "{\(pathName)}/versions"
             case .specificAppLatestVersions(let pathName):
@@ -31,6 +34,9 @@ extension ApplicationsController {
     }
     
     func configure(with router: Router, and protectedRouter:Router){
+        let appRouter = router.grouped("\(controllerVersion)/\(pathPrefix)")
+        appRouter.get("",String.parameter,PathComponent.constant("icon"), use:self.iconApplication)
+        
         let protectedAppsRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
         protectedAppsRouter.get("", use : self.applications)
         protectedAppsRouter.post("",  use: self.createApplication)

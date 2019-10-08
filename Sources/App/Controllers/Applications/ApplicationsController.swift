@@ -54,6 +54,18 @@ final class ApplicationsController:BaseController {
         }
     }
     
+    func iconApplication(_ req: Request) throws -> Future<ImageDto> {
+      //   throw "not implemented"
+        let appUuid = try req.parameters.next(String.self)
+        let context = try req.context()
+        return try findApplication(uuid: appUuid, into: context)
+            .map({ app in
+                guard let base64 = app?.base64IconData else { throw ApplicationError.iconNotFound }
+                guard let icon =  ImageDto(from: base64) else { throw ApplicationError.invalidIconFormat}
+                return icon
+            })
+    }
+    
     func applications(_ req: Request) throws -> Future<[ApplicationSummaryDto]> {
         let platformFilter:Platform?
         if let queryPlaform = try? req.query.get(String.self, at: "platform") {
