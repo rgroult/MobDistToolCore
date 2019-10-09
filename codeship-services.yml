@@ -8,4 +8,4 @@ modisttool-core:
     - MDT_mongoServerUrl=mongodb://mongo:27017/mobdisttoolXcode
 mongo:
   image: mongo:3.4
-  command: --general-log=0 --log-error
+  command: --quiet
