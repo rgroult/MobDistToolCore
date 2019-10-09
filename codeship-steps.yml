@@ -1,3 +1,6 @@
+- name: build
+  service: modisttool-core
+  command: swift build -c release
 - name: tests
   service: modisttool-core
   command: swift test
