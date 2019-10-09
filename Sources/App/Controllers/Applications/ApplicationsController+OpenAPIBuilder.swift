@@ -70,7 +70,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "400", description: "Request error")
                                 ],
-                                      authorization: true
+                                      authorization: false
                             ),
                             APIAction(method: .get, route: generateRoute(Verb.specificApp(pathName: "uuid").uri),
                                       summary: "Get App Detail",
