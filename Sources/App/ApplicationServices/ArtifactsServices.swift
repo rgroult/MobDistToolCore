@@ -198,11 +198,16 @@ private func  extractIpaMetaData(IpaFilePath:String,into context:Meow.Context)th
 
 private func  extractApkMetaData(ApkFilePath:String,into context:Meow.Context)throws -> Future<[String:String]>{
     let task = Process()
+    #if os(Linux)
+    task.launchPath = "/usr/bin/aapt"
+    #else
     task.launchPath = "/usr/local/bin/aapt"
+    #endif
     task.arguments = ["d", "xmltree",ApkFilePath, "AndroidManifest.xml"]
     let outputPipe = Pipe()
     task.standardOutput = outputPipe
     do {
+        print("before Manifest")
         #if os(Linux)
         try task.run()
         #else

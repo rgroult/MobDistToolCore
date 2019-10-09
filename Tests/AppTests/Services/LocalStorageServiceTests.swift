@@ -34,10 +34,16 @@ final class LocalStorageServiceTests: BaseAppTests {
         try? FileManager.default.removeItem(atPath: "/tmp/mdtOK")
         XCTAssertNoThrow(try storageService.initializeStore(with: ["RootDirectory":"/tmp/mdtOK"]))
         XCTAssertNoThrow(try storageService.initializeStore(with: ["RootDirectory":"/tmp/mdtOK"]))
+        #if os(Linux)
+        //inside docker image as root
+        XCTAssertNoThrow(try storageService.initializeStore(with: ["RootDirectory":"/toto"]))
+        #else
         XCTAssertThrowsError(try storageService.initializeStore(with: ["RootDirectory":"/toto"]), "") { error in
             //print(error.localizedDescription)
             XCTAssertTrue(error.localizedDescription.contains("permission"))
         }
+        #endif
+       
     }
     
     func testStoreFile() throws {

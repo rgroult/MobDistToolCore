@@ -303,8 +303,15 @@ final class ArtifactsContollerTests: BaseAppTests {
         let dwInfo = try donwloadInfo(apiKey: iOSApiKey!, fileData: fileData)
         print(dwInfo.directLinkUrl)
         let ipaFile = try app.clientSyncTest(.GET, dwInfo.directLinkUrl,isAbsoluteUrl:true)
+        #if os(Linux)
+        //URLSEssion on linux doens not handle redirect by default
+        XCTAssertEqual(ipaFile.http.status, .seeOther)
+        XCTAssertEqual( ipaFile.http.headers.firstValue(name: .location),TestingStorageService.defaultIpaUrl)
+        #else
         XCTAssertTrue(ipaFile.http.contentType == .binary)
         XCTAssertEqual(ipaFile.http.body.count,fileData.count)
+        #endif
+        
         //print(ipaFile.http.headers)
       //  print(ipaFile.content)
     }
@@ -314,8 +321,16 @@ final class ArtifactsContollerTests: BaseAppTests {
         let dwInfo = try donwloadInfo(apiKey: androidApiKey!, fileData: fileData,contentType:apkContentType)
         print(dwInfo.directLinkUrl)
         let ipaFile = try app.clientSyncTest(.GET, dwInfo.directLinkUrl,isAbsoluteUrl:true)
-        XCTAssertTrue(ipaFile.http.contentType == .binary)
-        XCTAssertEqual(ipaFile.http.body.count,fileData.count)
+        #if os(Linux)
+            //URLSEssion on linux doens not handle redirect by default
+            XCTAssertEqual(ipaFile.http.status, .seeOther)
+           XCTAssertEqual( ipaFile.http.headers.firstValue(name: .location),TestingStorageService.defaultApkUrl)
+            
+        #else
+            XCTAssertTrue(ipaFile.http.contentType == .binary)
+            XCTAssertEqual(ipaFile.http.body.count,fileData.count)
+        #endif
+       
         //print(ipaFile.http.headers)
         //  print(ipaFile.content)
     }
