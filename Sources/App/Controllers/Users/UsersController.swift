@@ -111,11 +111,19 @@ final class UsersController:BaseController {
     }
     
     func me(_ req: Request) throws -> Future<UserDto> {
-        return try retrieveUser(from:req)
-            .map{ user in
-                guard let user = user else { throw Abort(.unauthorized)}
-                return UserDto.create(from: user, content: .full)
-        }
+        return try retrieveMandatoryUser(from: req)
+            .flatMap({user throws -> Future<UserDto> in
+                let context = try req.context()
+                //administreted Applications
+                return try findApplications(for: user, into: context)
+                    .map(transform: {ApplicationSummaryDto(from: $0)})
+                    .getAllResults()
+                    .map{apps -> UserDto in
+                        var userDto = UserDto.create(from: user, content: .full)
+                        userDto.administretedApplications = apps
+                        return userDto
+                }
+            })
     }
     
     func activation(_ req: Request) throws -> Future<MessageDto> {

@@ -426,6 +426,16 @@ final class ApplicationsControllerTests: BaseAppTests {
         XCTAssertEqual(errorResp.reason , "ApplicationError.notAnApplicationAdministrator")
     }
     
+    func testAdministretedApps() throws {
+        try testCreateMultiple()
+        let token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
+        let me = try profile(with: token, inside: app)
+        XCTAssertEqual(me.administretedApplications?.count , 1)
+        XCTAssertEqual(me.administretedApplications?.first?.name , appDtoAndroid.name)
+        XCTAssertEqual(me.administretedApplications?.first?.platform , appDtoAndroid.platform)
+        XCTAssertEqual(me.administretedApplications?.first?.description , appDtoAndroid.description)
+    }
+    
     private func findApp(with name:String, token:String) throws -> ApplicationSummaryDto?{
         let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
         let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
@@ -468,7 +478,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         
         //check detail
         let iconResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)/icon")
-        let responseData = try iconResp.http.body.data
+        let responseData = iconResp.http.body.data
         XCTAssertEqual(responseData,Data(base64Encoded: base64EncodedData))
         XCTAssertEqual(iconResp.http.contentType?.serialize() , "image/png")
     }

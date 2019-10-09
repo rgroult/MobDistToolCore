@@ -215,13 +215,22 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         XCTAssertNotNil(loginResp.token)
         let token = loginResp.token
         
-        try app.clientTest(.GET, "/v2/Users/me",token:token){ res in
+        let me = try profile(with: token, inside: app)
+        XCTAssertTrue(me.email == userIOS.email)
+        XCTAssertTrue(me.isActivated ?? false)
+        
+      /*  try app.clientTest(.GET, "/v2/Users/me",token:token){ res in
             print(res.content)
             let me = try res.content.decode(UserDto.self).wait()
             XCTAssertTrue(me.email == userIOS.email)
             XCTAssertTrue(me.isActivated ?? false)
-        }
+        }*/
     }
+}
+
+func profile(with token:String,inside app:Application) throws -> UserDto {
+    let result = try app.clientSyncTest(.GET, "/v2/Users/me", token: token)
+    return try result.content.decode(UserDto.self).wait()
 }
 
 func login(withEmail:String, password:String,inside app:Application) throws -> LoginRespDto {

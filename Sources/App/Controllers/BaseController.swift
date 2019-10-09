@@ -37,6 +37,13 @@ class BaseController {
         return context.findOne(User.self, where: Query.valEquals(field: "email", val: email))
     }
     
+    func retrieveMandatoryUser(from req:Request) throws -> Future<User> {
+        return try retrieveUser(from: req)
+        .map{ user in
+            guard let user = user else { throw Abort(.unauthorized)}
+            return user
+        }
+    }
     
     /*
     func generateOpenAPI(apiBuilder:OpenAPIBuilder){

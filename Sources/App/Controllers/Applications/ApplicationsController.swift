@@ -81,9 +81,8 @@ final class ApplicationsController:BaseController {
         }else {
             platformFilter = nil
         }
-        return try retrieveUser(from:req)
+        return try retrieveMandatoryUser(from:req)
             .flatMap{user in
-                guard let _ = user else { throw Abort(.unauthorized)}
                 let context = try req.context()
                 return try findApplications(platform: platformFilter, into: context)
                     .map(transform: {ApplicationSummaryDto(from: $0)})
