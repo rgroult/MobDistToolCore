@@ -57,6 +57,17 @@ extension UsersController:APIBuilderControllerProtocol {
                                 ],
                                       authorization: true
                             ),
+                            APIAction(method: .put, route: generateRoute(Verb.me.rawValue),
+                                      summary: "Update",
+                                      description: "Update Profile",
+                                       request: APIRequest(object: UpdateUserDto.self, description: "Update info."),
+                                      responses: [
+                                        APIResponse(code: "200", description: "My profile", object: UserDto.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                ],
+                                      authorization: true
+                            ),
                             APIAction(method: .get, route: generateRoute(Verb.activation.rawValue),
                                       summary: "Activation",
                                       description: "Activate User",
@@ -71,7 +82,7 @@ extension UsersController:APIBuilderControllerProtocol {
             )
         )
         _ = apiBuilder.add([APIObject(object: LoginReqDto( email: "email@test.com", password: "1234")),APIObject(object: LoginRespDto(email:"john@doe.com",name:"John Doe",token:"554dsr45f8sdf5"))])
-        _ = apiBuilder.add([APIObject(object: UserDto.sample()),APIObject(object: MessageDto.sample())])
+        _ = apiBuilder.add([APIObject(object: UserDto.sample()),APIObject(object: UpdateUserDto.sample()),APIObject(object: MessageDto.sample())])
         _ = apiBuilder.add([APIObject(object: RegisterDto( email: "email@test.com", name: "John Doe", password: "password"))])
         _ = apiBuilder.add([APIObject(object: ForgotPasswordDto( email: "email@test.com"))])
     }

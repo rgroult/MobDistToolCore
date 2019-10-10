@@ -22,5 +22,6 @@ extension UsersController {
         
         let usersProtectedRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
         usersProtectedRouter.get(Verb.me.rawValue, use: self.me)
+        usersProtectedRouter.put(Verb.me.rawValue, use: self.update)
     }
 }

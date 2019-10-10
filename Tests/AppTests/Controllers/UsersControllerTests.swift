@@ -217,7 +217,12 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         
         let me = try profile(with: token, inside: app)
         XCTAssertTrue(me.email == userIOS.email)
+        XCTAssertTrue(me.administretedApplications.isEmpty)
         XCTAssertTrue(me.isActivated ?? false)
+        XCTAssertFalse(me.isSystemAdmin ?? true)
+        XCTAssertNotNil(me.createdAt)
+        XCTAssertNotNil(me.lastLogin)
+        XCTAssertNil(me.favoritesApplicationsUUID)
         
       /*  try app.clientTest(.GET, "/v2/Users/me",token:token){ res in
             print(res.content)
@@ -225,6 +230,35 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
             XCTAssertTrue(me.email == userIOS.email)
             XCTAssertTrue(me.isActivated ?? false)
         }*/
+    }
+    
+    func testUpdate() throws {
+        try testActivation()
+        var loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
+        var token = loginResp.token
+        
+        var me = try profile(with: token, inside: app)
+        XCTAssertEqual(me.name, userIOS.name)
+        //XCTAssertNil(me.)
+        let updateInfo = UpdateUserDto(name: "Foo Super User", password: "azerty",favoritesApplicationsUUID:["XXX_XXX-XXX"])
+        let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        //check update resp
+        let updatedMe = try updateResp.content.decode(UserDto.self).wait()
+        XCTAssertEqual(updatedMe.name, updateInfo.name)
+        XCTAssertEqual(updatedMe.favoritesApplicationsUUID, updateInfo.favoritesApplicationsUUID)
+        
+        //login with old password must failed
+        XCTAssertThrowsError(try login(withEmail: userIOS.email,password:userIOS.password,inside:app))
+        
+        //login with new password
+        loginResp = try login(withEmail: userIOS.email,password:updateInfo.password!,inside:app)
+        token = loginResp.token
+        
+        //retrieve profile
+        me = try profile(with: token, inside: app)
+        //check "updated me"
+        XCTAssertEqual(me.name, updateInfo.name)
+        XCTAssertEqual(me.favoritesApplicationsUUID, updateInfo.favoritesApplicationsUUID)
     }
 }
 

@@ -126,6 +126,19 @@ final class UsersController:BaseController {
             })
     }
     
+    func update(_ req: Request) throws -> Future<UserDto> {
+        return try retrieveMandatoryUser(from: req)
+        .flatMap({user throws -> Future<UserDto> in
+            return try req.content.decode(UpdateUserDto.self)
+            .flatMap({ updateDto  in
+                //update user
+                let context = try req.context()
+                return try updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID, into: context)
+                    .map{UserDto.create(from: $0, content: .full)}
+            })
+        })
+    }
+    
     func activation(_ req: Request) throws -> Future<MessageDto> {
         if let activationToken = try? req.query.get(String.self, at: "activationToken") {
             //activate user

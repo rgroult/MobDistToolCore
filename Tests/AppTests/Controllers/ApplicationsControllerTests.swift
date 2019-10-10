@@ -16,6 +16,15 @@ let appDtoAndroid = ApplicationCreateDto(name: "test App Android", platform: Pla
 final class ApplicationsControllerTests: BaseAppTests {
     func testCreate() throws{
         try createApplication(appData: appDtoiOS)
+        
+        //test if me contains administradted app
+        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
+        let token = loginDto.token
+        let me = try profile(with: token, inside: app)
+        XCTAssertEqual(me.administretedApplications.count, 1)
+        XCTAssertEqual(me.administretedApplications.first?.name, appDtoiOS.name)
+        
+        
      /*   _ = try register(registerInfo: userIOS, inside: app)
         let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         let token = loginDto.token
@@ -430,10 +439,10 @@ final class ApplicationsControllerTests: BaseAppTests {
         try testCreateMultiple()
         let token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
         let me = try profile(with: token, inside: app)
-        XCTAssertEqual(me.administretedApplications?.count , 1)
-        XCTAssertEqual(me.administretedApplications?.first?.name , appDtoAndroid.name)
-        XCTAssertEqual(me.administretedApplications?.first?.platform , appDtoAndroid.platform)
-        XCTAssertEqual(me.administretedApplications?.first?.description , appDtoAndroid.description)
+        XCTAssertEqual(me.administretedApplications.count , 1)
+        XCTAssertEqual(me.administretedApplications.first?.name , appDtoAndroid.name)
+        XCTAssertEqual(me.administretedApplications.first?.platform , appDtoAndroid.platform)
+        XCTAssertEqual(me.administretedApplications.first?.description , appDtoAndroid.description)
     }
     
     private func findApp(with name:String, token:String) throws -> ApplicationSummaryDto?{

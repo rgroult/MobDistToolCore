@@ -14,7 +14,7 @@ struct UserDto: Codable {
     var isActivated:Bool? = nil
     var isSystemAdmin:Bool? = nil
     var favoritesApplicationsUUID:[String]? = nil
-    var administretedApplications:[ApplicationSummaryDto]? = nil
+    var administretedApplications:[ApplicationSummaryDto] = []
     var createdAt:Date? = nil
     var lastLogin:Date? = nil
     var message:String? = nil
@@ -22,7 +22,7 @@ struct UserDto: Codable {
 
 extension UserDto {
     static func sample() -> UserDto {
-        return UserDto( email: "email@test.com", name: "John Doe",isActivated:nil,isSystemAdmin:nil,favoritesApplicationsUUID:nil,administretedApplications:nil,createdAt:nil,lastLogin:nil,message:nil)
+        return UserDto( email: "email@test.com", name: "John Doe",isActivated:nil,isSystemAdmin:nil,favoritesApplicationsUUID:nil,administretedApplications:[],createdAt:nil,lastLogin:nil,message:nil)
     }
     
     static func create(from user:User, content:ModelVisibility) -> UserDto {
