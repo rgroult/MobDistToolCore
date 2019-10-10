@@ -294,8 +294,16 @@ final class ArtifactsContollerTests: BaseAppTests {
         let manifestPlist = try app.clientSyncTest(.GET, dwInfo.installUrl,isAbsoluteUrl:true)
         XCTAssertEqual(manifestPlist.http.contentType, .xml)
         //download url must be in manifest
-        XCTAssertTrue("\(manifestPlist.content)".contains(dwInfo.directLinkUrl))
-        print(manifestPlist.content)
+        if let data =  manifestPlist.http.body.data {
+            let manifestPlistDict =  try PropertyListSerialization.propertyList(from: data, format: nil) as! [String:Any]
+            let metadata = (((manifestPlistDict["items"] as? Array<Any>)?.first as? [String:Any])?["metadata"]) as? [String:Any]
+            let assets = ((((manifestPlistDict["items"] as? Array<Any>)?.first as? [String:Any])?["assets"]) as? [Any])?.first as? [String:Any]
+            XCTAssertEqual(metadata?["title"] as? String, appDtoiOS.name)
+            XCTAssertEqual(metadata?["bundle-version"] as? String, "1")
+            XCTAssertEqual(metadata?["bundle-identifier"] as? String, "com.petri.calculator.calculator")
+            
+            XCTAssertEqual(assets?["url"] as? String, dwInfo.directLinkUrl)
+        }
     }
     
     func testDownloadiOSDownloadFile() throws {

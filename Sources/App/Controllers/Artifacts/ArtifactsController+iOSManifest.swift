@@ -21,19 +21,19 @@ let manifestTemplate = """
                                         <key>kind</key>
                                         <string>software-package</string>
                                         <key>url</key>
-                                        <string>%s</string>
+                                        <string>%@IPA_URL%@</string>
                                 </dict>
                         </array>
                         <key>metadata</key>
                         <dict>
                                 <key>bundle-identifier</key>
-                                <string>%s</string>
+                                <string>%@BUNDLE_ID%@</string>
                                 <key>bundle-version</key>
-                                <string>%s</string>
+                                <string>%@BUNDLE_VERSION%@</string>
                                 <key>kind</key>
                                 <string>software</string>
                                 <key>title</key>
-                                <string>%s</string>
+                                <string>%@APP_NAME%@</string>
                         </dict>
                 </dict>
         </array>
@@ -42,7 +42,13 @@ let manifestTemplate = """
 """
 extension ArtifactsController {
     class func generateiOsManifest(absoluteIpaUrl:String,bundleIdentifier:String,bundleVersion:String,ApplicationName:String) -> String {
-      //  NSLog("test %s",bundleVersion.getCS)
-        return String(format: NSString(string: manifestTemplate) as String, absoluteIpaUrl.withCString{$0},bundleIdentifier.withCString{$0},bundleVersion.withCString{$0},ApplicationName.withCString{$0})
+        
+        //DO NOT USE String(format: ....) it's does not work on Linux
+         let manifestTemplateFilled = manifestTemplate.replacingOccurrences(of: "%@IPA_URL%@", with: absoluteIpaUrl)
+            .replacingOccurrences(of: "%@BUNDLE_ID%@", with: bundleIdentifier)
+            .replacingOccurrences(of: "%@BUNDLE_VERSION%@", with: bundleVersion)
+            .replacingOccurrences(of: "%@APP_NAME%@", with: ApplicationName)
+        
+        return manifestTemplateFilled
     }
 }
