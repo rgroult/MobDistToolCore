@@ -8,7 +8,7 @@
 import Foundation
 import Vapor
 
-struct MdtConfiguration: Codable {
+public struct MdtConfiguration: Codable {
     enum StorageManager: String,Codable {
         case local = "FilesLocalStorage"
         case testing = "TestingStorage"
@@ -151,7 +151,7 @@ extension MdtConfiguration {
 //}
 
 extension MdtConfiguration : ServiceType {
-    static func makeService(for container: Container) throws -> MdtConfiguration {
+    public static func makeService(for container: Container) throws -> MdtConfiguration {
         throw "Unable to make empty service"
     }
     

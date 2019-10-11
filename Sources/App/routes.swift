@@ -5,7 +5,7 @@ import JWTAuth
 import JWT
 
 /// Register your application's routes here.
-public func routes(_ router: Router, authenticateMiddleware:Middleware) throws {
+public func routes(_ router: Router, authenticateMiddleware:Middleware,config:MdtConfiguration) throws {
     // Create builder.
     let openAPIBuilder = OpenAPIBuilder(
         title: "Mobile Distribution Tool",
@@ -52,7 +52,7 @@ public func routes(_ router: Router, authenticateMiddleware:Middleware) throws {
     let usersController = UsersController(apiBuilder: openAPIBuilder)
     usersController.configure(with: router, and: protected)
     
-    let appsController = ApplicationsController(apiBuilder: openAPIBuilder)
+    let appsController = ApplicationsController(apiBuilder: openAPIBuilder,externalUrl: config.serverUrl)
     appsController.configure(with: router, and: protected)
     
     //router.get("users",use:usersController.index)

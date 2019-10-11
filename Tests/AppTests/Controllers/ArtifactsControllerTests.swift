@@ -312,12 +312,12 @@ final class ArtifactsContollerTests: BaseAppTests {
         print(dwInfo.directLinkUrl)
         let ipaFile = try app.clientSyncTest(.GET, dwInfo.directLinkUrl,isAbsoluteUrl:true)
         #if os(Linux)
-        //URLSEssion on linux doens not handle redirect by default
-        XCTAssertEqual(ipaFile.http.status, .seeOther)
-        XCTAssertEqual( ipaFile.http.headers.firstValue(name: .location),TestingStorageService.defaultIpaUrl)
+            //URLSEssion on linux doens not handle redirect by default
+            XCTAssertEqual(ipaFile.http.status, .seeOther)
+            XCTAssertEqual( ipaFile.http.headers.firstValue(name: .location),TestingStorageService.defaultIpaUrl)
         #else
-        XCTAssertTrue(ipaFile.http.contentType == .binary)
-        XCTAssertEqual(ipaFile.http.body.count,fileData.count)
+            XCTAssertTrue(ipaFile.http.contentType == .binary)
+            XCTAssertEqual(ipaFile.http.body.count,fileData.count)
         #endif
         
         //print(ipaFile.http.headers)

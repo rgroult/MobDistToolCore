@@ -35,6 +35,13 @@ import MongoKitten
         self.uuid = UUID().uuidString
         self.maxVersionSecretKey = nil
     }
+    
+    func generateIconUrl(externalUrl:URL) -> String? {
+        if base64IconData != MDTApplication.defaultIconPlaceholder {
+            return externalUrl.appendingPathComponent("\(uuid)/icon").absoluteString
+        }
+        return nil
+    }
 }
 //BsonDbPointer{namespace='MDTUser', id=56d5a8a8f558ddacef0f14b1}
 

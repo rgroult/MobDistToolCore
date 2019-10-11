@@ -21,11 +21,12 @@ struct ApplicationDto: Codable {
     //admin fields
     var apiKey:String?
     var maxVersionSecretKey:String?
+    var iconUrl:String? = nil
 }
 
 extension ApplicationDto {
     static func sample() -> ApplicationDto {
-        return ApplicationDto( name: "Awesome App", platform:.ios ,description:"",uuid:"dsfdsfdsf",adminUsers:[], apiKey:nil,maxVersionSecretKey:nil)
+        return ApplicationDto( name: "Awesome App", platform:.ios ,description:"",uuid:"dsfdsfdsf",adminUsers:[], apiKey:"SQDQSDCQD",maxVersionSecretKey:"ùmlùlmjlsdlf", iconUrl:nil)
     }
 
     static func create(from app:MDTApplication, content:ModelVisibility, in context: Context) -> Future<ApplicationDto>{
@@ -53,6 +54,11 @@ extension ApplicationDto {
         }
     }
     
+    func setIconUrl(url:String?) -> ApplicationDto {
+        var result = self
+        result.iconUrl = url
+        return result
+    }
 }
 
 extension ApplicationDto : Content {}

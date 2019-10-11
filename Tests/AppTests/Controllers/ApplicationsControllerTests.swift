@@ -16,35 +16,6 @@ let appDtoAndroid = ApplicationCreateDto(name: "test App Android", platform: Pla
 final class ApplicationsControllerTests: BaseAppTests {
     func testCreate() throws{
         try createApplication(appData: appDtoiOS)
-        
-        //test if me contains administradted app
-        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
-        let token = loginDto.token
-        let me = try profile(with: token, inside: app)
-        XCTAssertEqual(me.administretedApplications.count, 1)
-        XCTAssertEqual(me.administretedApplications.first?.name, appDtoiOS.name)
-        
-        
-     /*   _ = try register(registerInfo: userIOS, inside: app)
-        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
-        let token = loginDto.token
-        
-        let appCreation = appDtoiOS
-        let bodyJSON = try JSONEncoder().encode(appCreation)
-        
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Applications", body,token:token){ res in
-            print(res.content)
-            let app = try res.content.decode(ApplicationDto.self).wait()
-            XCTAssertTrue(app.description == appDtoiOS.description)
-            XCTAssertTrue(app.maxVersionSecretKey == nil)
-            XCTAssertTrue(app.name == appDtoiOS.name)
-            XCTAssertTrue(app.platform == appDtoiOS.platform)
-            XCTAssertNotNil(app.uuid)
-            XCTAssertNotNil(app.apiKey)
-            XCTAssertTrue(app.adminUsers.first?.email == userIOS.email)
-            XCTAssertEqual(res.http.status.code , 200)
-        }*/
     }
     
     private func createApplication(appData:ApplicationCreateDto) throws{
@@ -65,6 +36,11 @@ final class ApplicationsControllerTests: BaseAppTests {
             XCTAssertTrue(app.platform == appDtoiOS.platform)
             XCTAssertNotNil(app.uuid)
             XCTAssertNotNil(app.apiKey)
+            if let _ = appData.base64IconData {
+                XCTAssertNotNil(app.iconUrl)
+            }else {
+                XCTAssertNil(app.iconUrl)
+            }
             XCTAssertTrue(app.adminUsers.first?.email == userIOS.email)
             XCTAssertEqual(res.http.status.code , 200)
         }
@@ -86,6 +62,7 @@ final class ApplicationsControllerTests: BaseAppTests {
             let app = try res.content.decode(ApplicationDto.self).wait()
             XCTAssertNotNil(app.uuid)
             XCTAssertNotNil(app.apiKey)
+            XCTAssertNil(app.iconUrl)
             XCTAssertEqual(res.http.status.code , 200)
         }
     }
@@ -484,12 +461,18 @@ final class ApplicationsControllerTests: BaseAppTests {
         let apps = try allAppsResp.content.decode([ApplicationSummaryDto].self).wait()
         
         let appFound = apps.first
+        XCTAssertNotNil(appFound?.iconUrl)
         
         //check detail
         let iconResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)/icon")
         let responseData = iconResp.http.body.data
         XCTAssertEqual(responseData,Data(base64Encoded: base64EncodedData))
         XCTAssertEqual(iconResp.http.contentType?.serialize() , "image/png")
+        
+        //check if result is same as it from app
+        print("retrieve with url :\(appFound?.iconUrl)")
+        let icon = try app.clientSyncTest(.GET, appFound!.iconUrl!,isAbsoluteUrl:true)
+        XCTAssertEqual(icon.http.body.data,responseData)
     }
     
     func testRetrieveVersion() throws {

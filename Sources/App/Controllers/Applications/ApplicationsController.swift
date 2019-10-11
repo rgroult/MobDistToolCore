@@ -12,13 +12,16 @@ import Swiftgger
 import Meow
 
 final class ApplicationsController:BaseController {
+    private let externalUrl:URL
     
-    init(apiBuilder:OpenAPIBuilder) {
+    init(apiBuilder:OpenAPIBuilder,externalUrl:URL) {
+        self.externalUrl = externalUrl.appendingPathComponent("v2/Applications")
         super.init(version: "v2", pathPrefix: "Applications", apiBuilder: apiBuilder)
     }
     
     func createApplication(_ req: Request) throws -> Future<ApplicationDto> {
         let context = try req.context()
+        let serverUrl = externalUrl
         return try retrieveUser(from:req)
             .flatMap{user -> Future<ApplicationDto> in
                 guard let user = user else { throw Abort(.unauthorized)}
@@ -28,7 +31,9 @@ final class ApplicationsController:BaseController {
                     }
                     .flatMap({ app -> Future<ApplicationDto>  in
                         App.updateApplication(from: app, maxVersionCheckEnabled: nil, iconData: nil)
-                        return app.save(to: context).flatMap{ ApplicationDto.create(from: app, content: .full, in : context)}
+                        return saveApplication(app: app, into: context)
+                            .flatMap{ ApplicationDto.create(from: $0, content: .full, in : context)}
+                            .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
                     })
         }
     }
@@ -36,6 +41,7 @@ final class ApplicationsController:BaseController {
     func updateApplication(_ req: Request) throws -> Future<ApplicationDto> {
         let appUuid = try req.parameters.next(String.self)
         let context = try req.context()
+        let serverUrl = externalUrl
         return try retrieveUser(from:req)
             .flatMap{user -> Future<ApplicationDto> in
                 guard let user = user else { throw Abort(.unauthorized)}
@@ -48,21 +54,22 @@ final class ApplicationsController:BaseController {
                                 guard app.isAdmin(user: user) else { throw ApplicationError.notAnApplicationAdministrator }
                                 App.updateApplication(from: app, with: applicationUpdateDto)
                                 return saveApplication(app: app, into: context)
-                                    .flatMap { ApplicationDto.create(from: $0, content: .full, in : context) }
+                                    .flatMap {ApplicationDto.create(from: $0, content: .full, in : context)}
+                                    .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
                             })
                     })
         }
     }
     
     func iconApplication(_ req: Request) throws -> Future<ImageDto> {
-      //   throw "not implemented"
+        //   throw "not implemented"
         let appUuid = try req.parameters.next(String.self)
         let context = try req.context()
         return try findApplication(uuid: appUuid, into: context)
             .flatMap{ app -> Future<ImageDto?> in
                 guard let base64 = app?.base64IconData else { throw ApplicationError.iconNotFound }
-               // guard let icon =  ImageDto(from: base64) else { throw ApplicationError.invalidIconFormat}
-               // return icon
+                // guard let icon =  ImageDto(from: base64) else { throw ApplicationError.invalidIconFormat}
+                // return icon
                 return ImageDto.create(for: req, base64Image: base64)
             }.map{ image -> ImageDto in
                 guard let image = image else { throw ApplicationError.invalidIconFormat}
@@ -81,11 +88,12 @@ final class ApplicationsController:BaseController {
         }else {
             platformFilter = nil
         }
+        let serverUrl = externalUrl
         return try retrieveMandatoryUser(from:req)
             .flatMap{user in
                 let context = try req.context()
                 return try findApplications(platform: platformFilter, into: context)
-                    .map(transform: {ApplicationSummaryDto(from: $0)})
+                    .map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
                     .getAllResults()
         }
     }
@@ -126,8 +134,8 @@ final class ApplicationsController:BaseController {
                         guard let user = user else { throw ApplicationError.invalidApplicationAdministrator }
                         return try info.app.addAdmin(user: user, into: context)
                             .map{ _ in MessageDto(message: "Admin User Added") }
-                })
-        })
+                    })
+            })
     }
     
     //@ApiMethod(method: 'DELETE', path: 'app/{appId}/adminUsers/{email}')
@@ -160,7 +168,7 @@ final class ApplicationsController:BaseController {
                 return try findArtifacts(app: app, pageIndex: pageIndex, limitPerPage: limitPerPage, selectedBranch:selectedBranch, excludedBranch: excludedBranch , into: context)
                     .map(transform: {ArtifactDto(from: $0)})
                     .getAllResults()
-            }
+        }
     }
     
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions?pageIndex=1&limitPerPage=30&branch=master')
@@ -176,7 +184,7 @@ final class ApplicationsController:BaseController {
     
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions/last')
     func getApplicationLastVersions(_ req: Request) throws -> Future<[ArtifactDto]> {
-         let uuid = try req.parameters.next(String.self)
+        let uuid = try req.parameters.next(String.self)
         
         return try getApplicationVersionsWithParameters(req, uuid:uuid , pageIndex: nil, limitPerPage: nil, selectedBranch: lastVersionBranchName, isLatestBranch: true)
     }
@@ -196,7 +204,7 @@ final class ApplicationsController:BaseController {
                             guard app.isAdmin(user: user)  else { throw Abort(ApplicationError.notAnApplicationAdministrator)}
                         }
                         return (user,app)
-                })
+                    })
             })
     }
 }

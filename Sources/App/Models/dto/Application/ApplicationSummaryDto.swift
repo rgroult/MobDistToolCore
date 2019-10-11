@@ -13,11 +13,12 @@ struct ApplicationSummaryDto: Codable {
     var platform:Platform
     var description:String
     var uuid:String
+    var iconUrl:String?
 }
 
 extension ApplicationSummaryDto {
     static func sample() -> ApplicationSummaryDto {
-        return ApplicationSummaryDto( name: "Awesome App", platform:.ios ,description:"",uuid:"dsfdsfdsf")
+        return ApplicationSummaryDto( name: "Awesome App", platform:.ios ,description:"",uuid:"dsfdsfdsf",iconUrl: nil)
     }
     
     init(from app:MDTApplication){
@@ -26,6 +27,22 @@ extension ApplicationSummaryDto {
         platform = app.platform
         uuid = app.uuid
     }
+    
+    func setIconUrl(url:String?) -> ApplicationSummaryDto {
+        var result = self
+        result.iconUrl = url
+        return result
+    }
+    /*
+    mutating func addIconUrl(from app:MDTApplication,externalUrl:String){
+        if app.base64IconData != MDTApplication.defaultIconPlaceholder {
+            var path = "v2/\(uuid)/icon"
+            if !externalUrl.hasSuffix("/") {
+                path = "/" + path
+            }
+            iconUrl = externalUrl + path
+        }
+    }*/
 }
 
 extension ApplicationSummaryDto : Content {}
