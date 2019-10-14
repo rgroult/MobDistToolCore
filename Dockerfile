@@ -1,5 +1,5 @@
 FROM swift:5.0
-RUN apt-get  update && apt-get install -y libssl-dev zlib1g-dev unzip aapt
+RUN apt-get  update && apt-get install -y libssl-dev zlib1g-dev unzip aapt && apt-get -qqy purge apport && rm -rf /var/lib/apt/lists/*
 WORKDIR /BUILD
 ADD . ./
 RUN swift package clean
