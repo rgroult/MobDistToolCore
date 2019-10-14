@@ -120,7 +120,7 @@ final class UsersController:BaseController {
                     .getAllResults()
                     .map{apps -> UserDto in
                         var userDto = UserDto.create(from: user, content: .full)
-                        userDto.administretedApplications = apps
+                        userDto.administeredApplications = apps
                         return userDto
                 }
             })

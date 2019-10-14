@@ -100,6 +100,7 @@ final class ApplicationsController:BaseController {
     
     func applicationDetail(_ req: Request) throws -> Future<ApplicationDto> {
         let appUuid = try req.parameters.next(String.self)
+        let serverUrl = externalUrl
         return try retrieveUser(from:req)
             .flatMap{user in
                 guard let user = user else { throw Abort(.unauthorized)}
@@ -108,6 +109,7 @@ final class ApplicationsController:BaseController {
                     .flatMap({ app in
                         guard let app = app else { throw ApplicationError.notFound }
                         return ApplicationDto.create(from: app, content:app.isAdmin(user: user) ? .full : .light , in : context)
+                        .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
                     })}
     }
     

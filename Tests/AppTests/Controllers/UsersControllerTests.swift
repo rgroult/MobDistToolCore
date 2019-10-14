@@ -217,7 +217,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         
         let me = try profile(with: token, inside: app)
         XCTAssertTrue(me.email == userIOS.email)
-        XCTAssertTrue(me.administretedApplications.isEmpty)
+        XCTAssertTrue(me.administeredApplications.isEmpty)
         XCTAssertTrue(me.isActivated ?? false)
         XCTAssertFalse(me.isSystemAdmin ?? true)
         XCTAssertNotNil(me.createdAt)
