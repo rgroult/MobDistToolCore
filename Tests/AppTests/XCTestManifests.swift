@@ -31,7 +31,7 @@ extension ApplicationsControllerTests {
         ("testAddAdminUser", testAddAdminUser),
         ("testAddAdminUserInvalid", testAddAdminUserInvalid),
         ("testAddAdminUserUnAuthorized", testAddAdminUserUnAuthorized),
-        ("testAdministretedApps", testAdministretedApps),
+        ("testAdministeredApps", testAdministeredApps),
         ("testAllApplications", testAllApplications),
         ("testAllApplicationsMultipleUsers", testAllApplicationsMultipleUsers),
         ("testAppDetail", testAppDetail),
@@ -148,6 +148,7 @@ extension UsersControllerNoAutomaticRegistrationTests {
         ("testLoginNotActivated", testLoginNotActivated),
         ("testMe", testMe),
         ("testRegister", testRegister),
+        ("testUpdate", testUpdate),
     ]
 }
 
