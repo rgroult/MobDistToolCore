@@ -16,6 +16,10 @@ public func routes(_ router: Router, authenticateMiddleware:Middleware,config:Md
     //common datamodel
         _ = openAPIBuilder.add([APIObject(object: MessageDto( message: "message"))])
     
+    router.get("status") { req in
+        return ["name":"MobileDistributionTool Core", "version" : MDT_Version ]
+    }
+    
     /*
     // Basic "It works" example
     router.get { req -> String in
