@@ -10,6 +10,11 @@ import Vapor
 
 extension UserError:AbortError {
     var status: HTTPResponseStatus {
-        return HTTPResponseStatus(statusCode: 400)
+        switch self {
+        case .userNotAdministrator:
+            return HTTPResponseStatus(statusCode: 401)
+        default:
+            return HTTPResponseStatus(statusCode: 400)
+        }
     }
 }

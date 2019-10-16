@@ -14,6 +14,7 @@ enum UserError: Error,Equatable {
     case notActivated
     case alreadyExist
     case invalidLoginOrPassword
+    case userNotAdministrator
     case fieldInvalid(fieldName:String)
 }
 
@@ -30,12 +31,18 @@ extension UserError: Debuggable {
             return "UserError.alreadyPresent"
         case .notActivated:
             return "UserError.notActivated"
+        case .userNotAdministrator:
+            return "UserError.userNotAdministrator"
         }
     }
     
     var identifier: String {
         return "UserError"
     }
+}
+
+func allUsers(into context:Meow.Context) throws -> MappedCursor<FindCursor, User>{
+    return context.find(User.self)
 }
 
 func findActivableUser(by activationToken:String,into context:Meow.Context) throws -> Future<User?>{

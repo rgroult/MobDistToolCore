@@ -45,6 +45,14 @@ class BaseController {
         }
     }
     
+    func retrieveMandatoryAdminUser(from req:Request) throws -> Future<User> {
+        return try retrieveMandatoryUser(from: req)
+            .map{ user in
+                guard user.isSystemAdmin else { throw UserError.userNotAdministrator }
+                return user
+        }
+    }
+    
     /*
     func generateOpenAPI(apiBuilder:OpenAPIBuilder){
         

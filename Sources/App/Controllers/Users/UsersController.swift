@@ -12,6 +12,7 @@ import Swiftgger
 import JWT
 import JWTAuth
 import SwiftSMTP
+import Pagination
 
 enum RegistrationError : Error {
     case invalidEmailFormat, emailDomainForbidden
@@ -124,6 +125,34 @@ final class UsersController:BaseController {
                         return userDto
                 }
             })
+    }
+    
+    func all(_ req: Request) throws -> Future<Paginated<UserDto>> {
+        return try retrieveMandatoryAdminUser(from: req)
+        .flatMap({_ in
+        let context = try req.context()
+        
+        let result:MappedCursor<MappedCursor<FindCursor, User>, UserDto> = try allUsers(into: context)
+            .map(transform: {UserDto.create(from: $0, content: .full)})
+       // .getAllResults()
+            
+        //    Future<Paginated<UserDto>> = try allUsers(into: context)
+           // .map(transform: {user -> UserDto in
+             //   return UserDto.create(from: user, content: .full)})
+          //  .paginate(for: req)
+        //:MappedCursor<FindCursor, UserDto>
+        let test:Future<Paginated<UserDto>> = result.paginate(for: req)
+        return test
+
+        /*
+         MappedCursor<MappedCursor<FindCursor, User>, UserDto>
+        return try retrieveMandatoryAdminUser(from: req)
+            .flatMap({ adminUser in
+                let context = try req.context()
+                return try allUsers(into: context).underlyingCursor
+            })
+ */
+        })
     }
     
     func update(_ req: Request) throws -> Future<UserDto> {

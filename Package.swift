@@ -6,6 +6,8 @@ let package = Package(
     dependencies: [
         // 💧 A server-side Swift web framework.
         .package(url: "https://github.com/vapor/vapor.git", from: "3.3.0"),
+        
+        .package(url: "https://github.com/vapor-community/pagination.git", .upToNextMinor(from: "1.0.9")),
 
         // 🔵 Swift ORM (queries, models, relations, etc) built on SQLite 3.
         //.package(url: "https://github.com/vapor/fluent-sqlite.git", from: "3.3.0"),
@@ -32,7 +34,7 @@ let package = Package(
         .package(url: "https://github.com/IBM-Swift/Swift-SMTP", .upToNextMinor(from: "5.1.0"))
     ],
     targets: [
-        .target(name: "App", dependencies: ["SwiftSMTP","JWTAuth", "Vapor","MeowVapor","Swiftgger","CryptoSwift"]),
+        .target(name: "App", dependencies: ["SwiftSMTP","JWTAuth", "Vapor","MeowVapor","Swiftgger","CryptoSwift", "Pagination"]),
         .target(name: "Run", dependencies: ["App"]),
         .testTarget(name: "AppTests", dependencies: ["App"])
     ]

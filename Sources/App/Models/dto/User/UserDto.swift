@@ -7,6 +7,7 @@
 
 import Foundation
 import Vapor
+import Pagination
 
 struct UserDto: Codable {
     var email:String
@@ -48,3 +49,6 @@ extension UserDto {
 }
 
 extension UserDto: Content {}
+
+//for pagination
+//extension UserDto: Paginatable { }

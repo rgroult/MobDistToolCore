@@ -7,6 +7,7 @@
 
 import Foundation
 import Swiftgger
+import Meow
 
 extension UsersController:APIBuilderControllerProtocol {
     func generateOpenAPI(apiBuilder:OpenAPIBuilder){
@@ -50,6 +51,20 @@ extension UsersController:APIBuilderControllerProtocol {
                             APIAction(method: .get, route: generateRoute(Verb.me.rawValue),
                                       summary: "Me",
                                       description: "Retrieve Profile",
+                                      responses: [
+                                        APIResponse(code: "200", description: "My profile", object: UserDto.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                ],
+                                      authorization: true
+                            ),
+                            APIAction(method: .get, route: generateRoute(""),
+                                      summary: "All USers",
+                                      description: "Retrieve users Profile : need be admin",
+                                      parameters: [
+                                        APIParameter(name: "per", parameterLocation:.query, description: "Number of result per page : default \(MappedCursorDefaultPageSize)", required: false),
+                                        APIParameter(name: "page", parameterLocation:.query, description: "Number of page : default 0", required: false)
+                                    ],
                                       responses: [
                                         APIResponse(code: "200", description: "My profile", object: UserDto.self),
                                         APIResponse(code: "500", description: "Internal Error"),
