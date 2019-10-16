@@ -111,15 +111,20 @@ func updateUser(user:User, newName:String?,newPassword:String?, newFavoritesAppl
     if let password = newPassword {
         user.password = generateHashedPassword(plain: password,salt: user.salt)
     }
-    if let favoritesApplicationsUUID = newFavoritesApplicationsUUID, !favoritesApplicationsUUID.isEmpty {
-        do {
-            let favoritesFlattenApplicationsUUID = String(data: try JSONEncoder().encode(favoritesApplicationsUUID), encoding: .utf8)
-            user.favoritesApplicationsUUID = favoritesFlattenApplicationsUUID
-        }catch {
-            throw UserError.fieldInvalid(fieldName:"favoritesApplicationsUUID")
+    if let favoritesApplicationsUUID = newFavoritesApplicationsUUID {
+        if favoritesApplicationsUUID.isEmpty {
+            user.favoritesApplicationsUUID?.removeAll()
+        }
+        else {
+            do {
+                let favoritesFlattenApplicationsUUID = String(data: try JSONEncoder().encode(favoritesApplicationsUUID), encoding: .utf8)
+                user.favoritesApplicationsUUID = favoritesFlattenApplicationsUUID
+            }catch {
+                throw UserError.fieldInvalid(fieldName:"favoritesApplicationsUUID")
+            }
         }
     }
-     return user.save(to: context).map{user}
+    return user.save(to: context).map{user}
 }
 
 func activateUser(withToken:String, into context:Meow.Context) throws -> Future<Void>{

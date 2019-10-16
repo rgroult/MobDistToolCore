@@ -14,7 +14,7 @@ struct UserDto: Codable {
     var name:String
     var isActivated:Bool? = nil
     var isSystemAdmin:Bool? = nil
-    var favoritesApplicationsUUID:[String]? = nil
+    var favoritesApplicationsUUID:[String] = []
     var administeredApplications:[ApplicationSummaryDto] = []
     var createdAt:Date? = nil
     var lastLogin:Date? = nil
@@ -23,7 +23,7 @@ struct UserDto: Codable {
 
 extension UserDto {
     static func sample() -> UserDto {
-        return UserDto( email: "email@test.com", name: "John Doe",isActivated:nil,isSystemAdmin:nil,favoritesApplicationsUUID:nil,administeredApplications:[],createdAt:nil,lastLogin:nil,message:nil)
+        return UserDto( email: "email@test.com", name: "John Doe",isActivated:nil,isSystemAdmin:nil,favoritesApplicationsUUID:[],administeredApplications:[],createdAt:nil,lastLogin:nil,message:nil)
     }
     
     static func create(from user:User, content:ModelVisibility) -> UserDto {
@@ -37,9 +37,7 @@ extension UserDto {
             isSystemAdmin = user.isSystemAdmin
             isActivated = user.isActivated
             if let appUUID = user.favoritesApplicationsUUID,let data = appUUID.data(using: .utf8) {
-                do {
-                    favoritesApplicationsUUID = try JSONDecoder().decode([String].self, from: data)
-                }catch {}
+                 favoritesApplicationsUUID = (try? JSONDecoder().decode([String].self, from: data)) ?? []
             }
             
             createdAt = user.createdAt

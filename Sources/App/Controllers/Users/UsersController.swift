@@ -141,7 +141,7 @@ final class UsersController:BaseController {
              //   return UserDto.create(from: user, content: .full)})
           //  .paginate(for: req)
         //:MappedCursor<FindCursor, UserDto>
-        let test:Future<Paginated<UserDto>> = result.paginate(for: req)
+            let test:Future<Paginated<UserDto>> = result.paginate(for: req, sortFields: ["email" : "email"])
         return test
 
         /*

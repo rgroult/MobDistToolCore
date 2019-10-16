@@ -10,20 +10,55 @@ import Vapor
 import Pagination
 
 let MappedCursorDefaultPageSize = 10
+
+enum PaginationSort:String {
+    case ascending
+    case descending
+    func convert(field:String) -> MongoKitten.Sort {
+        switch self {
+        case .ascending:
+                return Sort([("field", SortOrder.ascending)])
+        case .descending:
+            return Sort([("field", SortOrder.descending)])
+        }
+    }
+}
+
+//.sort(Sort([("creationDate", SortOrder.descending)]))
+
 extension MappedCursor  where Element:Content {
     
-    func paginate(for req:Request) -> Future<Paginated<Element>>{
+    func paginate(for req:Request, sortFields:[String:String]) -> Future<Paginated<Element>>{
         //extract "page" and "per" parameters
+        
+        //page info
         var page = (try? req.query.get(Int.self, at: "page")) ?? 0
         page = max (0 , page)
         let perPage = (try? req.query.get(Int.self, at: "per")) ?? MappedCursorDefaultPageSize
-        
         let skipItems = page * perPage
         
+        //search info
+        //let searchValue = try? req.query.get(String.self, at: "search")
+        
+        //sort info
+        let sortOrder:PaginationSort
+        if let sortOrderQuery = try? req.query.get(String.self, at: "orderby"), let sort = PaginationSort(rawValue: sortOrderQuery){
+            sortOrder = sort
+        }else {
+            sortOrder = .descending
+        }
+        let sortValue = try? req.query.get(String.self, at: "sortby")
+        let sortBy:String
+        if let field = sortFields[sortValue ?? ""] {
+            sortBy = field
+        }else {
+            sortBy = sortFields.values.first!
+        }
+      
         return self.collection.count().flatMap{ count in
             let pageData = PageData(per: perPage, total: count)
             let position = Position(current: page, max: Int(floor(Double(count) / Double(perPage))))
-            return self.skip(skipItems).limit(perPage)
+            return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)
                 .getPageResult(position,pageData)
         }
     }

@@ -239,6 +239,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         
         var me = try profile(with: token, inside: app)
         XCTAssertEqual(me.name, userIOS.name)
+        XCTAssertEqual(me.favoritesApplicationsUUID,[])
         //XCTAssertNil(me.)
         let updateInfo = UpdateUserDto(name: "Foo Super User", password: "azerty",favoritesApplicationsUUID:["XXX_XXX-XXX"])
         let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
@@ -259,6 +260,12 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         //check "updated me"
         XCTAssertEqual(me.name, updateInfo.name)
         XCTAssertEqual(me.favoritesApplicationsUUID, updateInfo.favoritesApplicationsUUID)
+        
+        //delete app favorites
+        let update2Info = UpdateUserDto(name: nil, password: nil,favoritesApplicationsUUID:[])
+        let update2Resp = try app.clientSyncTest(.PUT, "/v2/Users/me", update2Info.convertToHTTPBody() , token: token)
+        let updated2Me = try update2Resp.content.decode(UserDto.self).wait()
+        XCTAssertEqual(updated2Me.favoritesApplicationsUUID, [])
     }
 }
 
