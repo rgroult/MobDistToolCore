@@ -53,8 +53,9 @@ class BaseController {
         }
     }
     
-    /*
-    func generateOpenAPI(apiBuilder:OpenAPIBuilder){
-        
-    }*/
+    func extractSearch(from req:Request,searchField:String)  throws -> Query? {
+        guard let searchValue = try? req.query.get(String.self, at: "searchby") else { return nil}
+        let query: Document = ["email" : ["$regex": searchValue]]
+        return Query.custom(query)
+    }
 }

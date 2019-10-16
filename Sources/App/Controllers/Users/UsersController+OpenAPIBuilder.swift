@@ -63,10 +63,11 @@ extension UsersController:APIBuilderControllerProtocol {
                                       description: "Retrieve users Profile : need be admin",
                                       parameters: [
                                         APIParameter(name: "per", parameterLocation:.query, description: "Number of result per page : default \(MappedCursorDefaultPageSize)", required: false),
-                                        APIParameter(name: "page", parameterLocation:.query, description: "Number of page : default 0", required: false)
+                                        APIParameter(name: "page", parameterLocation:.query, description: "Number of page : default 0", required: false),
+                                        APIParameter(name: "searchby", parameterLocation:.query, description: "Search by email", required: false)
                                     ],
                                       responses: [
-                                        APIResponse(code: "200", description: "My profile", object: UserDto.self),
+                                        APIResponse(code: "200", description: "Profiles found", object: UserDto.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                 ],

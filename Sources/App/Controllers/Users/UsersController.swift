@@ -129,43 +129,28 @@ final class UsersController:BaseController {
     
     func all(_ req: Request) throws -> Future<Paginated<UserDto>> {
         return try retrieveMandatoryAdminUser(from: req)
-        .flatMap({_ in
-        let context = try req.context()
-        
-        let result:MappedCursor<MappedCursor<FindCursor, User>, UserDto> = try allUsers(into: context)
-            .map(transform: {UserDto.create(from: $0, content: .full)})
-       // .getAllResults()
-            
-        //    Future<Paginated<UserDto>> = try allUsers(into: context)
-           // .map(transform: {user -> UserDto in
-             //   return UserDto.create(from: user, content: .full)})
-          //  .paginate(for: req)
-        //:MappedCursor<FindCursor, UserDto>
-            let test:Future<Paginated<UserDto>> = result.paginate(for: req, sortFields: ["email" : "email"])
-        return test
-
-        /*
-         MappedCursor<MappedCursor<FindCursor, User>, UserDto>
-        return try retrieveMandatoryAdminUser(from: req)
-            .flatMap({ adminUser in
+            .flatMap({[weak self]_ in
                 let context = try req.context()
-                return try allUsers(into: context).underlyingCursor
+                
+                let cursor:MappedCursor<MappedCursor<FindCursor, User>, UserDto> = try allUsers(into: context, additionalQuery: self?.extractSearch(from: req, searchField: "email"))
+                    .map(transform: {UserDto.create(from: $0, content: .full)})
+                
+                let result:Future<Paginated<UserDto>> = cursor.paginate(for: req, sortFields: ["email" : "email"])
+                return result
             })
- */
-        })
     }
     
     func update(_ req: Request) throws -> Future<UserDto> {
         return try retrieveMandatoryUser(from: req)
-        .flatMap({user throws -> Future<UserDto> in
-            return try req.content.decode(UpdateUserDto.self)
-            .flatMap({ updateDto  in
-                //update user
-                let context = try req.context()
-                return try updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID, into: context)
-                    .map{UserDto.create(from: $0, content: .full)}
+            .flatMap({user throws -> Future<UserDto> in
+                return try req.content.decode(UpdateUserDto.self)
+                    .flatMap({ updateDto  in
+                        //update user
+                        let context = try req.context()
+                        return try updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID, into: context)
+                            .map{UserDto.create(from: $0, content: .full)}
+                    })
             })
-        })
     }
     
     func activation(_ req: Request) throws -> Future<MessageDto> {

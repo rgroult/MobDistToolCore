@@ -41,8 +41,8 @@ extension UserError: Debuggable {
     }
 }
 
-func allUsers(into context:Meow.Context) throws -> MappedCursor<FindCursor, User>{
-    return context.find(User.self)
+func allUsers(into context:Meow.Context,additionalQuery:Query?) throws -> MappedCursor<FindCursor, User>{
+    return context.find(User.self, where: additionalQuery ?? Query())
 }
 
 func findActivableUser(by activationToken:String,into context:Meow.Context) throws -> Future<User?>{
