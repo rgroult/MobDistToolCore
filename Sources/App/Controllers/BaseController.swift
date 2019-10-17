@@ -58,4 +58,21 @@ class BaseController {
         let query: Document = ["email" : ["$regex": searchValue]]
         return Query.custom(query)
     }
+    
+    func generatePaginationParameters(sortby:[String],searchByField:String?) ->  [APIParameter] {
+        var commonParams = [
+            APIParameter(name: "per", parameterLocation:.query, description: "Number of results per page : default \(MappedCursorDefaultPageSize)", required: false),
+            APIParameter(name: "page", parameterLocation:.query, description: "Page number required : default 0", required: false),
+            APIParameter(name: "orderby", parameterLocation:.query, description: "Order results : \(PaginationSort.ascending)[Default] , \(PaginationSort.ascending)", required: false)
+        ]
+        if let searchByField = searchByField {
+            commonParams.append(APIParameter(name: "searchby", parameterLocation:.query, description: "Search into \(searchByField)", required: false))
+        }
+        if !sortby.isEmpty {
+            commonParams.append(APIParameter(name: "sortby", parameterLocation:.query, description: "Possible sort fields: \(sortby.first ?? "")[default] \(sortby.suffix(from: 1).joined(separator: ", "))", required: false))
+        }
+        
+        return commonParams
+        
+    }
 }

@@ -26,6 +26,8 @@ final class UsersController:BaseController {
         super.init(version: "v2", pathPrefix: "Users", apiBuilder: apiBuilder)
     }
     
+    let sortFields = ["email" : "email","created" : "createdAt","lastlogin" : "lastLogin"]
+    
     func register(_ req: Request) throws -> Future<UserDto> {
         let config = try req.make(MdtConfiguration.self)
         return try req.content.decode(RegisterDto.self)
@@ -130,12 +132,13 @@ final class UsersController:BaseController {
     func all(_ req: Request) throws -> Future<Paginated<UserDto>> {
         return try retrieveMandatoryAdminUser(from: req)
             .flatMap({[weak self]_ in
+                guard let `self` = self else { throw Abort(.internalServerError)}
                 let context = try req.context()
                 
-                let cursor:MappedCursor<MappedCursor<FindCursor, User>, UserDto> = try allUsers(into: context, additionalQuery: self?.extractSearch(from: req, searchField: "email"))
+                let cursor:MappedCursor<MappedCursor<FindCursor, User>, UserDto> = try allUsers(into: context, additionalQuery: self.extractSearch(from: req, searchField: "email"))
                     .map(transform: {UserDto.create(from: $0, content: .full)})
                 
-                let result:Future<Paginated<UserDto>> = cursor.paginate(for: req, sortFields: ["email" : "email","created" : "createdAt","lastlogin" : "lastLogin"])
+                let result:Future<Paginated<UserDto>> = cursor.paginate(for: req, sortFields: self.sortFields)
                 return result
             })
     }

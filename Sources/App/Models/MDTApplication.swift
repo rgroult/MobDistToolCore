@@ -9,14 +9,14 @@ import MeowVapor
 import MongoKitten
 
  final class MDTApplication: Model {
-    static let defaultIconPlaceholder = "images/placeholder.jpg"
+    //static let defaultIconPlaceholder = "images/placeholder.jpg"
     //static let collectionName = "MDTApplication"
     var _id = ObjectId()
     var name:String
     var description:String
     var platform:Platform
     var uuid:String
-    var base64IconData:String
+    var base64IconData:String?
     var apiKey:String
     var maxVersionSecretKey:String?
     var adminUsers: [Reference<User>]
@@ -30,15 +30,16 @@ import MongoKitten
         self.platform = platform
         self.description = description
         self.adminUsers = [Reference(to: adminUser)]
-        self.base64IconData = base64Icon ?? MDTApplication.defaultIconPlaceholder
+        self.base64IconData = base64Icon
         self.apiKey = UUID().uuidString
         self.uuid = UUID().uuidString
         self.maxVersionSecretKey = nil
     }
     
     func generateIconUrl(externalUrl:URL) -> String? {
-        if base64IconData != MDTApplication.defaultIconPlaceholder {
-            return externalUrl.appendingPathComponent("\(uuid)/icon").absoluteString
+        if let base64IconData = base64IconData {
+            let hashCode = base64IconData.hashValue
+            return externalUrl.appendingPathComponent("\(uuid)/icon").absoluteString + "?h=\(hashCode)" //add hash to manage screenshot update"
         }
         return nil
     }

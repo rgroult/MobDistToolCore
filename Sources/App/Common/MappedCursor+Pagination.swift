@@ -24,8 +24,6 @@ enum PaginationSort:String {
     }
 }
 
-//.sort(Sort([("creationDate", SortOrder.descending)]))
-
 extension MappedCursor  where Element:Content {
     
     func paginate(for req:Request, sortFields:[String:String]) -> Future<Paginated<Element>>{
@@ -54,7 +52,10 @@ extension MappedCursor  where Element:Content {
         }else {
             sortBy = sortFields.values.first!
         }
-      
+        
+        //return manager.collection(for: M.self).count(query)
+        
+    
         return self.collection.count().flatMap{ count in
             let pageData = PageData(per: perPage, total: count)
             let position = Position(current: page, max: Int(ceil(Double(count) / Double(perPage))) - 1 /* start indice is 0 */)

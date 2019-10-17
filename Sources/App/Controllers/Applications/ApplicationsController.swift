@@ -10,9 +10,11 @@ import Vapor
 import Routing
 import Swiftgger
 import Meow
+import Pagination
 
 final class ApplicationsController:BaseController {
     private let externalUrl:URL
+    let sortFields = ["created": "createdAt", "name" : "name"]
     
     init(apiBuilder:OpenAPIBuilder,externalUrl:URL) {
         self.externalUrl = externalUrl.appendingPathComponent("v2/Applications")
@@ -77,7 +79,7 @@ final class ApplicationsController:BaseController {
         }
     }
     
-    func applications(_ req: Request) throws -> Future<[ApplicationSummaryDto]> {
+    func applications(_ req: Request) throws -> Future<Paginated<ApplicationSummaryDto>> {
         let platformFilter:Platform?
         if let queryPlaform = try? req.query.get(String.self, at: "platform") {
             if let platform = Platform(rawValue: queryPlaform)  {
@@ -90,11 +92,15 @@ final class ApplicationsController:BaseController {
         }
         let serverUrl = externalUrl
         return try retrieveMandatoryUser(from:req)
-            .flatMap{user in
+            .flatMap{[weak self]user in
+                guard let `self` = self else { throw Abort(.internalServerError)}
                 let context = try req.context()
-                return try findApplications(platform: platformFilter, into: context)
+                return try findApplications(platform: platformFilter, into: context,additionalQuery:self.extractSearch(from: req, searchField: "name"))
+                .map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
+                .paginate(for: req, sortFields: self.sortFields)
+                /*return try findApplications(platform: platformFilter, into: context)
                     .map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
-                    .getAllResults()
+                    .getAllResults()*/
         }
     }
     

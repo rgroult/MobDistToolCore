@@ -49,12 +49,13 @@ extension ApplicationError:Debuggable {
     }
 }
 
-func findApplications(platform:Platform? = nil ,into context:Meow.Context) throws -> MappedCursor<FindCursor, MDTApplication>{
+func findApplications(platform:Platform? = nil ,into context:Meow.Context,additionalQuery:Query?) throws -> MappedCursor<FindCursor, MDTApplication>{
     let query:Query
+    let anotherQuery = additionalQuery ?? Query()
     if let platorm = platform {
-        query = Query.valEquals(field: "platform", val: platorm.rawValue)
+        query = Query.and([Query.valEquals(field: "platform", val: platorm.rawValue),anotherQuery])
     }else {
-        query = Query()
+        query = anotherQuery
     }
     return context.find(MDTApplication.self,where:query)
 }
@@ -69,7 +70,7 @@ func findApplication(name:String,platform:Platform,into context:Meow.Context) th
 }
 
 func findApplication(apiKey:String,into context:Meow.Context) throws -> Future<MDTApplication?> {
-    return context.findOne(MDTApplication.self, where: Query.valEquals(field: "apiKey", val: apiKey))
+    return context.findOne(MDTApplication.self, where:Query.valEquals(field: "apiKey", val: apiKey))
 }
 
 func findApplication(uuid:String,into context:Meow.Context) throws -> Future<MDTApplication?> {
@@ -106,14 +107,20 @@ func updateApplication(from app:MDTApplication, maxVersionCheckEnabled:Bool?, ic
 func updateApplication(from app:MDTApplication, with appDto:ApplicationUpdateDto){
     app.name = appDto.name ?? app.name
     app.description = appDto.description ?? app.description
-    app.base64IconData = appDto.base64IconData ?? app.base64IconData
+    if let base64 = appDto.base64IconData {
+        app.base64IconData = base64.isEmpty ? nil : base64
+    }
+  // app.base64IconData = (appDto.base64IconData?.isEmpty ?? false) ?     ?? app.base64IconData
     if let maxVersionCheckEnabled = appDto.maxVersionCheckEnabled {
-         //already enabled : Do nothing
+        //already enabled : Do nothing
         if maxVersionCheckEnabled  && app.maxVersionSecretKey == nil{
-                app.maxVersionSecretKey = random(15)
+            app.maxVersionSecretKey = random(15)
         }
-    }else {
-        app.maxVersionSecretKey = nil
+        
+        if !maxVersionCheckEnabled {
+            app.maxVersionSecretKey = nil
+        }
+        
     }
 }
 

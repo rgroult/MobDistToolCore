@@ -20,9 +20,9 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                             APIAction(method: .get, route: generateRoute(Verb.allApplications.uri),
                                       summary: "Apps",
                                       description: "Retrieve Applications",
-                                      parameters: [
-                                        APIParameter(name: "platform", parameterLocation:.query, description: "Filter by platorm -  [\(Platform.android),\(Platform.ios)]", required: false)
-                                    ],
+                                      parameters:generatePaginationParameters(sortby: Array(sortFields.keys), searchByField: "name")
+                                            +
+                                            [APIParameter(name: "platform", parameterLocation:.query, description: "Filter by platorm -  [\(Platform.android),\(Platform.ios)]", required: false)],
                                       responses: [
                                         APIResponse(code: "200", description: "All applications", array: ApplicationSummaryDto.self),
                                         APIResponse(code: "500", description: "Internal Error"),
