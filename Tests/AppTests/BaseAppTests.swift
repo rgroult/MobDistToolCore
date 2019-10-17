@@ -54,6 +54,7 @@ class BaseAppTests: XCTestCase {
     override func tearDown()  {
         do {
         try app.runningServer?.close().wait()
+            context = nil
         }catch {
             print("Error Stopping server:\(error)")
             XCTAssertFalse(true)
