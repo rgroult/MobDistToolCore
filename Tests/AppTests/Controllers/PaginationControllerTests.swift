@@ -98,28 +98,70 @@ final class PaginationControllerTests: BaseAppTests {
              XCTAssertEqual( "test010@test.com" , elt?.email)
         }
     }
-    /*
-    func testUsersPaginationSortBy() throws{
-        try populateUsers(nbre: 10)
-        let nbreOfUsers = 11
-        
-        //login as superadmin
-        let configuration = try MdtConfiguration.loadConfig(from: nil, from: &app.environment)
-        let token = try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app).token
-        
-        
-        
-        
-        
-        
-        
-       
-    }*/
     
-    func paginationRequest<DATA:Content>(path:String, perPage:Int,order:PaginationSort?,sortBy:String? = nil, pageNumber:Int,maxElt:Int,token:String,firstItemCheck:((DATA?) -> Void)) throws {
+    func testUsersPaginationSearchByEmail() throws{
+    }
+    
+    func loginAsAdmin() throws -> String {
+        let configuration = try MdtConfiguration.loadConfig(from: nil, from: &app.environment)
+        return try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app).token
+    }
+    
+    func populateApplications(nbre:Int,tempo:Double = 0,token:String) throws{
+        for i in 1...nbre {
+            if tempo > 0.0 {
+                Thread.sleep(forTimeInterval: tempo)
+            }
+            let platform = i%2 == 0 ? Platform.android : Platform.ios
+            let appDto = ApplicationCreateDto(name: "Application\(String(format: "%03d",i))", platform: platform, description: "Desc App", base64IconData: nil, enableMaxVersionCheck: nil)
+            _ = try ApplicationsControllerTests.createApp(with: appDto, inside: app, token: token)
+        }
+    }
+    
+    
+    func testApplicationsPaginationSearchByName() throws {
+        let token = try loginAsAdmin()
+        try populateApplications(nbre: 50, token: token)
+        
+        let apps = try paginationRequest(path: "/v2/Applications", perPage: 20, order: .descending,sortBy:"created" ,searchby:"Application1" , pageNumber: 0, maxElt: 50, token: token) { (elt:ApplicationSummaryDto?) in
+                XCTAssertEqual( "Application10" , elt?.name)
+        }
+        XCTAssertEqual(apps.data.count,10)
+    }
+    
+    func testApplicationsPaginationSortByName() throws {
+        let token = try loginAsAdmin()
+        try populateApplications(nbre: 50, token: token)
+        
+        try paginationRequest(path: "/v2/Applications", perPage: 20, order: .descending,sortBy:"name" , pageNumber: 1, maxElt: 50, token: token) { (elt:ApplicationSummaryDto?) in
+            XCTAssertEqual( "Application030" , elt?.name)
+        }
+    }
+    
+    func testApplicationsPaginationSortByCreated() throws {
+        let token = try loginAsAdmin()
+        try populateApplications(nbre: 50, tempo: 0.2, token: token)
+        
+        try paginationRequest(path: "/v2/Applications", perPage: 20, order: .descending,sortBy:"created" , pageNumber: 0, maxElt: 50, token: token) { (elt:ApplicationSummaryDto?) in
+            XCTAssertEqual( "Application050" , elt?.name)
+        }
+        
+        try paginationRequest(path: "/v2/Applications", perPage: 20, order: .ascending,sortBy:"created" , pageNumber: 0, maxElt: 50, token: token) { (elt:ApplicationSummaryDto?) in
+            XCTAssertEqual( "Application001" , elt?.name)
+        }
+    }
+    
+    @discardableResult
+    func paginationRequest<DATA:Content>(path:String, perPage:Int,order:PaginationSort?,sortBy:String? = nil,searchby:String? = nil, pageNumber:Int,maxElt:Int,token:String,firstItemCheck:((DATA?) -> Void)) throws -> Paginated<DATA>  {
         var query = ["per":"\(perPage)","page":"\(pageNumber)"]
         if let order = order {
             query["orderby"] = order.rawValue
+        }
+        if let searchBy = searchby {
+            query["searchby"] = searchBy
+        }
+        if let sortBy = sortBy {
+            query["sortBy"] = sortBy
         }
         let pageResp = try app.clientSyncTest(.GET, path, nil, query,token: token)
         let page = try pageResp.content.decode(Paginated<DATA>.self).wait()
@@ -135,6 +177,8 @@ final class PaginationControllerTests: BaseAppTests {
         }
         XCTAssertEqual(page.data.count,dataCount )
         firstItemCheck(page.data.first)
+        
+        return page
         //XCTAssertTrue(firstItemCheck(page.data.first))
     }
 }
