@@ -222,7 +222,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         XCTAssertFalse(me.isSystemAdmin ?? true)
         XCTAssertNotNil(me.createdAt)
         XCTAssertNotNil(me.lastLogin)
-        XCTAssertNil(me.favoritesApplicationsUUID)
+        XCTAssertEqual(me.favoritesApplicationsUUID,[])
         
       /*  try app.clientTest(.GET, "/v2/Users/me",token:token){ res in
             print(res.content)

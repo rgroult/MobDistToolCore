@@ -17,9 +17,9 @@ enum PaginationSort:String {
     func convert(field:String) -> MongoKitten.Sort {
         switch self {
         case .ascending:
-                return Sort([("field", SortOrder.ascending)])
+                return Sort([(field, SortOrder.ascending)])
         case .descending:
-            return Sort([("field", SortOrder.descending)])
+            return Sort([(field, SortOrder.descending)])
         }
     }
 }
@@ -57,7 +57,7 @@ extension MappedCursor  where Element:Content {
       
         return self.collection.count().flatMap{ count in
             let pageData = PageData(per: perPage, total: count)
-            let position = Position(current: page, max: Int(floor(Double(count) / Double(perPage))))
+            let position = Position(current: page, max: Int(ceil(Double(count) / Double(perPage))) - 1 /* start indice is 0 */)
             return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)
                 .getPageResult(position,pageData)
         }

@@ -64,6 +64,7 @@ extension UsersController:APIBuilderControllerProtocol {
                                       parameters: [
                                         APIParameter(name: "per", parameterLocation:.query, description: "Number of result per page : default \(MappedCursorDefaultPageSize)", required: false),
                                         APIParameter(name: "page", parameterLocation:.query, description: "Number of page : default 0", required: false),
+                                        APIParameter(name: "sortby", parameterLocation:.query, description: "sort email (\(PaginationSort.ascending),\(PaginationSort.ascending))", required: false),
                                         APIParameter(name: "searchby", parameterLocation:.query, description: "Search by email", required: false)
                                     ],
                                       responses: [
