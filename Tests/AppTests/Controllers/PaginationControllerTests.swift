@@ -59,7 +59,7 @@ final class PaginationControllerTests: BaseAppTests {
     }
     
     func basePagination(nbre:Int,tempo:Double = 0)throws -> String {
-        try populateUsers(nbre: nbre)
+        try populateUsers(nbre: nbre,tempo: tempo)
         //login as superadmin
         let configuration = try MdtConfiguration.loadConfig(from: nil, from: &app.environment)
         return try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app).token
@@ -78,7 +78,7 @@ final class PaginationControllerTests: BaseAppTests {
         let token = try basePagination(nbre: 10,tempo:0.5)
         let nbreOfUsers = 11
         let configuration = try MdtConfiguration.loadConfig(from: nil, from: &app.environment)
-        try paginationRequest(path: "/v2/Users", perPage: 30, order: .descending,sortBy:"login" ,pageNumber: 0, maxElt: nbreOfUsers, token: token) { (elt:UserDto?) in
+        try paginationRequest(path: "/v2/Users", perPage: 30, order: .ascending,sortBy:"email" ,pageNumber: 0, maxElt: nbreOfUsers, token: token) { (elt:UserDto?) in
              XCTAssertEqual( configuration.initialAdminEmail , elt?.email)
         }
         
@@ -100,6 +100,13 @@ final class PaginationControllerTests: BaseAppTests {
     }
     
     func testUsersPaginationSearchByEmail() throws{
+        let token = try basePagination(nbre: 20,tempo: 0)
+        
+        let usersFound = try paginationRequest(path: "/v2/Users", perPage: 30, order: .descending,sortBy:"email",searchby: "test01" ,pageNumber: 0, maxElt: 10, token: token) { (elt:UserDto?) in
+            //print("TEST \(elt?.email)")
+            XCTAssertEqual( "test019@test.com" , elt?.email)
+        }
+        XCTAssertEqual(usersFound.data.count,10)
     }
     
     func loginAsAdmin() throws -> String {
@@ -121,10 +128,10 @@ final class PaginationControllerTests: BaseAppTests {
     
     func testApplicationsPaginationSearchByName() throws {
         let token = try loginAsAdmin()
-        try populateApplications(nbre: 50, token: token)
+        try populateApplications(nbre: 50, tempo: 0.4, token: token)
         
-        let apps = try paginationRequest(path: "/v2/Applications", perPage: 20, order: .descending,sortBy:"created" ,searchby:"Application1" , pageNumber: 0, maxElt: 50, token: token) { (elt:ApplicationSummaryDto?) in
-                XCTAssertEqual( "Application10" , elt?.name)
+        let apps = try paginationRequest(path: "/v2/Applications", perPage: 20, order: .descending,sortBy:"created" ,searchby:"Application01" , pageNumber: 0, maxElt: 10, token: token) { (elt:ApplicationSummaryDto?) in
+                XCTAssertEqual( "Application019" , elt?.name)
         }
         XCTAssertEqual(apps.data.count,10)
     }
@@ -140,7 +147,7 @@ final class PaginationControllerTests: BaseAppTests {
     
     func testApplicationsPaginationSortByCreated() throws {
         let token = try loginAsAdmin()
-        try populateApplications(nbre: 50, tempo: 0.2, token: token)
+        try populateApplications(nbre: 50, tempo: 0.5, token: token)
         
         try paginationRequest(path: "/v2/Applications", perPage: 20, order: .descending,sortBy:"created" , pageNumber: 0, maxElt: 50, token: token) { (elt:ApplicationSummaryDto?) in
             XCTAssertEqual( "Application050" , elt?.name)
@@ -161,16 +168,18 @@ final class PaginationControllerTests: BaseAppTests {
             query["searchby"] = searchBy
         }
         if let sortBy = sortBy {
-            query["sortBy"] = sortBy
+            query["sortby"] = sortBy
         }
         let pageResp = try app.clientSyncTest(.GET, path, nil, query,token: token)
         let page = try pageResp.content.decode(Paginated<DATA>.self).wait()
         
+        let eltPerPage = min(perPage,maxElt)
+        
         XCTAssertEqual(page.page.position.current, pageNumber)
-        XCTAssertEqual(page.page.position.max, Int(ceil(-1.0 + Double(maxElt) / Double(perPage))))
+        XCTAssertEqual(page.page.position.max, Int(ceil(-1.0 + Double(maxElt) / Double(eltPerPage))))
         let dataCount:Int
         if pageNumber <= page.page.position.max {
-             dataCount = pageNumber == page.page.position.max ? maxElt%perPage : perPage
+             dataCount = pageNumber == page.page.position.max ? maxElt%eltPerPage : eltPerPage
             
         }else {
            dataCount = 0

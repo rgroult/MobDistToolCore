@@ -96,6 +96,7 @@ func createUser(name:String,email:String,password:String,isSystemAdmin:Bool = fa
         let salt = generateSalt()
         createdUser.salt = salt
         createdUser.password = generateHashedPassword(plain: password,salt: salt)
+        //createdUser.createdAt = Date()
         if !isActivated {
             //generate activation token
             createdUser.activationToken = UUID().uuidString

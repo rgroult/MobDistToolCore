@@ -53,7 +53,7 @@ func findApplications(platform:Platform? = nil ,into context:Meow.Context,additi
     let query:Query
     let anotherQuery = additionalQuery ?? Query()
     if let platorm = platform {
-        query = Query.and([Query.valEquals(field: "platform", val: platorm.rawValue),anotherQuery])
+        query = Query.and([anotherQuery,Query.valEquals(field: "platform", val: platorm.rawValue)])
     }else {
         query = anotherQuery
     }
