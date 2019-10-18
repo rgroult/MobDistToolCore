@@ -20,6 +20,7 @@ import MongoKitten
     var apiKey:String
     var maxVersionSecretKey:String?
     var adminUsers: [Reference<User>]
+    var createdAt:Date
     
     func isAdmin(user:User) -> Bool {
         return user.isSystemAdmin || adminUsers.contains(Reference(to: user))
@@ -34,6 +35,7 @@ import MongoKitten
         self.apiKey = UUID().uuidString
         self.uuid = UUID().uuidString
         self.maxVersionSecretKey = nil
+        self.createdAt = Date()
     }
     
     func generateIconUrl(externalUrl:URL) -> String? {

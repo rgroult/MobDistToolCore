@@ -14,11 +14,12 @@ struct ApplicationSummaryDto: Codable {
     var description:String
     var uuid:String
     var iconUrl:String?
+    var createdAt:Date
 }
 
 extension ApplicationSummaryDto {
     static func sample() -> ApplicationSummaryDto {
-        return ApplicationSummaryDto( name: "Awesome App", platform:.ios ,description:"",uuid:"dsfdsfdsf",iconUrl: nil)
+        return ApplicationSummaryDto( name: "Awesome App", platform:.ios ,description:"",uuid:"dsfdsfdsf",iconUrl: nil,createdAt: Date())
     }
     
     init(from app:MDTApplication){
@@ -26,6 +27,7 @@ extension ApplicationSummaryDto {
         description = app.description
         platform = app.platform
         uuid = app.uuid
+        createdAt = app.createdAt
     }
     
     func setIconUrl(url:String?) -> ApplicationSummaryDto {
