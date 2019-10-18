@@ -98,7 +98,8 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     let corsConfiguration = CORSMiddleware.Configuration(
         allowedOrigin: .all,
         allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
-        allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, .userAgent, .accessControlAllowOrigin]
+        allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, .userAgent, .accessControlAllowOrigin,
+                         HTTPHeaderName("x-mimetype"),HTTPHeaderName("x-sortidentifier"),HTTPHeaderName("x-metatags"),HTTPHeaderName("x-filename")]
     )
     let corsMiddleware = CORSMiddleware(configuration: corsConfiguration)
     middlewares.use(corsMiddleware)

@@ -49,7 +49,7 @@ extension ApplicationError:Debuggable {
     }
 }
 
-func findApplications(platform:Platform? = nil ,into context:Meow.Context,additionalQuery:Query?) throws -> MappedCursor<FindCursor, MDTApplication>{
+func findApplications(platform:Platform? = nil ,into context:Meow.Context,additionalQuery:Query?) throws -> (Query?,MappedCursor<FindCursor, MDTApplication>){
     let query:Query
     let anotherQuery = additionalQuery ?? Query()
     if let platorm = platform {
@@ -57,7 +57,7 @@ func findApplications(platform:Platform? = nil ,into context:Meow.Context,additi
     }else {
         query = anotherQuery
     }
-    return context.find(MDTApplication.self,where:query)
+    return (query,context.find(MDTApplication.self,where:query))
 }
 
 func findApplications(for user:User, into context:Meow.Context) throws  -> MappedCursor<FindCursor, MDTApplication>{

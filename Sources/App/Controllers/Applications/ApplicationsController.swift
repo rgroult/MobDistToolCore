@@ -95,9 +95,9 @@ final class ApplicationsController:BaseController {
             .flatMap{[weak self]user in
                 guard let `self` = self else { throw Abort(.internalServerError)}
                 let context = try req.context()
-                return try findApplications(platform: platformFilter, into: context,additionalQuery:self.extractSearch(from: req, searchField: "name"))
-                .map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
-                .paginate(for: req, sortFields: self.sortFields)
+                let (queryUse,appFounds) = try findApplications(platform: platformFilter, into: context,additionalQuery:self.extractSearch(from: req, searchField: "name"))
+                return appFounds.map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
+                    .paginate(for: req, sortFields: self.sortFields,findQuery: queryUse)
                 /*return try findApplications(platform: platformFilter, into: context)
                     .map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
                     .getAllResults()*/

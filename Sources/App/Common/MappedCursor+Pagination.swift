@@ -26,7 +26,7 @@ enum PaginationSort:String {
 
 extension MappedCursor  where Element:Content {
     
-    func paginate(for req:Request, sortFields:[String:String]) -> Future<Paginated<Element>>{
+    func paginate(for req:Request, sortFields:[String:String],findQuery:Query? = nil) -> Future<Paginated<Element>>{
         //extract "page" and "per" parameters
         
         //page info
@@ -55,8 +55,14 @@ extension MappedCursor  where Element:Content {
         
         //return manager.collection(for: M.self).count(query)
         
+       /* let countQuery:EventLoopFuture<Int>
+        if let findQuery = findQuery,let context = try? req.context(), let model = model {
+            countQuery = context.count(model, where: findQuery)
+        }else {
+            countQuery = self.collection.count()
+        }*/
     
-        return self.collection.count().flatMap{ count in
+        return self.collection.count(findQuery).flatMap{ count in
             let pageData = PageData(per: perPage, total: count)
             let position = Position(current: page, max: Int(ceil(Double(count) / Double(perPage))) - 1 /* start indice is 0 */)
             return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)

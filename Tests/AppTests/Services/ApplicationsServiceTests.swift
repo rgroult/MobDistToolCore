@@ -81,7 +81,7 @@ final class ApplicationServiceTests: BaseAppTests {
         XCTAssertNil(try findApplications(for: normalUser, into: context).getFirstResult().wait())
         
         //reload app
-        app = try findApplications(into: context,additionalQuery:nil).getFirstResult().wait()
+        app = try findApplications(into: context,additionalQuery:nil).1.getFirstResult().wait()
         XCTAssertEqual(app?.adminUsers.count, 0)
         
         //add user as admin

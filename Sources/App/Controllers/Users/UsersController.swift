@@ -135,10 +135,12 @@ final class UsersController:BaseController {
                 guard let `self` = self else { throw Abort(.internalServerError)}
                 let context = try req.context()
                 
-                let cursor:MappedCursor<MappedCursor<FindCursor, User>, UserDto> = try allUsers(into: context, additionalQuery: self.extractSearch(from: req, searchField: "email"))
+                let searchQuery = try self.extractSearch(from: req, searchField: "email")
+                
+                let cursor:MappedCursor<MappedCursor<FindCursor, User>, UserDto> = try allUsers(into: context, additionalQuery:searchQuery )
                     .map(transform: {UserDto.create(from: $0, content: .full)})
                 
-                let result:Future<Paginated<UserDto>> = cursor.paginate(for: req, sortFields: self.sortFields)
+                let result:Future<Paginated<UserDto>> = cursor.paginate(for: req, sortFields: self.sortFields,findQuery: searchQuery)
                 return result
             })
     }
