@@ -8,6 +8,7 @@
 import Foundation
 import Swiftgger
 import Meow
+import Pagination
 
 extension UsersController:APIBuilderControllerProtocol {
     func generateOpenAPI(apiBuilder:OpenAPIBuilder){
@@ -70,7 +71,7 @@ extension UsersController:APIBuilderControllerProtocol {
                                         APIParameter(name: "searchby", parameterLocation:.query, description: "Search by email", required: false)
                                     ]*/,
                                       responses: [
-                                        APIResponse(code: "200", description: "Profiles found", object: UserDto.self),
+                                        APIResponse(code: "200", description: "Profiles found", object: Paginated<UserDto>.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                 ],
@@ -104,5 +105,6 @@ extension UsersController:APIBuilderControllerProtocol {
         _ = apiBuilder.add([APIObject(object: UserDto.sample()),APIObject(object: UpdateUserDto.sample()),APIObject(object: MessageDto.sample())])
         _ = apiBuilder.add([APIObject(object: RegisterDto( email: "email@test.com", name: "John Doe", password: "password"))])
         _ = apiBuilder.add([APIObject(object: ForgotPasswordDto( email: "email@test.com"))])
+        _ = apiBuilder.add([APIObject(object: Paginated.sample(obj: UserDto.sample()))])
     }
 }

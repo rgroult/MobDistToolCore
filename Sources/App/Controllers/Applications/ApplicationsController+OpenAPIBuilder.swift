@@ -7,6 +7,7 @@
 
 import Foundation
 import Swiftgger
+import Pagination
 
 extension ApplicationsController:APIBuilderControllerProtocol {
     
@@ -24,7 +25,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                             +
                                             [APIParameter(name: "platform", parameterLocation:.query, description: "Filter by platorm -  [\(Platform.android),\(Platform.ios)]", required: false)],
                                       responses: [
-                                        APIResponse(code: "200", description: "All applications", array: ApplicationSummaryDto.self),
+                                        APIResponse(code: "200", description: "All applications", object: Paginated<ApplicationSummaryDto>.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                         APIResponse(code: "400", description: "Request error")
@@ -135,14 +136,15 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                             APIAction(method: .get, route: generateRoute(Verb.specificAppVersions(pathName: "uuid").uri),
                                       summary: "Application versions",
                                       description: "Retrieve versions for specified app",
-                                      parameters: [
+                                      parameters: generatePaginationParameters(sortby: Array(sortFields.keys), searchByField: "name") +
+                                        [
                                         APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true),
-                                        APIParameter(name: "pageIndex", parameterLocation:.query, description: "Number of page (only work if limitPerPage is also provided)", required: false),
-                                        APIParameter(name: "limitPerPage", parameterLocation:.query, description: "Max Number results (only work if pageIndex is also provided)", required: false),
+                                       // APIParameter(name: "pageIndex", parameterLocation:.query, description: "Number of page (only work if limitPerPage is also provided)", required: false),
+                                       // APIParameter(name: "limitPerPage", parameterLocation:.query, description: "Max Number results (only work if pageIndex is  also provided)", required: false),
                                         APIParameter(name: "branch", parameterLocation:.query, description: "Specific branch", required: false)
-                                ],
+                                ],//artifactsSortFields
                                       responses: [
-                                        APIResponse(code: "200", description: "applications updated", array: ArtifactDto.self),
+                                        APIResponse(code: "200", description: "applications versions", object: Paginated<ArtifactDto>.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                         APIResponse(code: "400", description: "Request error")
@@ -157,7 +159,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                         APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true)
                                 ],
                                       responses: [
-                                        APIResponse(code: "200", description: "applications updated", array: ArtifactDto.self),
+                                        APIResponse(code: "200", description: "applications latest versions", object: Paginated<ArtifactDto>.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                         APIResponse(code: "400", description: "Request error")
@@ -170,7 +172,9 @@ extension ApplicationsController:APIBuilderControllerProtocol {
         _ = apiBuilder.add([APIObject(object: ApplicationDto.sample()),
                             APIObject(object: ApplicationSummaryDto.sample()),
                             APIObject(object: ApplicationUpdateDto.sample()),
-                            APIObject(object: ApplicationCreateDto.sample())
+                            APIObject(object: ApplicationCreateDto.sample()),
+                            APIObject(object: Paginated.sample(obj: ApplicationSummaryDto.sample())),
+                            APIObject(object: Paginated.sample(obj: ArtifactDto.sample()))
             ])
     }
 }

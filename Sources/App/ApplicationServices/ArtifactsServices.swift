@@ -55,6 +55,22 @@ func findArtifact(app:MDTApplication,branch:String,version:String,name:String,in
                            Query.valEquals(field: "name", val: name)])
      return context.findOne(Artifact.self, where: query)
 }
+// Find artifacts
+func findArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,into context:Meow.Context) throws -> (Query,MappedCursor<FindCursor, Artifact>){
+    var queryConditions = [Query.valEquals(field: "application", val: app._id)]
+    
+    if let branch = selectedBranch {
+        queryConditions.append(Query.valEquals(field: "branch", val: branch))
+    }
+    
+    if let excludedBranch = excludedBranch {
+        queryConditions.append(Query.valNotEquals(field: "branch", val: excludedBranch))
+    }
+    
+    let query = Query.and(queryConditions)
+    
+    return (query,context.find(Artifact.self, where: query))
+}
 
 // NB: Pagination is made by creationDate
 func findArtifacts(app:MDTApplication,pageIndex:Int?,limitPerPage:Int?,selectedBranch:String?, excludedBranch:String?,into context:Meow.Context) throws -> MappedCursor<FindCursor, Artifact>{
