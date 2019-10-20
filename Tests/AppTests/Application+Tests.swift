@@ -53,7 +53,7 @@ extension Application {
         let config = try make(NIOServerConfig.self)
         let path = path.hasPrefix("/") ? path : "/\(path)"
         let req = Request(
-            http: .init(method: method, url: "http://localhost:\(config.port)" + path),
+            http: .init(method: method, url: "http://0.0.0.0:\(config.port)" + path),
             using: self
         )
         if let body = body {
@@ -84,7 +84,7 @@ extension Application {
            urlString = path
         }else {
             let path = path.hasPrefix("/") ? path : "/\(path)"
-            urlString = "http://localhost:\(config.port)" + path
+            urlString = "http://0.0.0.0:\(config.port)" + path
         }
         let req = Request(
             http: .init(method: method, url: urlString),

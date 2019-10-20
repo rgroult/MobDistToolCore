@@ -40,7 +40,7 @@ final class LocalStorageServiceTests: BaseAppTests {
         #else
         XCTAssertThrowsError(try storageService.initializeStore(with: ["RootDirectory":"/toto"]), "") { error in
             //print(error.localizedDescription)
-            XCTAssertTrue(error.localizedDescription.contains("permission"))
+            XCTAssertTrue(error.localizedDescription.contains("permission") || error.localizedDescription.contains("read only"))
         }
         #endif
        

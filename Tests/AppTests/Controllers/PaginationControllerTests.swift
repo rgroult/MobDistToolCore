@@ -26,7 +26,7 @@ final class PaginationControllerTests: BaseAppTests {
     func testUsersPagination() throws{
         let usersToCreate = 100
         
-        try populateUsers(nbre: usersToCreate)
+        try populateUsers(nbre: usersToCreate,tempo: 0.2)
         
         let nbreOfUsers = usersToCreate + 1  //admin
         
