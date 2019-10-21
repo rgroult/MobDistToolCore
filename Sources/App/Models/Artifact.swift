@@ -59,8 +59,28 @@ final class Artifact: Model {
     
     func retrieveMetaData() -> [String:String]? {
         if let tagsData = metaDataTags?.convertToData() {
-            let tags = (try? JSONDecoder().decode([String:String].self, from: tagsData))
-            return tags
+            let decoder = JSONDecoder()
+            decoder.dataDecodingStrategy = .custom({ decoder -> Data in
+                //decode only String and Int
+                // for backward compatibility with MDT V1
+                let container = try decoder.singleValueContainer()
+                let value:String
+                if let v = try? container.decode(String.self) {
+                    value  = v
+                } else {
+                    value = "\(try container.decode(Int.self).description)"
+                }
+                
+                if let data = value.data(using: .utf8) {
+                    return data
+                }
+                else {
+                    throw DecodingError.dataCorruptedError(in: container,
+                    debugDescription:  "Invalid value \(value)")
+                }
+            })
+            let tags = try? decoder.decode([String:Data].self, from: tagsData)
+            return tags?.mapValues({ String(data: $0, encoding: .utf8) ?? "" })
         }
         return nil
     }

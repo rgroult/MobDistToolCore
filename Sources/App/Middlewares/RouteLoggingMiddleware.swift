@@ -12,9 +12,13 @@ final class RouteLoggingMiddleware: Middleware {
         let logger = try request.make(Logger.self)
         
         let method = request.http.method
-        let path = request.http.url.path
-        let query = request.http.url.query
-        let reqString = "❕[\(method)]@\(path) with query:\(String(describing: query)) 🔍"
+        //let path = request.http.url.path
+        //let query = request.http.url.query
+        //let reqString = "❕[\(method)]@\(path) with query:\(String(describing: query)) 🔍"
+        var reqString = " 🔍 \(method)@ \(request.http.url.absoluteString)"
+        if let size = request.http.body.count {
+            reqString += " - Size:\(size)"
+        }
         logger.info(reqString,file:"RouteLoggingMiddleware"/*,function: "", line: 0, column: 0*/)
         
         return try next.respond(to: request)
