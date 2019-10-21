@@ -629,8 +629,8 @@ final class ApplicationsControllerTests: BaseAppTests {
         try uploadArtifact(branches: branches , numberPerBranches: 10, apiKey: appDetail.apiKey!)
         
         let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions",token:token)
-        let versions = try allVersions.content.decode([ArtifactDto].self).wait()
-        XCTAssertEqual(versions.count, 30)
+        let versions = try allVersions.content.decode(Paginated<ArtifactDto>.self).wait()
+        XCTAssertEqual(versions.data.count, 30)
         
         for branch in branches {
             let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions?branch=\(branch)",token:token)
@@ -639,17 +639,18 @@ final class ApplicationsControllerTests: BaseAppTests {
             for version in versions.data {
                 XCTAssertEqual(version.branch, branch)
             }
-            XCTAssertEqual(versions.data.last?.version, "1.2.009")
+            XCTAssertEqual(versions.data.first?.version, "1.2.009")
         }
     }
+    
     func testRetrieveVersionsByBranchAndLatest() throws {
         let (token,appDetail) = try createAndReturnAppDetail()
         try uploadLatestArtifact(numberOfUpload: 10, apiKey: appDetail.apiKey!)
         
         try uploadArtifact(branches: ["master"] , numberPerBranches: 10, apiKey: appDetail.apiKey!)
         let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions",token:token)
-        let versions = try allVersions.content.decode([ArtifactDto].self).wait()
-        XCTAssertEqual(versions.count, 10)
+        let versions = try allVersions.content.decode(Paginated<ArtifactDto>.self).wait()
+        XCTAssertEqual(versions.data.count, 10)
     }
     
     func testRetrieveVersionsLatest() throws {

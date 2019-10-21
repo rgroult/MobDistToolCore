@@ -18,11 +18,12 @@ struct ArtifactDto: Codable {
     var version:String
     var sortIdentifier:String?
     var metaDataTags:[String:String]?
+    var createdDate:Date
 }
 
 extension ArtifactDto {
     static func sample() -> ArtifactDto {
-        return ArtifactDto(uuid:"uuid",branch:"master",name:"prod",contentType:nil,size:nil,version:"X.Y.Z",sortIdentifier:nil,metaDataTags:nil)
+        return ArtifactDto(uuid:"uuid",branch:"master",name:"prod",contentType:nil,size:nil,version:"X.Y.Z",sortIdentifier:nil,metaDataTags:nil,createdDate: Date())
     }
     
     init(from artifact:Artifact){
@@ -34,7 +35,7 @@ extension ArtifactDto {
         version = isLatestBranch ? lastVersionName : artifact.version
         size = artifact.size
         sortIdentifier = isLatestBranch ? nil : artifact.sortIdentifier
-        
+        createdDate = artifact.createdAt
         metaDataTags = artifact.retrieveMetaData()
        /* if let tagsData = artifact.metaDataTags?.convertToData() {
             let tags = (try? JSONDecoder().decode([String:String].self, from: tagsData))

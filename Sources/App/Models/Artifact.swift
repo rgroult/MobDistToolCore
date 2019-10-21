@@ -26,6 +26,7 @@ final class Artifact: Model {
     var filename:String?
     var size:Int?
     var contentType:String?
+    var createdAt:Date
     
     //var adminUsers: [Data]
     
@@ -41,6 +42,7 @@ final class Artifact: Model {
         filename = nil
         size = nil
         contentType = nil
+        createdAt = Date()
     }
     
     func addMetaData(metaData:[String:String]){

@@ -63,7 +63,7 @@ class BaseController {
         var commonParams = [
             APIParameter(name: "per", parameterLocation:.query, description: "Number of results per page : default \(MappedCursorDefaultPageSize)", required: false),
             APIParameter(name: "page", parameterLocation:.query, description: "Page number required : default 0", required: false),
-            APIParameter(name: "orderby", parameterLocation:.query, description: "Order results : \(PaginationSort.ascending)[Default] , \(PaginationSort.ascending)", required: false)
+            APIParameter(name: "orderby", parameterLocation:.query, description: "Order results : \(PaginationSort.descending)[Default] , \(PaginationSort.ascending)", required: false)
         ]
         if let searchByField = searchByField {
             commonParams.append(APIParameter(name: "searchby", parameterLocation:.query, description: "Search into \(searchByField)", required: false))

@@ -9,9 +9,6 @@ import Foundation
 import Vapor
 import Meow
 
-
-
-
 struct ApplicationDto: Codable {
     var name:String
     var platform:Platform

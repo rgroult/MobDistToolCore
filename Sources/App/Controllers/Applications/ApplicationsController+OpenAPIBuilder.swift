@@ -136,7 +136,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                             APIAction(method: .get, route: generateRoute(Verb.specificAppVersions(pathName: "uuid").uri),
                                       summary: "Application versions",
                                       description: "Retrieve versions for specified app",
-                                      parameters: generatePaginationParameters(sortby: Array(sortFields.keys), searchByField: "name") +
+                                      parameters: generatePaginationParameters(sortby: Array(artifactsSortFields.keys), searchByField: nil) +
                                         [
                                         APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true),
                                        // APIParameter(name: "pageIndex", parameterLocation:.query, description: "Number of page (only work if limitPerPage is also provided)", required: false),
@@ -155,7 +155,8 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                             APIAction(method: .get, route: generateRoute(Verb.specificAppLatestVersions(pathName: "uuid").uri),
                                       summary: "Application latest versions",
                                       description: "Retrieve latest versions for specified app",
-                                      parameters: [
+                                      parameters:generatePaginationParameters(sortby: Array(artifactsSortFields.keys), searchByField: nil) +
+                                        [
                                         APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true)
                                 ],
                                       responses: [

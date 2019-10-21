@@ -9,7 +9,7 @@ import Meow
 import Vapor
 import Pagination
 
-let MappedCursorDefaultPageSize = 10
+let MappedCursorDefaultPageSize = 50
 
 enum PaginationSort:String {
     case ascending

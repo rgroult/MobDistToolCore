@@ -108,3 +108,4 @@ extension UsersController:APIBuilderControllerProtocol {
         _ = apiBuilder.add([APIObject(object: Paginated.sample(obj: UserDto.sample()))])
     }
 }
+
