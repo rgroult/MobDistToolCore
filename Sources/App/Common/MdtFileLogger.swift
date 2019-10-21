@@ -25,6 +25,10 @@ public class MdtFileLogger: Logger {
         //
     }
     
+    func initialize(){
+        
+    }
+    
     required init(logDirectory:String? = nil , includeTimestamps: Bool = false) throws{
         let logdir = logDirectory ?? FileManager.default.currentDirectoryPath + "/logs"
         self.includeTimestamps = includeTimestamps
@@ -100,7 +104,7 @@ extension MdtFileLogger: ServiceType {
     }
     
     public static func makeService(for worker: Container) throws -> Self {
-        return try Self.init()
+        throw "Unable to make empty service"
     }
     
 }

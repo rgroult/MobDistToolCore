@@ -11,8 +11,19 @@ import Vapor
 
 public final class MdtActivityFileLogger: MdtFileLogger {
     
+    static var sharedActivity:MdtActivityFileLogger!
+    /*
     required convenience init(logDirectory:String? = nil , includeTimestamps: Bool = false) throws{
-        try self.init(logDirectory: logDirectory, includeTimestamps: includeTimestamps)
+        try super.init(logDirectory: logDirectory, includeTimestamps: includeTimestamps)
+        self.fileQueue = DispatchQueue.init(label: "MdtActivityFileLogger", qos: .utility)
+        self.filename = {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "YYYY_MM_dd_HH_mm"
+            return "MDT_Activity_\(dateFormatter.string(from:Date())).activity"
+        }()
+    }*/
+    override func initialize(){
+        super.initialize()
         self.fileQueue = DispatchQueue.init(label: "MdtActivityFileLogger", qos: .utility)
         self.filename = {
             let dateFormatter = DateFormatter()
@@ -20,4 +31,16 @@ public final class MdtActivityFileLogger: MdtFileLogger {
             return "MDT_Activity_\(dateFormatter.string(from:Date())).activity"
         }()
     }
+    
+    override class func initialize(logDirectory:String? = nil , includeTimestamps: Bool = false) throws{
+        sharedActivity = try MdtActivityFileLogger(logDirectory: logDirectory, includeTimestamps: includeTimestamps)
+        //
+    }
+}
+
+extension  MdtActivityFileLogger: ActivityLogger {
+    func track(event: ActivityEvent) {
+        
+           // TODO
+       }
 }

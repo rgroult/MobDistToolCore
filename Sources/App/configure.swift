@@ -23,8 +23,14 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     
     services.register(Logger.self) { container throws -> MdtFileLogger in
         return MdtFileLogger.shared
-         //return try MdtFileLogger(logDirectory: configuration.logDirectory, includeTimestamps: true)
     }
+    
+    try MdtActivityFileLogger.initialize(logDirectory: configuration.logDirectory, includeTimestamps: true)
+    services.register(ActivityLogger.self) { container throws -> MdtActivityFileLogger in
+        return MdtActivityFileLogger.sharedActivity
+    }
+    
+    
    // config.prefer(MdtFileLogger.self, for: Logger.self)
     //logger
     switch env {
