@@ -31,7 +31,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         
         let body = bodyJSON.convertToHTTPBody()
         try app.clientTest(.POST, "/v2/Applications", body,token:token){ res in
-            print(res.content)
+           // print(res.content)
             let app = try res.content.decode(ApplicationDto.self).wait()
             XCTAssertTrue(app.description == appDtoiOS.description)
             XCTAssertTrue(app.maxVersionSecretKey == nil)

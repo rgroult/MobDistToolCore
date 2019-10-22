@@ -128,14 +128,14 @@ func updateUser(user:User, newName:String?,newPassword:String?, newFavoritesAppl
     return user.save(to: context).map{user}
 }
 
-func activateUser(withToken:String, into context:Meow.Context) throws -> Future<Void>{
+func activateUser(withToken:String, into context:Meow.Context) throws -> Future<User>{
     return try findActivableUser(by: withToken, into: context)
         .flatMap({ user in
             guard let user = user else { throw UserError.notFound }
             //activate user
             user.isActivated = true
             user.activationToken  = nil
-            return user.save(to: context)
+            return user.save(to: context).map{user}
         })
 }
 

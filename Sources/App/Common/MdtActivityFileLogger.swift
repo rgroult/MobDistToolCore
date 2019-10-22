@@ -40,7 +40,7 @@ public final class MdtActivityFileLogger: MdtFileLogger {
 
 extension  MdtActivityFileLogger: ActivityLogger {
     func track(event: ActivityEvent) {
-        
+        print("Track \(event)")
            // TODO
        }
 }

@@ -37,6 +37,10 @@ final class ApplicationsController:BaseController {
                         return saveApplication(app: app, into: context)
                             .flatMap{ ApplicationDto.create(from: $0, content: .full, in : context)}
                             .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
+                            .do({ [weak self] dto in self?.track(event: .CreateApp(app: app, user: user), for: req)})
+                          /*  .map {[weak self] dto in
+                                self?.track(event: .CreateApp(app: app, user: user), for: req)
+                                return dto}*/
                     })
         }
     }
@@ -59,6 +63,7 @@ final class ApplicationsController:BaseController {
                                 return saveApplication(app: app, into: context)
                                     .flatMap {ApplicationDto.create(from: $0, content: .full, in : context)}
                                     .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
+                                    .do({ [weak self] dto in self?.track(event: .UpdateApp(app: app, user: user), for: req)})
                             })
                     })
         }
@@ -128,6 +133,7 @@ final class ApplicationsController:BaseController {
                 return App.deleteApplication(by: info.app, into: context).map {
                     return MessageDto(message: "Application Deleted")
                 }
+                .do({ [weak self] dto in self?.track(event: .DeleteApp(app: info.app, user: info.user), for: req)})
             })
     }
     

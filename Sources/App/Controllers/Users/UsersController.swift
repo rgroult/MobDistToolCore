@@ -62,6 +62,8 @@ final class UsersController:BaseController {
                             return req.eventLoop.newSucceededFuture(result: userCreated)
                         }
                 }
+                .do({[weak self]  dto in self?.track(event: .Register(email: registerDto.email, isSuccess: true), for: req)})
+                .catch({[weak self]  error in self?.track(event: .Register(email: registerDto.email, isSuccess: false,failedError:error), for: req)})
         }
     }
     
@@ -86,6 +88,7 @@ final class UsersController:BaseController {
                                 let emailService = try req.make(EmailService.self)
                                 return try emailService.sendResetEmail(for: user, newPassword: newPassword, into: req)
                                     .map { message}
+                                    .do({ [weak self] dto in self?.track(event: .ForgotPassword(email: user.email), for: req)})
                             })
                     })
             })
@@ -110,6 +113,8 @@ final class UsersController:BaseController {
                                 return LoginRespDto( email: user.email, name: user.name,token:token)
                         }
                     })
+                    .do({[weak self]  dto in self?.track(event: .Login(email: dto.email, isSuccess: true), for: req)})
+                    .catch({[weak self]  error in self?.track(event: .Login(email: loginDto.email, isSuccess: false,failedError:error), for: req)})
         }
     }
     
@@ -155,6 +160,8 @@ final class UsersController:BaseController {
                         return try updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID, into: context)
                             .map{UserDto.create(from: $0, content: .full)}
                     })
+                .do({[weak self]  dto in self?.track(event: .UpdateUser(email: user.email, isSuccess: true), for: req)})
+                .catch({[weak self]  error in self?.track(event: .UpdateUser(email: user.email, isSuccess: false,failedError:error), for: req)})
             })
     }
     
@@ -163,7 +170,9 @@ final class UsersController:BaseController {
             //activate user
             let context = try req.context()
             return try activateUser(withToken: activationToken, into: context)
-                .map { MessageDto(message:"Activation Done")}
+                .do({[weak self]  user in self?.track(event: .Activation(email: user.email, isSuccess: true), for: req)})
+                .catch({[weak self]  error in self?.track(event: .Activation(email: "<Token>", isSuccess: false,failedError:error), for: req)})
+                .map { _ in MessageDto(message:"Activation Done")}
                 .thenIfErrorThrowing({ error in
                     if let userError = error as? UserError, userError == UserError.notFound {
                         throw Abort(.badRequest, reason: "Invalid activationToken")

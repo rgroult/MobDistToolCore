@@ -73,6 +73,10 @@ class BaseController {
         }
         
         return commonParams
-        
+    }
+    
+    func track(event:ActivityEvent, for req:Request){
+        let trackingService = try? req.make(MdtActivityFileLogger.self)
+        trackingService?.track(event: event)
     }
 }

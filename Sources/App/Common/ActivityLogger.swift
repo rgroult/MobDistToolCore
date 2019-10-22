@@ -8,9 +8,10 @@
 import Foundation
 
 enum ActivityEvent {
-    case Register(email:String,isSuccess:Bool)
-    case Activation(email:String,isSuccess:Bool)
-    case Login(email:String,isSuccess:Bool)
+    case Register(email:String,isSuccess:Bool, failedError:Error? = nil)
+    case Activation(email:String,isSuccess:Bool, failedError:Error? = nil)
+    case Login(email:String,isSuccess:Bool, failedError:Error? = nil)
+    case UpdateUser(email:String,isSuccess:Bool, failedError:Error? = nil)
     case ForgotPassword(email:String)
     
     case CreateApp(app:MDTApplication, user:User)
