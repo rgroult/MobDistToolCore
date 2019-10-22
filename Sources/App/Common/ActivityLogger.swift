@@ -18,10 +18,15 @@ enum ActivityEvent {
     case DeleteApp(app:MDTApplication, user:User)
     case UpdateApp(app:MDTApplication, user:User)
     
-    case UploadArtifact(artifact:Artifact,user:User?)
-    case DownloadArtifact(artifact:Artifact,user:User?)
+    case UploadArtifact(artifact:Artifact? , failedError:Error? = nil)
+    case DeleteArtifact(artifact:Artifact? , failedError:Error? = nil)
+    case DownloadArtifact(artifact:Artifact,user:User?, failedError:Error? = nil)
     
     //case MaxVersion
+    
+    func description() -> String {
+        return "\(self)"
+    }
 }
 
 protocol ActivityLogger {

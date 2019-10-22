@@ -64,6 +64,8 @@ final class ArtifactsController:BaseController  {
                                 return try storeArtifactData(data: data, filename: filename, contentType: mimeType, artifact: artifact, storage: storage, into: context)
                             })
                     })
+                    .do({[weak self]  artifact in self?.track(event: .UploadArtifact(artifact: artifact), for: req)})
+                    .catch({[weak self]  error in self?.track(event: .UploadArtifact(artifact: nil, failedError: error), for: req)})
             })
             .flatMap{try saveArtifact(artifact: $0, into: context)}
             .map{ArtifactDto(from: $0)}
@@ -86,9 +88,11 @@ final class ArtifactsController:BaseController  {
             .flatMap({ app throws -> Future<Artifact?> in
                 guard let app = app else { throw ApplicationError.notFound }
                 return try findArtifact(app: app, branch: branch, version: version, name: artifactName, into: context)})
-            .flatMap({ artifact  throws -> Future<Void> in
+            .flatMap({ artifact  throws -> Future<Artifact> in
                 guard let artifact = artifact else { throw ArtifactError.notFound }
-                return App.deleteArtifact(by: artifact, into: context)})
+                return App.deleteArtifact(by: artifact, into: context).map{artifact}})
+            .do({[weak self]  artifact in self?.track(event: .DeleteArtifact(artifact: artifact), for: req)})
+            .catch({[weak self]  error in self?.track(event: .DeleteArtifact(artifact: nil, failedError: error), for: req)})
             .map {_ in return  MessageDto(message: "Artifact Deleted")}
     }
     
@@ -130,7 +134,6 @@ final class ArtifactsController:BaseController  {
         return try retrieveUser(from:req)
             .flatMap{user in
                 guard let user = user else { throw Abort(.unauthorized)}
-                
                 return try findArtifact(byUUID: artifactId, into: context)
                     .flatMap({[unowned self] artifact in
                         guard let artifact = artifact else { throw ArtifactError.notFound }
@@ -138,9 +141,11 @@ final class ArtifactsController:BaseController  {
                             .flatMap{application in
                                 return try self.generateDownloadInfo(user: user, for: artifact._id.hexString, platform: application.platform,applicationName:application.name, config: config, into: context)
                         }
+                        .do({[weak self] dto in self?.track(event: .DownloadArtifact(artifact:artifact,user:user), for: req)})
                     })
         }
     }
+    
     enum ArtifactTokenKeys:String {
         case user, appName, artifactId, baseDownloadUrl
     }
@@ -187,8 +192,8 @@ final class ArtifactsController:BaseController  {
                         let metaData = artifact.retrieveMetaData()
                         guard let bundleID = metaData?["CFBundleIdentifier"], let bundleVersion = metaData?["CFBundleVersion"] else { throw  Abort(.serviceUnavailable, reason: "Artifact infos not found for ID") }
                         let manifest = ArtifactsController.generateiOsManifest(absoluteIpaUrl: downloadUrl, bundleIdentifier: bundleID, bundleVersion: bundleVersion, ApplicationName: name)
-                        
                         return req.response(manifest, as: .xml)
+                        
                 }
         }
     }

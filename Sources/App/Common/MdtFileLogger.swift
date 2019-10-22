@@ -30,9 +30,11 @@ public class MdtFileLogger: Logger {
     }
     
     required init(logDirectory:String? = nil , includeTimestamps: Bool = false) throws{
+        
         let logdir = logDirectory ?? FileManager.default.currentDirectoryPath + "/logs"
         self.includeTimestamps = includeTimestamps
         
+        initialize()
         //create log file
         try createLogFile(logDirectory: logdir)
     }
@@ -75,15 +77,15 @@ public class MdtFileLogger: Logger {
     }
     
     public func log(_ string: String, at level: LogLevel, file: String, function: String, line: UInt, column: UInt) {
-        let fileName = level.description.lowercased() + ".log"
+       // let fileName = level.description.lowercased() + ".log"
         var output = "[ \(level.description) ] \(string) (\(file):\(line))"
         if includeTimestamps {
             output = "\(Date() ) " + output
         }
-        saveToFile(output, fileName: fileName)
+        saveToFile(output)
     }
     
-    func saveToFile(_ string: String, fileName: String) {
+    func saveToFile(_ string: String) {
         fileQueue.async {[weak self] in
             let output = string + "\n"
             if let data = output.data(using: .utf8) {
@@ -91,10 +93,30 @@ public class MdtFileLogger: Logger {
             }
         }
     }
-    /*
-    func loadTailLines(nbreOfLines:Int) -> Future<String>{
-        
-    }*/
+    
+    func loadTailLines(nbreOfLines:Int, inside eventLoop:EventLoop) -> Future<String>{
+        let result = eventLoop.newPromise(of: String.self)
+        fileQueue.async {[weak self] in
+            do {
+                guard let fd = self?.logFileHandle?.fileDescriptor else { throw "Unable to open File" }
+                let numberOfCharactersPerLine = 150
+                let readLength:UInt64 = UInt64(nbreOfLines * numberOfCharactersPerLine)
+                let readHandle = FileHandle(fileDescriptor:fd,closeOnDealloc:false)
+                
+                
+                
+                let fileSize = readHandle.seekToEndOfFile()
+                readHandle.seek(toFileOffset: fileSize - readLength)
+                
+                let data = readHandle.readDataToEndOfFile()
+                guard let stringValue =  String(data: data, encoding: .utf16) else { throw "Invalid file content" }
+                result.succeed(result: stringValue)
+            }catch {
+                result.fail(error: error)
+            }
+        }
+        return  result.futureResult
+    }
 }
 
 extension MdtFileLogger: ServiceType {
