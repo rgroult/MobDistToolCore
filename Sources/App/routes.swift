@@ -79,6 +79,9 @@ public func routes(_ router: Router, authenticateMiddleware:Middleware,config:Md
     let artifactController = ArtifactsController(apiBuilder: openAPIBuilder)
     artifactController.configure(with: router, and: protected)
     //router.post("testupload",use:artifactController.uploadArtifact)
+    
+    let activityController = ActivityController(apiBuilder: openAPIBuilder)
+    activityController.configure(with: router, and: protected)
 
    
     //OpenAPI

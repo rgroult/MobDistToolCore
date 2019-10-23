@@ -27,7 +27,7 @@ public final class MdtActivityFileLogger: MdtFileLogger {
         self.fileQueue = DispatchQueue.init(label: "MdtActivityFileLogger", qos: .utility)
         self.filename = {
             let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "YYYY_MM_dd_HH_mm"
+            dateFormatter.dateFormat = "YYYY_MM_dd"
             return "MDT_Activity_\(dateFormatter.string(from:Date())).activity"
         }()
     }

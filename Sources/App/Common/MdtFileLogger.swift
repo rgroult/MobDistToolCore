@@ -14,6 +14,7 @@ public class MdtFileLogger: Logger {
     let fileManager = FileManager.default
     var fileQueue = DispatchQueue.init(label: "MdtFileLogger", qos: .utility)
     var logFileHandle:Foundation.FileHandle?
+    var logFileUrl:URL?
     lazy var filename:String = {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "YYYY_MM_dd_HH_mm"
@@ -72,6 +73,9 @@ public class MdtFileLogger: Logger {
         try createLogFileIfNeeded(fileName: logFileUrl.path)
         
         logFileHandle = try FileHandle(forWritingTo: logFileUrl)
+        self.logFileUrl = logFileUrl
+        //go to end on file
+        logFileHandle?.seekToEndOfFile()
         guard logFileHandle != nil else { throw "Unable to create log file :\(logFileUrl.absoluteString)"}
         //print("Log file create \(logFileUrl)")
     }
@@ -98,19 +102,21 @@ public class MdtFileLogger: Logger {
         let result = eventLoop.newPromise(of: String.self)
         fileQueue.async {[weak self] in
             do {
-                guard let fd = self?.logFileHandle?.fileDescriptor else { throw "Unable to open File" }
+               // guard let fd = self?.logFileHandle?.fileDescriptor else { throw "Unable to open File" }
+                guard let fileUrl = self?.logFileUrl else { throw "Unable to open File" }
                 let numberOfCharactersPerLine = 150
                 let readLength:UInt64 = UInt64(nbreOfLines * numberOfCharactersPerLine)
-                let readHandle = FileHandle(fileDescriptor:fd,closeOnDealloc:false)
-                
-                
-                
+                let readHandle =   try FileHandle(forReadingFrom: fileUrl)//  FileHandle(fileDescriptor:fd,closeOnDealloc:false)
+
                 let fileSize = readHandle.seekToEndOfFile()
-                readHandle.seek(toFileOffset: fileSize - readLength)
+                let offset =  fileSize > readLength ? fileSize - readLength : 0 //  max(0, fileSize - readLength)
+                readHandle.seek(toFileOffset: offset)
                 
                 let data = readHandle.readDataToEndOfFile()
-                guard let stringValue =  String(data: data, encoding: .utf16) else { throw "Invalid file content" }
+                guard let stringValue =  String(data: data, encoding: .utf8) else { throw "Invalid file content" }
+                //stringValue = stringValue.components(separatedBy: .newlines).joined(separator: "\n ")
                 result.succeed(result: stringValue)
+                readHandle.closeFile()
             }catch {
                 result.fail(error: error)
             }
