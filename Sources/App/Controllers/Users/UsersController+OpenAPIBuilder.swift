@@ -62,16 +62,31 @@ extension UsersController:APIBuilderControllerProtocol {
                             APIAction(method: .get, route: generateRoute(""),
                                       summary: "All USers",
                                       description: "Retrieve users Profile : need be admin",
-                                      parameters: generatePaginationParameters(sortby: Array(sortFields.keys), searchByField: "email")
-                               /* [
-                                        
-                                        APIParameter(name: "per", parameterLocation:.query, description: "Number of result per page : default \(MappedCursorDefaultPageSize)", required: false),
-                                        APIParameter(name: "page", parameterLocation:.query, description: "Number of page : default 0", required: false),
-                                        APIParameter(name: "sortby", parameterLocation:.query, description: "sort email (\(PaginationSort.ascending),\(PaginationSort.ascending))", required: false),
-                                        APIParameter(name: "searchby", parameterLocation:.query, description: "Search by email", required: false)
-                                    ]*/,
+                                      parameters: generatePaginationParameters(sortby: Array(sortFields.keys), searchByField: "email"),
                                       responses: [
                                         APIResponse(code: "200", description: "Profiles found", object: Paginated<UserDto>.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                ],
+                                      authorization: true
+                            ),
+                            APIAction(method: .put, route: generateRoute(Verb.specificUser.rawValue),
+                                      summary: "Update User",
+                                      description: "Update user Profile : need be admin",
+                                      parameters: [ APIParameter(name: "email", parameterLocation:.path, description: "Email", required: true)],
+                                      responses: [
+                                        APIResponse(code: "200", description: "Profiles found", object: Paginated<UserDto>.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                ],
+                                      authorization: true
+                            ),
+                            APIAction(method: .delete, route: generateRoute(Verb.specificUser.rawValue),
+                                      summary: "Delete User",
+                                      description: "Delete user : need be admin",
+                                      parameters: [ APIParameter(name: "email", parameterLocation:.path, description: "Email", required: true)],
+                                      responses: [
+                                        APIResponse(code: "200", description: "Profiles found", object: Paginated<MessageDto>.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                 ],

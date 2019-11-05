@@ -11,6 +11,7 @@ extension UsersController {
     
     enum Verb:String {
         case login, me, activation,register, forgotPassword
+        case specificUser = "{email}"
     }
     
     func configure(with router: Router, and protectedRouter:Router){
@@ -24,5 +25,7 @@ extension UsersController {
         usersProtectedRouter.get(Verb.me.rawValue, use: self.me)
         usersProtectedRouter.put(Verb.me.rawValue, use: self.update)
         usersProtectedRouter.get("", use: self.all)
+        usersProtectedRouter.put("",String.parameter, use: self.updateUser)
+        usersProtectedRouter.delete("",String.parameter, use: self.deleteUser)
     }
 }

@@ -157,12 +157,51 @@ final class UsersController:BaseController {
                     .flatMap({ updateDto  in
                         //update user
                         let context = try req.context()
-                        return try updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID, into: context)
+                        return try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID, into: context)
                             .map{UserDto.create(from: $0, content: .full)}
                     })
-                .do({[weak self]  dto in self?.track(event: .UpdateUser(email: user.email, isSuccess: true), for: req)})
-                .catch({[weak self]  error in self?.track(event: .UpdateUser(email: user.email, isSuccess: false,failedError:error), for: req)})
+                    .do({[weak self]  dto in self?.track(event: .UpdateUser(email: user.email, isSuccess: true), for: req)})
+                    .catch({[weak self]  error in self?.track(event: .UpdateUser(email: user.email, isSuccess: false,failedError:error), for: req)})
             })
+    }
+    
+    func updateUser(_ req: Request) throws -> Future<UserDto> {
+        let email = try req.parameters.next(String.self)
+        return try retrieveMandatoryAdminUser(from: req)
+            .flatMap({ _ throws -> Future<UserDto> in
+                return try req.content.decode(UpdateUserDto.self)
+                    .flatMap({ updateDto  in
+                        let context = try req.context()
+                        //find user
+                        return try findUser(by: email, into: context)
+                            .flatMap { user  in
+                                guard let user = user else { throw Abort(.notFound)}
+                                return try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID, into: context)
+                                    .map{UserDto.create(from: $0, content: .full)}
+                        }
+                    })
+            })
+            .do({[weak self]  dto in self?.track(event: .UpdateUser(email: email, isSuccess: true), for: req)})
+            .catch({[weak self]  error in self?.track(event: .UpdateUser(email: email, isSuccess: false,failedError:error), for: req)})
+    }
+    
+    func deleteUser(_ req: Request) throws -> Future<MessageDto> {
+        let email = try req.parameters.next(String.self)
+        return try retrieveMandatoryAdminUser(from: req)
+            .flatMap({ _ throws in
+                let context = try req.context()
+                //find user
+                return try findUser(by: email, into: context)
+                    .flatMap { user  in
+                        guard let user = user else { throw Abort(.notFound)}
+                        return try delete(user: user, into: context).map {
+                            return MessageDto(message: "User Deleted")
+                        }
+                        
+                }
+            })
+            .do({ [weak self] dto in self?.track(event: .DeleteUser(email: email, isSuccess:true), for: req)})
+            .catch({[weak self]  error in self?.track(event: .DeleteUser(email: email, isSuccess: false,failedError:error), for: req)})
     }
     
     func activation(_ req: Request) throws -> Future<MessageDto> {
