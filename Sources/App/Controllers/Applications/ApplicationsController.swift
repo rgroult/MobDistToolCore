@@ -186,7 +186,7 @@ final class ApplicationsController:BaseController {
                     .paginate(for: req, sortFields: self.artifactsSortFields,findQuery: queryUse)
         }
     }
-    
+    /*
     func getApplicationVersionsWithParameters(_ req: Request,uuid:String,pageIndex:Int?,limitPerPage:Int?,selectedBranch:String?,isLatestBranch:Bool = false) throws -> Future<[ArtifactDto]> {
         let context = try req.context()
         return try retrieveUser(from:req)
@@ -201,7 +201,7 @@ final class ApplicationsController:BaseController {
                     .map(transform: {ArtifactDto(from: $0)})
                     .getAllResults()
         }
-    }
+    }*/
     
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions?branch=master')
     func getApplicationVersions(_ req: Request) throws -> Future<Paginated<ArtifactDto>> {
@@ -218,7 +218,7 @@ final class ApplicationsController:BaseController {
     func getApplicationLastVersions(_ req: Request) throws -> Future<Paginated<ArtifactDto>> {
         let uuid = try req.parameters.next(String.self)
         
-        return try getApplicationVersionsPagined(req, uuid: uuid, selectedBranch: nil, isLatestBranch: true)
+        return try getApplicationVersionsPagined(req, uuid: uuid, selectedBranch: lastVersionBranchName, isLatestBranch: true)
         //return try getApplicationVersionsWithParameters(req, uuid:uuid , pageIndex: nil, limitPerPage: nil, selectedBranch: lastVersionBranchName, isLatestBranch: true)
     }
     

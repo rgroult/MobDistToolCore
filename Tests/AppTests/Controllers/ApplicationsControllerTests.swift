@@ -558,7 +558,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         
         let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions",token:token)
         let versions = try allVersions.content.decode(Paginated<ArtifactDto>.self).wait()
-        XCTAssertEqual(versions.data.count, 1)
+        XCTAssertEqual(versions.data.count,1)
         XCTAssertEqual(versions.data.first?.branch, "master")
         XCTAssertEqual(versions.data.first?.version,"1.2.3")
         XCTAssertEqual(versions.data.first?.name,"prod")
@@ -599,8 +599,14 @@ final class ApplicationsControllerTests: BaseAppTests {
         }*/
         
         let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions",token:token)
-        let versions = try allVersions.content.decode(Paginated<ArtifactDto>.self).wait()
+        var versions = try allVersions.content.decode(Paginated<ArtifactDto>.self).wait()
         XCTAssertEqual(versions.data.count, 50)
+        
+        //Check latest is empty
+        let latestVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions/latest",token:token)
+        versions = try latestVersions.content.decode(Paginated<ArtifactDto>.self).wait()
+        XCTAssertEqual(versions.data.count, 0)
+        
         // app/{appId}/versions?pageIndex=1&limitPerPage=30&branch=master'
     }
     
@@ -657,10 +663,17 @@ final class ApplicationsControllerTests: BaseAppTests {
         let (token,appDetail) = try createAndReturnAppDetail()
         try uploadLatestArtifact(numberOfUpload: 10, apiKey: appDetail.apiKey!)
         
-        let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions/latest",token:token)
+        let allLatestVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions/latest",token:token)
+       // print(allLatestVersions)
+        let latestVersions = try allLatestVersions.content.decode(Paginated<ArtifactDto>.self).wait()
+        XCTAssertEqual(latestVersions.data.count, 10)
+        
+        //check "normal" versions are empty
+        let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions",token:token)
         print(allVersions)
         let versions = try allVersions.content.decode(Paginated<ArtifactDto>.self).wait()
-        XCTAssertEqual(versions.data.count, 10)
+        XCTAssertEqual(versions.data.count, 0)
+        XCTAssertEqual(versions.page.position.max, 0)
     }
 }
 

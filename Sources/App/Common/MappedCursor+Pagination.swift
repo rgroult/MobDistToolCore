@@ -64,7 +64,8 @@ extension MappedCursor  where Element:Content {
     
         return self.collection.count(findQuery).flatMap{ count in
             let pageData = PageData(per: perPage, total: count)
-            let position = Position(current: page, max: Int(ceil(Double(count) / Double(perPage))) - 1 /* start indice is 0 */)
+            let maxPosition = max(0, Int(ceil(-1.0 + Double(count) / Double(perPage))))
+            let position = Position(current: page, max: maxPosition /* Int(ceil(Double(count) / Double(perPage)) - 1) *//* start indice is 0 */)
             return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)
                 .getPageResult(position,pageData)
         }

@@ -124,6 +124,12 @@ final class PaginationControllerTests: BaseAppTests {
         }
     }
     
+    func testApplicationsPaginationEmptyResult() throws {
+        let token = try loginAsAdmin()
+        let apps = try paginationRequest(path: "/v2/Applications", perPage: 20, order: .descending,sortBy:"created" ,searchby:"Application01" , pageNumber: 0, maxElt: 0, token: token) { (elt:ApplicationSummaryDto?) in
+        }
+        XCTAssertEqual(apps.data.count,0)
+    }
     
     func testApplicationsPaginationSearchByName() throws {
         let token = try loginAsAdmin()
@@ -175,7 +181,12 @@ final class PaginationControllerTests: BaseAppTests {
         let eltPerPage = min(perPage,maxElt)
         
         XCTAssertEqual(page.page.position.current, pageNumber)
-        XCTAssertEqual(page.page.position.max, Int(ceil(-1.0 + Double(maxElt) / Double(eltPerPage))))
+        if eltPerPage > 0 {
+            XCTAssertEqual(page.page.position.max, Int(ceil(-1.0 + Double(maxElt) / Double(eltPerPage))))
+        }else {
+            XCTAssertEqual(page.page.position.max, 0)
+        }
+        
        /* let dataCount:Int
         (page.page.position.max + 1) * perPage
         

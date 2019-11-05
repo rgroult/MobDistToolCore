@@ -267,6 +267,40 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         let updated2Me = try update2Resp.content.decode(UserDto.self).wait()
         XCTAssertEqual(updated2Me.favoritesApplicationsUUID, [])
     }
+    
+    func testUpdateOther() throws {
+        try testActivation()
+        let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
+        let token = loginResp.token
+        
+        //test update without be a admin
+        let updateInfo = UpdateUserDto(name: "Foo Super User", password: "azerty",favoritesApplicationsUUID:["XXX_XXX-XXX"])
+        var updateResp = try app.clientSyncTest(.PUT, "/v2/Users/\(userIOS.email)", updateInfo.convertToHTTPBody() , token: token)
+        XCTAssertEqual(updateResp.http.status.code, 401)
+        //check update resp
+        
+        let configuration = try MdtConfiguration.loadConfig(from: nil, from: &app.environment)
+        let adminToken = try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app).token
+        //retry as admin
+        updateResp = try app.clientSyncTest(.PUT, "/v2/Users/\(userIOS.email)", updateInfo.convertToHTTPBody() , token: adminToken)
+        XCTAssertEqual(updateResp.http.status.code, 200)
+        let updatedDto = try updateResp.content.decode(UserDto.self).wait()
+        XCTAssertEqual(updatedDto.name,updateInfo.name)
+    }
+    
+    func testUpdateDelete() throws {
+        try testActivation()
+        let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
+        let token = loginResp.token
+        //test update without be a admin
+        var deleteResp = try app.clientSyncTest(.DELETE, "/v2/Users/\(userIOS.email)" , token: token)
+        XCTAssertEqual(deleteResp.http.status.code, 401)
+        
+        let configuration = try MdtConfiguration.loadConfig(from: nil, from: &app.environment)
+        let adminToken = try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app).token
+        deleteResp = try app.clientSyncTest(.DELETE, "/v2/Users/\(userIOS.email)" , token: adminToken)
+        XCTAssertEqual(deleteResp.http.status.code, 200)
+    }
 }
 
 func profile(with token:String,inside app:Application) throws -> UserDto {
