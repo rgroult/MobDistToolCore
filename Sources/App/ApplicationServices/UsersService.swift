@@ -105,12 +105,18 @@ func createUser(name:String,email:String,password:String,isSystemAdmin:Bool = fa
     }
 }
 
-func updateUser(user:User, newName:String?,newPassword:String?, newFavoritesApplicationsUUID:[String]? , into context:Meow.Context) throws -> Future<User>{
+func updateUser(user:User, newName:String?,newPassword:String?, newFavoritesApplicationsUUID:[String]? ,isSystemAdmin:Bool?,isActivated:Bool?, into context:Meow.Context) throws -> Future<User>{
     if let name = newName {
         user.name = name
     }
     if let password = newPassword {
         user.password = generateHashedPassword(plain: password,salt: user.salt)
+    }
+    if let isSystemAdmin = isSystemAdmin {
+        user.isSystemAdmin = isSystemAdmin
+    }
+    if let isActivated = isActivated {
+        user.isActivated = isActivated
     }
     if let favoritesApplicationsUUID = newFavoritesApplicationsUUID {
         if favoritesApplicationsUUID.isEmpty {

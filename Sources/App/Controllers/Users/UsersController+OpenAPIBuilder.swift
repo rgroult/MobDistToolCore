@@ -74,6 +74,7 @@ extension UsersController:APIBuilderControllerProtocol {
                                       summary: "Update User",
                                       description: "Update user Profile : need be admin",
                                       parameters: [ APIParameter(name: "email", parameterLocation:.path, description: "Email", required: true)],
+                                      request: APIRequest(object: UpdateUserFullDto.self, description: "Update info."),
                                       responses: [
                                         APIResponse(code: "200", description: "Profiles found", object: Paginated<UserDto>.self),
                                         APIResponse(code: "500", description: "Internal Error"),
@@ -117,7 +118,7 @@ extension UsersController:APIBuilderControllerProtocol {
             )
         )
         _ = apiBuilder.add([APIObject(object: LoginReqDto( email: "email@test.com", password: "1234")),APIObject(object: LoginRespDto(email:"john@doe.com",name:"John Doe",token:"554dsr45f8sdf5"))])
-        _ = apiBuilder.add([APIObject(object: UserDto.sample()),APIObject(object: UpdateUserDto.sample()),APIObject(object: MessageDto.sample())])
+        _ = apiBuilder.add([APIObject(object: UserDto.sample()),APIObject(object: UpdateUserDto.sample()),APIObject(object: MessageDto.sample()),APIObject(object: UpdateUserFullDto.sample())])
         _ = apiBuilder.add([APIObject(object: RegisterDto( email: "email@test.com", name: "John Doe", password: "password"))])
         _ = apiBuilder.add([APIObject(object: ForgotPasswordDto( email: "email@test.com"))])
         _ = apiBuilder.add([APIObject(object: Paginated.sample(obj: UserDto.sample()))])

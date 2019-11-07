@@ -157,7 +157,7 @@ final class UsersController:BaseController {
                     .flatMap({ updateDto  in
                         //update user
                         let context = try req.context()
-                        return try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID, into: context)
+                        return try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID,isSystemAdmin: nil,isActivated: nil, into: context)
                             .map{UserDto.create(from: $0, content: .full)}
                     })
                     .do({[weak self]  dto in self?.track(event: .UpdateUser(email: user.email, isSuccess: true), for: req)})
@@ -169,14 +169,14 @@ final class UsersController:BaseController {
         let email = try req.parameters.next(String.self)
         return try retrieveMandatoryAdminUser(from: req)
             .flatMap({ _ throws -> Future<UserDto> in
-                return try req.content.decode(UpdateUserDto.self)
+                return try req.content.decode(UpdateUserFullDto.self)
                     .flatMap({ updateDto  in
                         let context = try req.context()
                         //find user
                         return try findUser(by: email, into: context)
                             .flatMap { user  in
                                 guard let user = user else { throw Abort(.notFound)}
-                                return try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID, into: context)
+                                return try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID, isSystemAdmin: updateDto.isSystemAdmin, isActivated: updateDto.isActivated, into: context)
                                     .map{UserDto.create(from: $0, content: .full)}
                         }
                     })

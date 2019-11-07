@@ -268,13 +268,29 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         XCTAssertEqual(updated2Me.favoritesApplicationsUUID, [])
     }
     
+    func testUpdateNotAdmin() throws {
+        try testActivation()
+        let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
+        let token = loginResp.token
+        
+        let me = try profile(with: token, inside: app)
+        
+        let updateInfo = UpdateUserFullDto(name: "Foo Super User", password: "azerty",favoritesApplicationsUUID:["XXX_XXX-XXX"],isActivated: !me.isActivated!,isSystemAdmin: !me.isSystemAdmin!)
+        let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        XCTAssertEqual(updateResp.http.status.code, 200)
+        let updatedDto = try updateResp.content.decode(UserDto.self).wait()
+        //check that isAdmin and Activated not changed
+        XCTAssertEqual(updatedDto.isActivated,me.isActivated)
+        XCTAssertEqual(updatedDto.isSystemAdmin,me.isSystemAdmin)
+    }
+    
     func testUpdateOther() throws {
         try testActivation()
         let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
         let token = loginResp.token
         
         //test update without be a admin
-        let updateInfo = UpdateUserDto(name: "Foo Super User", password: "azerty",favoritesApplicationsUUID:["XXX_XXX-XXX"])
+        let updateInfo = UpdateUserFullDto(name: "Foo Super User", password: "azerty",favoritesApplicationsUUID:["XXX_XXX-XXX"],isActivated: false,isSystemAdmin: true)
         var updateResp = try app.clientSyncTest(.PUT, "/v2/Users/\(userIOS.email)", updateInfo.convertToHTTPBody() , token: token)
         XCTAssertEqual(updateResp.http.status.code, 401)
         //check update resp
@@ -286,6 +302,8 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         XCTAssertEqual(updateResp.http.status.code, 200)
         let updatedDto = try updateResp.content.decode(UserDto.self).wait()
         XCTAssertEqual(updatedDto.name,updateInfo.name)
+        XCTAssertEqual(updatedDto.isActivated,updateInfo.isActivated)
+        XCTAssertEqual(updatedDto.isSystemAdmin,updateInfo.isSystemAdmin)
     }
     
     func testUpdateDelete() throws {

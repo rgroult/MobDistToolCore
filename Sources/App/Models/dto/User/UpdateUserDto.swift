@@ -21,3 +21,19 @@ extension UpdateUserDto {
 }
 
 extension UpdateUserDto: Content {}
+
+struct UpdateUserFullDto:Codable {
+    var name:String? = nil
+    var password:String? = nil
+    var favoritesApplicationsUUID:[String]? = nil
+    var isActivated:Bool? = nil
+    var isSystemAdmin:Bool? = nil
+}
+
+extension UpdateUserFullDto {
+    static func sample() -> UpdateUserFullDto {
+        return UpdateUserFullDto(name: "John Doe",password:"NeW PaSsw0rD",favoritesApplicationsUUID:["XXX_XX__X_X_X"],isActivated:nil,isSystemAdmin:false)
+    }
+}
+
+extension UpdateUserFullDto: Content {}
