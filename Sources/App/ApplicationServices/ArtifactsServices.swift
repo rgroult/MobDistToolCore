@@ -81,6 +81,34 @@ func findDistinctsBranches(app:MDTApplication,into context:Meow.Context) -> Futu
     return context.distinct(Artifact.self, on:keypath, where: ModelQuery(query))
 }
 
+/*
+ /// ```swift
+ /// collection.aggregate()
+ ///     .match("status" == "A")
+ ///     .group(id: "$cust_id", ["total": .sum("$amount"))
+ ///     .forEach { result in ... }
+ /// ```
+
+db.getCollection("MDTArtifact").aggregate([
+    { $match : { application : ObjectId("59197088a889ce6afd6f1edb") } },
+    { $match : { branch : { "$ne" : "@@@@LAST####"} } },
+    { $group : {
+        _id : "$sortIdentifier" ,
+        date : { $min : "$creationDate"},
+        version: { $first : "$version" },
+        artifacts : { $push: "$$ROOT" }
+        }}
+]);
+ */
+
+func findAndSortArtifacts(app:MDTApplication,into context:Meow.Context) throws -> Future<[String]> {
+    context.manager.collection(for: Artifact.self).aggregate()
+        .match("application" == app._id)
+        .match("branch" != lastVersionBranchName)
+        .group(id: "$sortIdentifier", fields: ["date" : .min("$creationDate"),"version" : .first("$version"),"artifacts" : .push("$$ROOT")])
+    throw "Not implemented"
+}
+
 // NB: Pagination is made by creationDate
 /*func findArtifacts(app:MDTApplication,pageIndex:Int?,limitPerPage:Int?,selectedBranch:String?, excludedBranch:String?,into context:Meow.Context) throws -> MappedCursor<FindCursor, Artifact>{
     var queryConditions = [Query.valEquals(field: "application", val: app._id)]
