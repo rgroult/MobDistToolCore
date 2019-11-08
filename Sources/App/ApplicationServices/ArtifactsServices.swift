@@ -72,8 +72,17 @@ func findArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:Str
     return (query,context.find(Artifact.self, where: query))
 }
 
+func findDistinctsBranches(app:MDTApplication,into context:Meow.Context) -> Future<[String]> {
+    var queryConditions = [Query.valEquals(field: "application", val: app._id)]
+    //excluse latest
+    queryConditions.append(Query.valNotEquals(field: "branch", val: lastVersionBranchName))
+    let query = Query.and(queryConditions)
+    let keypath:KeyPath<Artifact,String> =  \Artifact.branch
+    return context.distinct(Artifact.self, on:keypath, where: ModelQuery(query))
+}
+
 // NB: Pagination is made by creationDate
-func findArtifacts(app:MDTApplication,pageIndex:Int?,limitPerPage:Int?,selectedBranch:String?, excludedBranch:String?,into context:Meow.Context) throws -> MappedCursor<FindCursor, Artifact>{
+/*func findArtifacts(app:MDTApplication,pageIndex:Int?,limitPerPage:Int?,selectedBranch:String?, excludedBranch:String?,into context:Meow.Context) throws -> MappedCursor<FindCursor, Artifact>{
     var queryConditions = [Query.valEquals(field: "application", val: app._id)]
     
     if let branch = selectedBranch {
@@ -95,7 +104,7 @@ func findArtifacts(app:MDTApplication,pageIndex:Int?,limitPerPage:Int?,selectedB
         mappedCursorResult = mappedCursorResult.skip(numberToSkip).limit(limitPerPage)
     }
     return mappedCursorResult
-}
+}*/
 
 // NB: Search max artifact version sort by "sortIdentifier"
 func searchMaxArtifact(app:MDTApplication,branch:String,artifactName:String,into context:Meow.Context) ->  Future<Artifact?> {

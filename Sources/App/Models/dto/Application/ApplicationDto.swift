@@ -15,6 +15,7 @@ struct ApplicationDto: Codable {
     var description:String
     var uuid:String
     var adminUsers: [UserDto]
+    var availableBranches:[String]
     //admin fields
     var apiKey:String?
     var maxVersionSecretKey:String?
@@ -24,7 +25,7 @@ struct ApplicationDto: Codable {
 
 extension ApplicationDto {
     static func sample() -> ApplicationDto {
-        return ApplicationDto( name: "Awesome App", platform:.ios ,description:"",uuid:"dsfdsfdsf",adminUsers:[], apiKey:"SQDQSDCQD",maxVersionSecretKey:"ùmlùlmjlsdlf", iconUrl:nil,createdDate: Date())
+        return ApplicationDto( name: "Awesome App", platform:.ios ,description:"",uuid:"dsfdsfdsf",adminUsers:[], availableBranches:["release","develop","master"],apiKey:"SQDQSDCQD",maxVersionSecretKey:"ùmlùlmjlsdlf", iconUrl:nil,createdDate: Date())
     }
 
     static func create(from app:MDTApplication, content:ModelVisibility, in context: Context) -> Future<ApplicationDto>{
@@ -33,9 +34,10 @@ extension ApplicationDto {
         return app.adminUsers
             .map { $0.resolve(in: context) }
             .flatten(on: context)
-            .map{ users in
-                appDto.adminUsers = users.map{UserDto.create(from: $0, content: .light)
-                }
+            .and(findDistinctsBranches(app: app, into: context).mapIfError{ _ in []})
+            .map{ users,branches in
+                appDto.adminUsers = users.map{UserDto.create(from: $0, content: .light)}
+                appDto.availableBranches = branches
                 return appDto
             }
     }
@@ -46,6 +48,7 @@ extension ApplicationDto {
         platform = app.platform
         uuid = app.uuid
         adminUsers = []
+        availableBranches = []
         if content == .full {
             apiKey = app.apiKey
             maxVersionSecretKey = app.maxVersionSecretKey

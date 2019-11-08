@@ -320,6 +320,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         let app = try detailResp.content.decode(ApplicationDto.self).wait()
         XCTAssertTrue(app.iconUrl?.contains("/v2/Applications/\(app.uuid)/icon") ?? false )
         XCTAssertEqual(app.adminUsers.count , 1)
+        XCTAssertEqual(app.availableBranches , [])
         XCTAssertNotNil(app.apiKey)
          XCTAssertNil(app.maxVersionSecretKey)
     }
@@ -512,12 +513,21 @@ final class ApplicationsControllerTests: BaseAppTests {
         let appFound = apps.first*/
         
         //check detail
+        let appDetail = try returnAppDetail(uuid: appFound!.uuid, token: token)
+        /*
         let detailResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)",token:token)
         print(detailResp.content)
         XCTAssertEqual(detailResp.http.status.code , 200)
         let appDetail = try detailResp.content.decode(ApplicationDto.self).wait()
-        
+        */
         return (token,appDetail)
+    }
+     
+    private func returnAppDetail(uuid:String,token:String) throws -> ApplicationDto {
+        let detailResp = try app.clientSyncTest(.GET, "/v2/Applications/\(uuid)",token:token)
+        XCTAssertEqual(detailResp.http.status.code , 200)
+        let appDetail = try detailResp.content.decode(ApplicationDto.self).wait()
+        return appDetail
     }
     
     func testApplicationIcon() throws {
@@ -674,6 +684,20 @@ final class ApplicationsControllerTests: BaseAppTests {
         let versions = try allVersions.content.decode(Paginated<ArtifactDto>.self).wait()
         XCTAssertEqual(versions.data.count, 0)
         XCTAssertEqual(versions.page.position.max, 0)
+    }
+    
+    func testAppDetailWithBranches() throws {
+        let (token,appDetail) = try createAndReturnAppDetail()
+        XCTAssertEqual(appDetail.availableBranches, [])
+        
+        try uploadArtifact(branches: ["master","dev"] , numberPerBranches: 2, apiKey: appDetail.apiKey!)
+        
+        var app = try returnAppDetail(uuid: appDetail.uuid, token: token)
+        XCTAssertEqual(app.availableBranches, ["master","dev"])
+        
+        try uploadLatestArtifact(numberOfUpload: 2, apiKey: appDetail.apiKey!)
+        app = try returnAppDetail(uuid: appDetail.uuid, token: token)
+        XCTAssertEqual(app.availableBranches, ["master","dev"])
     }
 }
 

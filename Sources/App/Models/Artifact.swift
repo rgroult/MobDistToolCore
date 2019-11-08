@@ -11,7 +11,7 @@ import MongoKitten
 
 typealias StorageAccessUrl = String
 
-final class Artifact: Model {
+final class Artifact: Model,QueryableModel {
     static let collectionName = "MDTArtifact"
     var _id = ObjectId()
     var application:  Reference<MDTApplication>
