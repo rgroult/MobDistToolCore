@@ -11,7 +11,7 @@ import Meow
 
 let normalUSerInfo = RegisterDto(email: "toto@toto.Com", name: "toto", password: "pwd")
 
-final class ApplicationServiceTests: BaseAppTests {
+ final class ApplicationServiceTests: BaseAppTests {
     var normalUser:User!
     var adminUser:User!
     

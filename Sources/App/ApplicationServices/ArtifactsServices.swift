@@ -101,12 +101,12 @@ db.getCollection("MDTArtifact").aggregate([
 ]);
  */
 
-func findAndSortArtifacts(app:MDTApplication,into context:Meow.Context) throws -> Future<[String]> {
-    context.manager.collection(for: Artifact.self).aggregate()
+func findAndSortArtifacts(app:MDTApplication,into context:Meow.Context) throws -> AggregateCursor<Document> {
+    return context.manager.collection(for: Artifact.self).aggregate()
         .match("application" == app._id)
         .match("branch" != lastVersionBranchName)
-        .group(id: "$sortIdentifier", fields: ["date" : .min("$creationDate"),"version" : .first("$version"),"artifacts" : .push("$$ROOT")])
-    throw "Not implemented"
+        .group(id: "$sortIdentifier", fields: ["date" : .max("$createdAt"),"version" : .first("$version"),"artifacts" : .push("$$ROOT")])
+   // throw "Not implemented"
 }
 
 // NB: Pagination is made by creationDate
