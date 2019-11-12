@@ -34,18 +34,18 @@ final class ArtifactsServiceTests: BaseAppTests {
     func testAddArtifactsAndsort() throws {
         let app = try createApplication(name: "testApp", platform: Platform.android, description: "testApp", adminUser: normalUser, into: context).wait()
         
-        try uploadArtifact(branches: ["master","test"], numberPerBranches: 10, app: app)
-        
-        let cursor = try findAndSortArtifacts(app: app, into: context)
-        .forEach(handler: {document in
-            print(document)
-        })
-        
-      /*  let artifact = try createArtifact(app: app, name: "test", version: "1.2.3", branch: "test", sortIdentifier: nil, tags: nil)
-        artifact.save(to: context).wait()*/
+        try addArtifact(branches: ["master","test"], numberPerBranches: 10, app: app)
+        let (cursor,total) = try findAndSortArtifacts(app: app, selectedBranch: nil, excludedBranch: App.lastVersionName, into: context)
+       
+        let allResults = try cursor.getAllResults().wait()
+        let totalResults = try total.wait()
+        XCTAssertEqual(totalResults, 20)
+        allResults.forEach { art in
+            XCTAssertEqual(art.artifacts.count, 2)
+        }
     }
     
-    func uploadArtifact(branches:[String], numberPerBranches:Int,app:MDTApplication) throws {
+    func addArtifact(branches:[String], numberPerBranches:Int,app:MDTApplication) throws {
         let formatter = NumberFormatter()
         formatter.minimumIntegerDigits = 3
         

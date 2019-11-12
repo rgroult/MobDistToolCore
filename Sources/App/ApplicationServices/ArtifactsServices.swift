@@ -101,12 +101,21 @@ db.getCollection("MDTArtifact").aggregate([
 ]);
  */
 
-func findAndSortArtifacts(app:MDTApplication,into context:Meow.Context) throws -> AggregateCursor<Document> {
-    return context.manager.collection(for: Artifact.self).aggregate()
+func findAndSortArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,into context:Meow.Context) throws -> (MappedCursor<AggregateCursor<Document>,ArtifactGrouped>,Future<Int>) {
+    var cursor = context.manager.collection(for: Artifact.self).aggregate()
         .match("application" == app._id)
-        .match("branch" != lastVersionBranchName)
-        .group(id: "$sortIdentifier", fields: ["date" : .max("$createdAt"),"version" : .first("$version"),"artifacts" : .push("$$ROOT")])
-   // throw "Not implemented"
+        
+    if let branch = selectedBranch {
+        cursor = cursor.match("branch" == branch)
+    }
+    
+    if let excludedBranch = excludedBranch {
+        cursor = cursor.match("branch" != excludedBranch)
+    }
+    
+    let idPrimitive = Document(dictionaryLiteral:("sortIdentifier" , "$sortIdentifier"), ("branch" , "$branch"))
+    cursor = cursor.group(id: idPrimitive , fields: ["date" : .max("$createdAt"),"version" : .first("$version"),"artifacts" : .push("$$ROOT")])
+    return (cursor.decode(ArtifactGrouped.self),cursor.count())
 }
 
 // NB: Pagination is made by creationDate

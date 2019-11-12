@@ -575,7 +575,7 @@ final class ApplicationsControllerTests: BaseAppTests {
        // app/{appId}/versions?pageIndex=1&limitPerPage=30&branch=master'
     }
     
-    func uploadArtifact(branches:[String], numberPerBranches:Int,apiKey:String) throws {
+    func uploadArtifact(branches:[String],names:[String] = ["prod"], numberPerBranches:Int,apiKey:String) throws {
         let formatter = NumberFormatter()
         formatter.minimumIntegerDigits = 3
         
@@ -583,7 +583,10 @@ final class ApplicationsControllerTests: BaseAppTests {
             for idx in 0..<numberPerBranches {
                 let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
                 let version = formatter.string(from: NSNumber(value: idx))
-                _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: apiKey, branch: branch, version: "1.2.\(version!)", name: "prod", contentType:ipaContentType, inside: app)
+                for name in names {
+                     _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: apiKey, branch: branch, version: "1.2.\(version!)", name: name, contentType:ipaContentType, inside: app)
+                }
+               
             }
         }
     }
@@ -615,6 +618,22 @@ final class ApplicationsControllerTests: BaseAppTests {
         //Check latest is empty
         let latestVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions/latest",token:token)
         versions = try latestVersions.content.decode(Paginated<ArtifactDto>.self).wait()
+        XCTAssertEqual(versions.data.count, 0)
+        
+        // app/{appId}/versions?pageIndex=1&limitPerPage=30&branch=master'
+    }
+    
+    func testRetrieveVersionsGrouped() throws {
+        let (token,appDetail) = try createAndReturnAppDetail()
+        try uploadArtifact(branches: ["master","dev"], names: ["prod","dev","demo"], numberPerBranches: 25, apiKey: appDetail.apiKey!)
+        
+        let allVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions/grouped",token:token)
+        var groupedVersions = try allVersions.content.decode(Paginated<ArtifactGroupedDto>.self).wait()
+        XCTAssertEqual(groupedVersions.data.count, 50)
+        
+        //Check latest is empty
+        let latestVersions = try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/versions/latest",token:token)
+        let versions = try latestVersions.content.decode(Paginated<ArtifactDto>.self).wait()
         XCTAssertEqual(versions.data.count, 0)
         
         // app/{appId}/versions?pageIndex=1&limitPerPage=30&branch=master'

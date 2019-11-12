@@ -139,8 +139,23 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                       parameters: generatePaginationParameters(sortby: Array(artifactsSortFields.keys), searchByField: nil) +
                                         [
                                         APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true),
-                                       // APIParameter(name: "pageIndex", parameterLocation:.query, description: "Number of page (only work if limitPerPage is also provided)", required: false),
-                                       // APIParameter(name: "limitPerPage", parameterLocation:.query, description: "Max Number results (only work if pageIndex is  also provided)", required: false),
+                                        APIParameter(name: "branch", parameterLocation:.query, description: "Specific branch", required: false)
+                                ],//artifactsSortFields
+                                      responses: [
+                                        APIResponse(code: "200", description: "applications versions", object: Paginated<ArtifactDto>.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: true
+                            ),
+                            //App versions grouped
+                            APIAction(method: .get, route: generateRoute(Verb.specificAppVersionsGrouped(pathName: "uuid").uri),
+                                      summary: "Application versions grouped",
+                                      description: "Retrieve grouped versions for specified app",
+                                      parameters: generatePaginationParameters(sortby: Array(artifactsSortFields.keys), searchByField: nil) +
+                                        [
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true),
                                         APIParameter(name: "branch", parameterLocation:.query, description: "Specific branch", required: false)
                                 ],//artifactsSortFields
                                       responses: [
@@ -166,6 +181,22 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                         APIResponse(code: "400", description: "Request error")
                                 ],
                                       authorization: true
+                            ),
+                            //App versions latest grouped
+                            APIAction(method: .get, route: generateRoute(Verb.specificAppLatestVersionsGrouped(pathName: "uuid").uri),
+                                      summary: "Application latest versions grouped",
+                                      description: "Retrieve latest grouped versions for specified app",
+                                      parameters:generatePaginationParameters(sortby: Array(artifactsSortFields.keys), searchByField: nil) +
+                                        [
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true)
+                                ],
+                                      responses: [
+                                        APIResponse(code: "200", description: "applications latest versions", object: Paginated<ArtifactGroupedDto>.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: true
                             )
                 ]
             )
@@ -175,7 +206,8 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                             APIObject(object: ApplicationUpdateDto.sample()),
                             APIObject(object: ApplicationCreateDto.sample()),
                             APIObject(object: Paginated.sample(obj: ApplicationSummaryDto.sample())),
-                            APIObject(object: Paginated.sample(obj: ArtifactDto.sample()))
+                            APIObject(object: Paginated.sample(obj: ArtifactDto.sample())),
+                            APIObject(object: Paginated.sample(obj: ArtifactGroupedDto.sample()))
             ])
     }
 }
