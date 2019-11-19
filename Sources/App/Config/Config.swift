@@ -19,7 +19,10 @@ public struct MdtConfiguration: Codable {
         return serverExternalUrl ?? URL(string: "http://localhost:8080")!
     }
     var mongoServerUrl:URL
-    var basePathPrefix:String = "/api"
+    private var basePathPrefix:String?
+    var pathPrefix:String {
+        return basePathPrefix ?? ""
+    }
     var jwtSecretToken:String?
     //delay (in ms) before login resquest response (limit brut attack).
     var loginResponseDelay:Int
@@ -115,7 +118,7 @@ public struct MdtConfiguration: Codable {
 
 extension MdtConfiguration {
     private static var empty:MdtConfiguration {
-        return MdtConfiguration(serverListeningPort: 0, serverExternalUrl: URL(string: "http://host.com")!, mongoServerUrl: URL(string: "mongodb://host")!, jwtSecretToken: "", loginResponseDelay: 0, storageMode: .testing, storageConfiguration: [String:String](), registrationWhiteDomains: nil, automaticRegistration: true, smtpConfiguration:[String:String](), minimumPasswordStrength: 0, initialAdminEmail: "", initialAdminPassword: "", logDirectory:"")
+        return MdtConfiguration(serverListeningPort: 0, serverExternalUrl: URL(string: "http://host.com")!, mongoServerUrl: URL(string: "mongodb://host")!,basePathPrefix:"/api",  jwtSecretToken: "", loginResponseDelay: 0, storageMode: .testing, storageConfiguration: [String:String](), registrationWhiteDomains: nil, automaticRegistration: true, smtpConfiguration:[String:String](), minimumPasswordStrength: 0, initialAdminEmail: "", initialAdminPassword: "", logDirectory:"")
     }
     
     private func convert<T>(from value:String, into:T) throws -> Any {
