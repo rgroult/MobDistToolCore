@@ -88,6 +88,9 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     }
     // Register routes to the router
     let router = EngineRouter.default()
+    //basePath
+    BaseController.basePathPrefix = configuration.basePathPrefix
+    //let baseRouter = router.grouped(configuration.basePathPrefix)
     try routes(router,authenticateMiddleware: authenticationMiddleware,config:configuration)
     services.register(router, as: Router.self)
     services.register(RouteLoggingMiddleware.self)

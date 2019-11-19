@@ -19,6 +19,7 @@ public struct MdtConfiguration: Codable {
         return serverExternalUrl ?? URL(string: "http://localhost:8080")!
     }
     var mongoServerUrl:URL
+    var basePathPrefix:String = "/api"
     var jwtSecretToken:String?
     //delay (in ms) before login resquest response (limit brut attack).
     var loginResponseDelay:Int

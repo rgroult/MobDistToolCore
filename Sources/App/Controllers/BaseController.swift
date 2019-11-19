@@ -15,11 +15,15 @@ protocol APIBuilderControllerProtocol {
 }
 
 class BaseController {
+    static var basePathPrefix = ""
+    var basePathPrefix:String {
+        return BaseController.basePathPrefix
+    }
     let controllerVersion:String
     let pathPrefix:String
     
     func generateRoute(_ verb:String)->String{
-        return "/\(controllerVersion)/\(pathPrefix)/\(verb)"
+        return "\(basePathPrefix)/\(controllerVersion)/\(pathPrefix)/\(verb)"
     }
     
     init(version:String,pathPrefix:String,apiBuilder:OpenAPIBuilder?){
