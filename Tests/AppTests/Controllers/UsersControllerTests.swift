@@ -53,6 +53,51 @@ final class UsersControllerAutomaticRegistrationTests: BaseAppTests {
     
 }
 
+final class UsersControllerNoAutomaticAndTemplatesRegistrationTests: BaseAppTests {
+    
+    private func createTemplateFile()->String {
+        let filename = "/tmp/test\(random(10))"
+        XCTAssertTrue(FileManager.default.createFile(atPath:filename , contents:nil , attributes: nil))
+        let file = FileHandle(forWritingAtPath: filename)
+        let html =
+            """
+                <html><body><h1><a href="<%ACTIVATION_LINK%>">Activation Link"</a></h1></body></html>
+            """
+        file?.write(html.data(using: .utf8)!)
+        
+        return filename
+    }
+
+    
+    override func setUp() {
+        var env = Environment.xcode
+        env.arguments += ["-DautomaticRegistration=false"]
+       
+        let smtpConfig = ["smtpServer":"gmail","smtpLogin":"toto","smtpPassword":"password","smtpSender":"toto","fakeMode":"true","alternateEmailtemplateFile":createTemplateFile(),"confirmationPath":"test/activation"]
+        let stringValue = String(data:try! JSONEncoder().encode(smtpConfig), encoding: .utf8)!
+        env.arguments += ["-DsmtpConfiguration=\(stringValue)"]
+        configure(with: env)
+    }
+    
+    func testRegisterAlternateTemplate() throws{
+        let registerReq = userIOS
+        let registerJSON = try JSONEncoder().encode(registerReq)
+        
+        let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+            XCTAssertNotNil(res)
+            // let token = res.content.get(String.self, at: "token")
+            print(res.content)
+            let registerResp = try res.content.decode(UserDto.self).wait()
+            XCTAssertEqual(registerResp.email, registerReq.email)
+            XCTAssertEqual(registerResp.name, registerReq.name)
+            XCTAssertEqual(registerResp.isActivated, false)
+            XCTAssertEqual(registerResp.isSystemAdmin, false)
+            print(registerResp)
+        }
+    }
+}
+
 final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     override func setUp() {
         var env = Environment.xcode
@@ -77,6 +122,8 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
             print(registerResp)
         }
     }
+    
+    
     
     func testActivation() throws {
         try testRegister()
