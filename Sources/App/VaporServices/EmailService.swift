@@ -11,7 +11,7 @@ import SwiftSMTP
 
 final class EmailService {
     enum ConfigKeys:String {
-        case smtpServer,smtpLogin,smtpPassword,smtpSender,fakeMode,alternateEmailtemplateFile,confirmationPath
+        case smtpServer,smtpLogin,smtpPassword,smtpSender,fakeMode,alternateEmailtemplateFile,confirmationPath,smtpPort
     }
     let emailQueue = DispatchQueue.init(label: "EmailService", qos: .default)
     let smtp:SMTP
@@ -36,7 +36,10 @@ final class EmailService {
             alternateEmailHtmlTemplate = nil
         }
         
-        smtp = SMTP(hostname: serverName, email: login, password: password, tlsMode:.requireSTARTTLS,timeout: 20)
+        let defaultPort:Int32 = 587
+        let smtpPort = Int32(smtpConfig[ConfigKeys.smtpPort.rawValue] ?? "\(defaultPort)") ?? defaultPort
+        
+        smtp = SMTP(hostname: serverName, email: login, password: password, port:smtpPort, tlsMode:.requireSTARTTLS,timeout: 20)
         defaultSenderEmail = Mail.User(email:sender)
         externalUrl = externalServerUrl
         
