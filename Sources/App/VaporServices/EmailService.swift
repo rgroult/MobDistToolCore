@@ -26,7 +26,7 @@ final class EmailService {
     init(with smtpConfig:[String:String], externalServerUrl:URL) throws{
         guard let serverName = smtpConfig[ConfigKeys.smtpServer.rawValue] else { throw "Unable to retrieve \(ConfigKeys.smtpServer) in smtp configuration"}
         guard let login = smtpConfig[ConfigKeys.smtpLogin.rawValue] else { throw "Unable to retrieve \(ConfigKeys.smtpLogin) in smtp configuration"}
-        guard let password = smtpConfig[ConfigKeys.smtpPassword.rawValue] else { throw "Unable to retrieve \(ConfigKeys.smtpPassword) in smtp configuration"}
+        //guard let password = smtpConfig[ConfigKeys.smtpPassword.rawValue] else { throw "Unable to retrieve \(ConfigKeys.smtpPassword) in smtp configuration"}
         guard let sender = smtpConfig[ConfigKeys.smtpSender.rawValue] else { throw "Unable to retrieve \(ConfigKeys.smtpSender) in smtp configuration"}
         
         confirmationPath = smtpConfig[ConfigKeys.confirmationPath.rawValue] ?? "/web/index.html#/activation"
@@ -36,11 +36,18 @@ final class EmailService {
             alternateEmailHtmlTemplate = nil
         }
         
+        let password = smtpConfig[ConfigKeys.smtpPassword.rawValue]
+        
         let defaultPort:Int32 = 587
         let smtpPort = Int32(smtpConfig[ConfigKeys.smtpPort.rawValue] ?? "\(defaultPort)") ?? defaultPort
         let tlsMode:SMTP.TLSMode = (smtpConfig[ConfigKeys.isSecured.rawValue]?.lowercased() == "true") ? .requireSTARTTLS : .normal
-        
-        smtp = SMTP(hostname: serverName, email: login, password: password, port:smtpPort, tlsMode:tlsMode,timeout: 20)
+        let authMethods:[AuthMethod]
+        if let _ = password {
+            authMethods = [ AuthMethod.cramMD5, AuthMethod.login,AuthMethod.plain, AuthMethod.xoauth2]
+        }else {
+            authMethods = []
+        }
+        smtp = SMTP(hostname: serverName, email: login, password: password ?? "" , port:smtpPort, tlsMode:tlsMode,authMethods:authMethods, timeout: 20)
         defaultSenderEmail = Mail.User(email:sender)
         externalUrl = externalServerUrl
         
@@ -116,6 +123,4 @@ extension EmailService : ServiceType {
     static func makeService(for container: Container) throws -> EmailService {
         throw "Unable to make empty service"
     }
-    
-    
 }

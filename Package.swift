@@ -34,7 +34,10 @@ let package = Package(
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMinor(from: "0.9.0")),
         
         //✉️ email
-        .package(url: "https://github.com/IBM-Swift/Swift-SMTP", .upToNextMinor(from: "5.1.0"))
+        //.package(url: "https://github.com/IBM-Swift/Swift-SMTP", .upToNextMinor(from: "5.1.0"))
+        .package(url: "https://github.com/rgroult/Swift-SMTP.git", .branch("master"))
+        //.package(path: "../Swift-SMTP")
+       
     ],
     targets: [
         .target(name: "App", dependencies: ["SwiftSMTP","JWTAuth", "Vapor","MeowVapor","Swiftgger","CryptoSwift", "Pagination"]),
