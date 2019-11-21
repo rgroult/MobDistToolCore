@@ -181,7 +181,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                         APIResponse(code: "400", description: "Request error")
                                 ],
                                       authorization: true
-                            ),
+                            )/*,
                             //App versions latest grouped
                             APIAction(method: .get, route: generateRoute(Verb.specificAppLatestVersionsGrouped(pathName: "uuid").uri),
                                       summary: "Application latest versions grouped",
@@ -197,7 +197,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                         APIResponse(code: "400", description: "Request error")
                                 ],
                                       authorization: true
-                            )
+                            )*/
                 ]
             )
         )

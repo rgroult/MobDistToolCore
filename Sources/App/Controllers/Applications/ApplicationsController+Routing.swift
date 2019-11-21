@@ -54,7 +54,7 @@ extension ApplicationsController {
         protectedAppsRouter.get("",String.parameter,PathComponent.constant("versions"),PathComponent.constant("grouped"), use:self.getApplicationVersionsGrouped)
     
         protectedAppsRouter.get("",String.parameter,PathComponent.constant("versions"),PathComponent.constant("latest"), use:self.getApplicationLastVersions)
-        protectedAppsRouter.get("",String.parameter,PathComponent.constant("versions"),PathComponent.constant("latest"),PathComponent.constant("grouped"), use:self.getApplicationLastVersionsGrouped)
+       // protectedAppsRouter.get("",String.parameter,PathComponent.constant("versions"),PathComponent.constant("latest"),PathComponent.constant("grouped"), use:self.getApplicationLastVersionsGrouped)
         //admin user
         protectedAppsRouter.put("", PathComponent.parameter("uuid"),PathComponent.constant("adminUsers"),String.parameter,/*PathComponent.parameter("email"),*/ use: self.addAdminUser)
         protectedAppsRouter.delete("", PathComponent.parameter("uuid"),PathComponent.constant("adminUsers"),String.parameter,/*PathComponent.parameter("email"),*/ use: self.deleteAdminUser)

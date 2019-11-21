@@ -291,7 +291,10 @@ final class ArtifactsContollerTests: BaseAppTests {
         let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
         let dwInfo = try donwloadInfo(apiKey: iOSApiKey!, fileData: fileData)
         
-        let manifestPlist = try app.clientSyncTest(.GET, dwInfo.installUrl,isAbsoluteUrl:true)
+        var plistUrl = dwInfo.installUrl.replacingOccurrences(of: "itms-services://?action=download-manifest&url=", with: "")
+        plistUrl = plistUrl.removingPercentEncoding!
+        
+        let manifestPlist = try app.clientSyncTest(.GET, plistUrl,isAbsoluteUrl:true)
         XCTAssertEqual(manifestPlist.http.contentType, .xml)
         //download url must be in manifest
         if let data =  manifestPlist.http.body.data {

@@ -167,13 +167,25 @@ final class ArtifactsController:BaseController  {
                 let downloadUrl = baseDownloadUrl + "?token=\(token)"
                 let installUrl:String
                 if platform == .ios {
-                    installUrl = baseArtifactPath + self.generateRoute(Verb.artifactiOSManifest(uuid: artifactID).path) + "?token=\(token)"
+                    let plistInstallUrl = baseArtifactPath + self.generateRoute(Verb.artifactiOSManifest(uuid: artifactID).path) + "?token=\(token)"
+                    installUrl = self.generateItmsUrl(plistUrl:plistInstallUrl)
                 }else {
                     installUrl = downloadUrl
                 }
-                
                 return DownloadInfoDto(directLinkUrl: downloadUrl, installUrl: installUrl, validity: validity)
         }
+    }
+    
+    private func generateItmsUrl(plistUrl:String) -> String {
+        //"itms-services://?action=download-manifest&url="
+        var urlComponents = URLComponents()
+        urlComponents.scheme = "itms-services"
+        urlComponents.host = ""
+        urlComponents.path = ""
+        let queryItems = [URLQueryItem(name: "action", value: "download-manifest"),URLQueryItem(name: "url", value: plistUrl)]
+        urlComponents.queryItems = queryItems
+        
+        return urlComponents.url?.absoluteString ?? plistUrl
     }
     
     //GET {idArtifact}/ios_plist?token='
