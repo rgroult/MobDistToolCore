@@ -1,4 +1,4 @@
-modisttool-core:
+modisttool-core-test:
   build:
     image: mobdisttool-testing
     dockerfile: DockerfileForTesting
@@ -6,12 +6,26 @@ modisttool-core:
     - mongo
   environment:
     - MDT_mongoServerUrl=mongodb://mongo:27017/mobdisttoolXcode
+
+modisttool-core-build:
+  build:
+   image: mobdisttool-testing
+   dockerfile: DockerfileForTesting
   volumes:
-  - ./tmp:/artifacts
+   - ./tmp:/artifacts
+   
 docker:
   image: docker
   volumes_from:
-   - modisttool-core
+   - modisttool-core-build
+   
 mongo:
   image: mongo:3.4
   command: --quiet
+  
+modisttool-core-deploy:
+ build:
+  image: mobdisttool-bionic
+  dockerfile: DockerfileBionic
+ volumes_from:
+  - modisttool-core-build
