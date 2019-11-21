@@ -2,8 +2,11 @@
   service: modisttool-core-build
   command: ./scripts/build.sh
 
-- service: modisttool-core-deploy
-  type: push
-  image_name: rgroult2/mobdisttool-core-slim
-  encrypted_dockercfg_path: dockercfg.encrypted
+- name: tests
+  service: modisttool-core-test
+  command: swift test
 
+#- service: modisttool-core-deploy
+#  type: push
+#  image_name: rgroult2/mobdisttool-core-slim
+#  encrypted_dockercfg_path: dockercfg.encrypted
