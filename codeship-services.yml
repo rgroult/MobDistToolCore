@@ -6,6 +6,12 @@ modisttool-core:
     - mongo
   environment:
     - MDT_mongoServerUrl=mongodb://mongo:27017/mobdisttoolXcode
+  volumes:
+  - ./tmp:/artifacts
+docker:
+  image: docker
+  volumes_from:
+   - modisttool-core
 mongo:
   image: mongo:3.4
   command: --quiet

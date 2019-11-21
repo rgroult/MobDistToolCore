@@ -1,6 +1,14 @@
 - name: build
   service: modisttool-core
-  command: swift build -c release
+  steps:
+  - command: swift build -c release
+  - command: cp `swift build -c release --show-bin-path`/Run ./tmp/app/bin
+  - command: cp ./Sources/App/Config/envs/production/configDockerFull.json /app/config/config.json
 - name: tests
   service: modisttool-core
   command: swift test
+- name: deploy
+  services: docker
+  steps:
+  - command: ls -lRh ./tmp
+  - command: ls -lRh /artifacts
