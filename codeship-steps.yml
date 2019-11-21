@@ -1,12 +1,9 @@
 - name: build
   service: modisttool-core-build
   command: ./scripts/build.sh
-- type: serial
-  name: deploy
-  service: docker
-  steps:
-   - command: ls -lRh ./tmp
-   - command: ls -lRh ./artifacts
-- name: tests
-  service: modisttool-core-test
-  command: swift test
+
+- service: modisttool-core-deploy
+  type: push
+  image_name: rgroult2/mobdisttool-core-slim
+  encrypted_dockercfg_path: dockercfg.encrypted
+

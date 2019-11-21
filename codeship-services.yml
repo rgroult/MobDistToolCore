@@ -25,7 +25,7 @@ mongo:
   
 modisttool-core-deploy:
  build:
-  image: mobdisttool-bionic
+  image: rgroult2/mobdisttool-core-slim
   dockerfile: DockerfileBionic
  volumes_from:
   - modisttool-core-build

@@ -8,7 +8,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/vapor.git", from: "3.3.1"),
 
         // fix: https://forums.swift.org/t/logging-module-name-clash-in-vapor-3/25466
-        //.package(url: "https://github.com/IBM-Swift/LoggerAPI.git", .upToNextMinor(from: "1.8.0")),
+        .package(url: "https://github.com/IBM-Swift/LoggerAPI.git", .upToNextMinor(from: "1.8.0")),
         
         .package(url: "https://github.com/vapor-community/pagination.git", .upToNextMinor(from: "1.0.9")),
 
