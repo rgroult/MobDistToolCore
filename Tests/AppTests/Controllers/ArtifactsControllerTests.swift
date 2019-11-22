@@ -278,7 +278,10 @@ final class ArtifactsContollerTests: BaseAppTests {
     }
     
     func donwloadInfo(apiKey:String, fileData:Data,contentType:MediaType = ipaContentType) throws -> DownloadInfoDto{
-    let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: apiKey, branch: "master", version: "1.2.3", name: "prod", contentType:contentType, inside: app)
+        return try type(of:self).donwloadInfo(apiKey: apiKey, fileData: fileData, contentType: contentType, into: app,with: token)
+    }
+    class func donwloadInfo(apiKey:String, fileData:Data,contentType:MediaType = ipaContentType, into app:Application,with token:String?) throws -> DownloadInfoDto{
+    let artifact = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: apiKey, branch: "master", version: "1.2.3", name: "prod", contentType:contentType, inside: app)
     
     //retrieve download info
     let uri = "/v2/Artifacts/\(artifact.uuid)/download"
@@ -351,5 +354,61 @@ final class ArtifactsContollerTests: BaseAppTests {
        let filePath = dirConfig.workDir+"Ressources/\(name).\(ext)"
       //  let filePath =  Bundle.init(for: ArtifactsContollerTests.self).url(forResource: name, withExtension: ext)
         return try Data(contentsOf: URL(fileURLWithPath: filePath))
+    }
+}
+
+final class LocalStorageArtifactsContollerTests: BaseAppTests {
+    private var iOSApiKey:String?
+    private var androidApiKey:String?
+    private var token:String?
+    
+    override func setUp() {
+        var env = Environment.xcode
+        env.arguments += ["-DstorageMode=FilesLocalStorage"]
+        configure(with: env)
+        
+        //register user
+        _ = try? register(registerInfo: userIOS, inside: app)
+        //login
+        token = try? login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
+        do {
+            iOSApiKey = try ApplicationsControllerTests.createApp(with: appDtoiOS, inside: app,token: token).apiKey
+            androidApiKey = try ApplicationsControllerTests.createApp(with: appDtoAndroid, inside: app,token: token).apiKey
+        }catch{
+            print("Error \(error)")
+        }
+    }
+    
+    func testDownloadiOSManifest() throws {
+        let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
+        let dwInfo = try ArtifactsContollerTests.donwloadInfo(apiKey: iOSApiKey!, fileData: fileData,into:app!,with:token)
+        
+        var plistUrl = dwInfo.installUrl.replacingOccurrences(of: "itms-services://?action=download-manifest&url=", with: "")
+        plistUrl = plistUrl.removingPercentEncoding!
+        
+        let manifestPlist = try app.clientSyncTest(.GET, plistUrl,isAbsoluteUrl:true)
+        XCTAssertEqual(manifestPlist.http.contentType, .xml)
+        //download url must be in manifest
+        if let data =  manifestPlist.http.body.data {
+            let manifestPlistDict =  try PropertyListSerialization.propertyList(from: data, format: nil) as! [String:Any]
+            let metadata = (((manifestPlistDict["items"] as? Array<Any>)?.first as? [String:Any])?["metadata"]) as? [String:Any]
+            let assets = ((((manifestPlistDict["items"] as? Array<Any>)?.first as? [String:Any])?["assets"]) as? [Any])?.first as? [String:Any]
+            XCTAssertEqual(metadata?["title"] as? String, appDtoiOS.name)
+            XCTAssertEqual(metadata?["bundle-version"] as? String, "1")
+            XCTAssertEqual(metadata?["bundle-identifier"] as? String, "com.petri.calculator.calculator")
+            
+            XCTAssertEqual(assets?["url"] as? String, dwInfo.directLinkUrl)
+        }
+        
+        let ipaFile = try app.clientSyncTest(.GET, dwInfo.directLinkUrl,isAbsoluteUrl:true)
+        #if os(Linux)
+            //URLSEssion on linux doens not handle redirect by default
+            XCTAssertEqual(ipaFile.http.status, .seeOther)
+           XCTAssertEqual( ipaFile.http.headers.firstValue(name: .location),TestingStorageService.defaultApkUrl)
+            
+        #else
+            XCTAssertTrue(ipaFile.http.contentType == .binary)
+            XCTAssertEqual(ipaFile.http.body.count,fileData.count)
+        #endif
     }
 }
