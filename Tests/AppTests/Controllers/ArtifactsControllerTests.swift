@@ -401,14 +401,8 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
         }
         
         let ipaFile = try app.clientSyncTest(.GET, dwInfo.directLinkUrl,isAbsoluteUrl:true)
-        #if os(Linux)
-            //URLSEssion on linux doens not handle redirect by default
-            XCTAssertEqual(ipaFile.http.status, .seeOther)
-           XCTAssertEqual( ipaFile.http.headers.firstValue(name: .location),TestingStorageService.defaultApkUrl)
-            
-        #else
-            XCTAssertTrue(ipaFile.http.contentType == .binary)
-            XCTAssertEqual(ipaFile.http.body.count,fileData.count)
-        #endif
+    
+        XCTAssertTrue(ipaFile.http.contentType == ipaContentType)
+        XCTAssertEqual(ipaFile.http.body.count,fileData.count)
     }
 }

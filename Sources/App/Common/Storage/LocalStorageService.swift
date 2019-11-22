@@ -87,10 +87,16 @@ final class LocalStorageService: StorageServiceProtocol {
     }
     
     func getStoredFile(storedIn :StorageAccessUrl, into eventLoop:EventLoop) throws -> EventLoopFuture<StoredResult> {
-        guard let filenameUrl = URL(string:  try extractStorageId(storageInfo: storedIn)) else { throw StorageError.badFormat }
-        guard FileManager.default.fileExists(atPath: filenameUrl.path) else { throw StorageError.notFound }
-        guard let url = URL(string:  "file://\(filenameUrl.path)") else { throw StorageError.internalError }
+        let filePath = try extractStorageId(storageInfo: storedIn)
+        guard FileManager.default.fileExists(atPath: filePath) else { throw StorageError.notFound }
+        guard let escapingPath = filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else { throw StorageError.badFormat }
+        guard let url = URL(string:  "file://\(escapingPath)") else { throw StorageError.internalError }
         return eventLoop.newSucceededFuture(result:StoredResult.asUrI(url:url))
+        
+        //guard let filenameUrl = URL(string:  try extractStorageId(storageInfo: storedIn)) else { throw StorageError.badFormat }
+       /* guard FileManager.default.fileExists(atPath: filenameUrl.path) else { throw StorageError.notFound }
+        guard let url = URL(string:  "file://\(filenameUrl.path)") else { throw StorageError.internalError }
+        return eventLoop.newSucceededFuture(result:StoredResult.asUrI(url:url))*/
       /*  do {
             let fileHandler = try Foundation.FileHandle(forReadingFrom: filename)
             //print(fileHandler.readDataToEndOfFile())

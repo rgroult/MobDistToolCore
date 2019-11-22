@@ -238,7 +238,13 @@ final class ArtifactsController:BaseController  {
                     //TO DO
                     case .asUrI(let url):
                         if url.scheme == "file"{ //local files
-                            return try req.streamFile(at: url.absoluteString)
+                            return try req.streamFile(at: url.path)
+                                .map { response in
+                                    let contentType = MediaType.parse(artifact.contentType?.data(using: .utf8) ?? Data()) ?? MediaType.binary
+                                    response.http.contentType = contentType
+                                    
+                                    return response
+                            }
                         }else {
                             //redirect to it
                             response = req.redirect(to: url.absoluteString)
