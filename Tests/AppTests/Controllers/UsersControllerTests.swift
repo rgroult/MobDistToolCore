@@ -53,6 +53,40 @@ final class UsersControllerAutomaticRegistrationTests: BaseAppTests {
     
 }
 
+
+final class UsersControllerPasswordStrengthRegistrationTests: BaseAppTests {
+    override func setUp() {
+        var env = Environment.xcode
+        env.arguments += ["-DminimumPasswordStrength=4"]
+        configure(with: env)
+    }
+    
+    func testRegisterKO() throws{
+        let registerReq = userIOS
+        let registerJSON = try JSONEncoder().encode(registerReq)
+        
+        let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+            XCTAssertNotNil(res)
+            XCTAssertEqual(res.http.status.code , 400)
+            let errorResp = try res.content.decode(ErrorDto.self).wait()
+            XCTAssertTrue(errorResp.reason == "UserError.invalidPassworsStrength")
+        }
+    }
+    func testRegisterOK() throws{
+        let registerReq = RegisterDto(email: "toto@toto.com", name: "toto", password: "VéRyComCET1DePQ55WD")
+        let registerJSON = try JSONEncoder().encode(registerReq)
+        
+        let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+            XCTAssertNotNil(res)
+            XCTAssertEqual(res.http.status.code , 200)
+          //  let errorResp = try res.content.decode(ErrorDto.self).wait()
+         //   XCTAssertTrue(errorResp.reason == "UserError.invalidPassworsStrength")
+        }
+    }
+}
+
 final class UsersControllerNoAutomaticAndTemplatesRegistrationTests: BaseAppTests {
     
     private func createTemplateFile()->String {

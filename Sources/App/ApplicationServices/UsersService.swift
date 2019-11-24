@@ -16,6 +16,7 @@ enum UserError: Error,Equatable {
     case invalidLoginOrPassword
     case userNotAdministrator
     case fieldInvalid(fieldName:String)
+    case invalidPassworsStrength(required:Int)
 }
 
 extension UserError: Debuggable {
@@ -33,6 +34,8 @@ extension UserError: Debuggable {
             return "UserError.notActivated"
         case .userNotAdministrator:
             return "UserError.userNotAdministrator"
+        case .invalidPassworsStrength:
+            return "UserError.invalidPassworsStrength"
         }
     }
     

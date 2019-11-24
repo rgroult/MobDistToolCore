@@ -33,6 +33,9 @@ let package = Package(
         //🔐 crypto
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMinor(from: "0.9.0")),
         
+        //🔐 Swift wrapper for zxcvbn-c
+        .package(url: "https://github.com/vzsg/zxcvbn-swift.git", .branch("master")),
+        
         //✉️ email
         //.package(url: "https://github.com/IBM-Swift/Swift-SMTP", .upToNextMinor(from: "5.1.0"))
         .package(url: "https://github.com/rgroult/Swift-SMTP.git", .branch("master"))
@@ -40,7 +43,7 @@ let package = Package(
        
     ],
     targets: [
-        .target(name: "App", dependencies: ["SwiftSMTP","JWTAuth", "Vapor","MeowVapor","Swiftgger","CryptoSwift", "Pagination"]),
+        .target(name: "App", dependencies: ["SwiftSMTP","JWTAuth", "Vapor","MeowVapor","Swiftgger","CryptoSwift", "Pagination","zxcvbn"]),
         .target(name: "Run", dependencies: ["App"]),
         .testTarget(name: "AppTests", dependencies: ["App"])
     ]

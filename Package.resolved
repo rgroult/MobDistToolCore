@@ -333,6 +333,15 @@
           "revision": "d85e5b6dce4d04065865f77385fc3324f98178f6",
           "version": "1.1.2"
         }
+      },
+      {
+        "package": "zxcvbn",
+        "repositoryURL": "https://github.com/vzsg/zxcvbn-swift.git",
+        "state": {
+          "branch": "master",
+          "revision": "c0fa718f6c8f30a982129ac25afbcef75c5ffede",
+          "version": null
+        }
       }
     ]
   },

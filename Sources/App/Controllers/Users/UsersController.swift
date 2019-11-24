@@ -13,6 +13,7 @@ import JWT
 import JWTAuth
 import SwiftSMTP
 import Pagination
+import zxcvbn
 
 enum RegistrationError : Error {
     case invalidEmailFormat, emailDomainForbidden
@@ -40,6 +41,10 @@ final class UsersController:BaseController {
                         throw RegistrationError.emailDomainForbidden
                     }
                 }
+                //check password strength
+                let strength = Zxcvbn.estimateScore(registerDto.password)
+                guard strength >= config.minimumPasswordStrength else { throw UserError.invalidPassworsStrength(required: config.minimumPasswordStrength)}
+                
                 //register user
                 let needRegistrationEmail = !config.automaticRegistration
                 let context = try req.context()
