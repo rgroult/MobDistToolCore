@@ -54,10 +54,11 @@ final class UsersControllerAutomaticRegistrationTests: BaseAppTests {
 }
 
 
-final class UsersControllerPasswordStrengthRegistrationTests: BaseAppTests {
+final class UsersControllerPasswordStrengthAndDelayRegistrationTests: BaseAppTests {
     override func setUp() {
         var env = Environment.xcode
         env.arguments += ["-DminimumPasswordStrength=4"]
+        env.arguments += ["-DloginResponseDelay=10"]
         configure(with: env)
     }
     
@@ -84,6 +85,15 @@ final class UsersControllerPasswordStrengthRegistrationTests: BaseAppTests {
           //  let errorResp = try res.content.decode(ErrorDto.self).wait()
          //   XCTAssertTrue(errorResp.reason == "UserError.invalidPassworsStrength")
         }
+    }
+    
+    func testLoginWithDelay() throws {
+        try testRegisterOK()
+        let start = Date()
+        let registerUser = RegisterDto(email: "toto@toto.com", name: "toto", password: "VéRyComCET1DePQ55WD")
+        XCTAssertNoThrow(try login(withEmail: registerUser.email, password: registerUser.password, inside: app))
+        print("Delay \(start.timeIntervalSinceNow)")
+        XCTAssertTrue(abs(start.timeIntervalSinceNow) >= 10)
     }
 }
 

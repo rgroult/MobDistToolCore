@@ -99,8 +99,14 @@ final class UsersController:BaseController {
             })
         // throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
     }
-    
     func login(_ req: Request) throws -> Future<LoginRespDto> {
+        let config = try req.make(MdtConfiguration.self)
+        let delay = config.loginResponseDelay
+        return req.eventLoop.scheduleTask(in: TimeAmount.seconds(delay)) { return try self.loginDelayed(req)}
+            .futureResult.flatMap{$0}
+    }
+    
+    func loginDelayed(_ req: Request) throws -> Future<LoginRespDto> {
         return try req.content.decode(LoginReqDto.self)
             .flatMap{ loginDto -> Future<LoginRespDto>  in
                 let context = try req.context()
