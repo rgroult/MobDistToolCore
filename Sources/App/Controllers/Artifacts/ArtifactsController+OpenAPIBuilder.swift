@@ -18,6 +18,19 @@ extension ArtifactsController:APIBuilderControllerProtocol {
             APIController(name: pathPrefix,
                           description: "Controller for Artifacts provisionning",
                           actions: [
+                            APIAction(method: .get, route: generateRoute(Verb.deployScript(apiKeyPathName: "apiKey").uri),
+                                      summary: "Deploy Artifacts",
+                                      description: "Python Deployement script.ex :curl -Ls http://<your_server>/<base_path>/v2/Artifacts/<api_key>/deploy | python - ADD fromFile sample.json ",
+                                      parameters: [
+                                        APIParameter(name: "apiKey", parameterLocation:.path, description: "Api Key", required: true)
+                                ],
+                                      responses: [
+                                        APIResponse(code: "200", description: "Artifact created", object: ApplicationDto.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: false
+                            ),
                             APIAction(method: .post, route: generateRoute(verb.uri),
                                       summary: "Create Artifact",
                                       description: "Create artifact with apiKey",

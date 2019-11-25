@@ -30,7 +30,7 @@ final class ArtifactsController:BaseController  {
     }
     
     private func createArtifactWithInfo(_ req: Request,apiKey:String,branch:String,version:String,artifactName:String) throws -> Future<ArtifactDto> {
-        let filename = req.http.headers[customHeadersName.filename.rawValue].last ?? "artifact"
+        let headerFilename = req.http.headers[customHeadersName.filename.rawValue].last
         let sortIdentifier = req.http.headers[customHeadersName.sortIdentifier.rawValue].last
         let metaTagsHeader = req.http.headers[customHeadersName.metaTags.rawValue].last
         guard req.http.headers["content-type"].last == BINARY_CONTENT_TYPE else { throw ArtifactError.invalidContentType}
@@ -40,6 +40,12 @@ final class ArtifactsController:BaseController  {
             metaTags = try? JSONDecoder().decode([String : String].self,from: metaTagsHeader.convertToData())
         }else {
             metaTags = nil
+        }
+        let filename:String
+        if let lastPath = headerFilename?.split(separator:"/").last {
+            filename = String(lastPath)
+        }else {
+            filename = "artifact"
         }
         let context = try req.context()
         return try findApplication(apiKey: apiKey, into: context)
@@ -259,5 +265,17 @@ final class ArtifactsController:BaseController  {
             }
         }
         
+    }
+    
+    func deploy(_ req: Request) throws -> Future<Response> {
+        let apiKey = try req.parameters.next(String.self)
+        let context = try req.context()
+        let config = try req.make(MdtConfiguration.self)
+        return try findApplication(apiKey: apiKey, into: context).map{app in
+            guard let _ = app else { throw ApplicationError.notFound }
+            let baseUrl = config.serverUrl.appendingPathComponent(config.pathPrefix)
+            let scriptCode = pythonDeployScript(apiKey: apiKey, exernalServerHost: baseUrl.absoluteString)
+            return req.response(scriptCode,as: MediaType(type: "application", subType: "x-python-code"))
+        }
     }
 }

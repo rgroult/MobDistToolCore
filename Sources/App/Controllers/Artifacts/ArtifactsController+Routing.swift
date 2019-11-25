@@ -14,6 +14,7 @@ extension ArtifactsController {
         case artifactDownloadInfo
         case artifactFile(uuid:String)
         case artifactiOSManifest(uuid:String)
+        case deployScript(apiKeyPathName:String)
         var uri:String {
             switch self {
             case .artifacts(let apiKeyPathName, let branchPathName, let versionPathName,let namePathName):
@@ -26,6 +27,8 @@ extension ArtifactsController {
                 return "{\(uuid)}/file"
             case .artifactiOSManifest(let uuid):
                 return "{\(uuid)}/ios_plist"
+            case .deployScript(let apiKeyPathName):
+                return "{\(apiKeyPathName)}/deploy"
             }
         }
         var path:String {
@@ -48,6 +51,8 @@ extension ArtifactsController {
     
     func configure(with router: Router, and protectedRouter:Router){
         let artifactRouter = router.grouped("\(controllerVersion)/\(pathPrefix)")
+        //GET '{apiKey}/deploy
+        artifactRouter.get("", String.parameter,PathComponent.constant("deploy"), use:self.deploy)
         //POST '{apiKey}/{branch}/{version}/{artifactName}
         artifactRouter.post("", String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.createArtifactByApiKey)
         //DELETE '{apiKey}/{branch}/{version}/{artifactName}
