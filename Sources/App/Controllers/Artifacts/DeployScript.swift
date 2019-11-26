@@ -82,9 +82,9 @@ func pythonDeployScript(apiKey:String, exernalServerHost:String) -> String {
     def deleteArtifact(isLatest,branch,version,name):
         url = urlForParameters(isLatest,branch,version,name)
         try:
-            print 'delete artifact at /'+branch+'/'+version+'/'+name
+            print 'delete artifact at '+url
             r = requests.delete(url)
-            if r.status_code in [ 200, 404]:
+            if r.status_code in [ 200, 400]:
                 return True
             else:
                 print 'Error on delete Artifact:'+r.text
@@ -93,6 +93,9 @@ func pythonDeployScript(apiKey:String, exernalServerHost:String) -> String {
             print 'error '+ repr(error)
             return False
         
+    def checkExitCode(isSuccess):
+        if isSuccess!=True:
+            exit(1)
 
 
     parser = argparse.ArgumentParser()
@@ -121,20 +124,24 @@ func pythonDeployScript(apiKey:String, exernalServerHost:String) -> String {
             if type(jsonData).__name__ != 'list':
                 jsonData = [jsonData]
             for data in jsonData:
+                #padding missing properties
+                if args.latest == True:
+                   padding = {"branch": "", "version" : ""}
+                   data.update(padding)
                 if args.action == 'ADD':
                     filePath = data['file']
                     if os.path.isabs(filePath) == False: # relative path
                         # concat file path to json file path
                         filePath = os.path.join(os.path.dirname(args.filename),filePath)
                     
-                    postArtifact(args.latest,data['branch'],data['version'],data['name'],filePath)
+                    checkExitCode(postArtifact(args.latest,data['branch'],data['version'],data['name'],filePath))
                 else:
-                    deleteArtifact(args.latest,data['branch'],data['version'],data['name'])
+                    checkExitCode(deleteArtifact(args.latest,data['branch'],data['version'],data['name']))
         else :
             if args.action == 'ADD':
-                postArtifact(args.latest,args.branch,args.version,args.name,args.file)
+                checkExitCode(postArtifact(args.latest,args.branch,args.version,args.name,args.file))
             else:
-                deleteArtifact(args.latest,args.branch,args.version,args.name)
+                checkExitCode(deleteArtifact(args.latest,args.branch,args.version,args.name))
 
     '''
     Deploy file sample for full version
