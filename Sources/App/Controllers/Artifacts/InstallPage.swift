@@ -30,11 +30,15 @@ func generateInstallPage(for artifact:Artifact,into app:MDTApplication,installUr
 <body>
 <style type="text/css">
     #finished { display: none; }
+    .icon {
+        width : 50px;
+        height: 50px;
+    }
 </style>
 <div class="jumbotron">
-    <div class="container">
+    <div class="container text-center">
         <div class="well bs-component">
-            <h2>\(app.name) <img src="data:image/png;\(app.base64IconData)"/></h2>
+            <h2>\(app.name) <img class="icon" src="\(app.base64IconData ?? "")"/></h2>
             <h3>Version \(artifact.version) on branch \(artifact.branch)</h3>
             <br/>
             <p><a href="\(installUrl)" onclick="document.getElementById('finished').id = '';" class="btn btn-primary btn-raised btn-success">Install</a></p>

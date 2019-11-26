@@ -171,13 +171,13 @@ final class ArtifactsController:BaseController  {
         return store(info: tokenInfo, durationInSecs: TimeInterval(durationInSecs) , into: context)
             .map{[unowned self] token  in
                 let downloadUrl = baseDownloadUrl + "?token=\(token)"
-                let installUrl:String
-                if platform == .ios {
+                let installUrl = self.generateDirectInstallUrl(serverExternalUrl: baseArtifactPath, token: token, platform: platform)
+                /*  if platform == .ios {
                     let plistInstallUrl = baseArtifactPath + self.generateRoute(Verb.artifactiOSManifest.path) + "?token=\(token)"
                     installUrl = self.generateItmsUrl(plistUrl:plistInstallUrl)
                 }else {
                     installUrl = downloadUrl
-                }
+                }*/
                 let installPageUrl = self.generateInstallPageUrl(serverExternalUrl: baseArtifactPath, token: token)
                 return DownloadInfoDto(directLinkUrl: downloadUrl, installUrl: installUrl, installPageUrl: installPageUrl, validity: validity)
         }
@@ -186,6 +186,21 @@ final class ArtifactsController:BaseController  {
     private func generateInstallPageUrl(serverExternalUrl:String,token:String)->String {
         let baseArtifactPath = serverExternalUrl
         return baseArtifactPath + self.generateRoute(Verb.installPage.path) + "?token=\(token)"
+    }
+    
+    private func generateDirectInstallUrl(serverExternalUrl:String,token:String,platform:Platform)->String {
+        let baseArtifactPath = serverExternalUrl
+        let installUrl:String
+        if platform == .ios {
+            let plistInstallUrl = baseArtifactPath + self.generateRoute(Verb.artifactiOSManifest.path) + "?token=\(token)"
+            installUrl = self.generateItmsUrl(plistUrl:plistInstallUrl)
+        }else {
+            let baseDownloadUrl = baseArtifactPath + self.generateRoute(Verb.artifactFile.path)
+            let downloadUrl = baseDownloadUrl + "?token=\(token)"
+            installUrl = downloadUrl
+        }
+        
+        return installUrl
     }
     
     private func generateItmsUrl(plistUrl:String) -> String {
