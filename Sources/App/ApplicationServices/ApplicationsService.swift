@@ -11,7 +11,7 @@ import Meow
 let lastVersionBranchName = "@@@@LAST####"
 let lastVersionName = "latest"
 
-enum ApplicationError: Error {
+enum ApplicationError: Error,Equatable {
     case notFound
     case alreadyExist
     case notAnApplicationAdministrator

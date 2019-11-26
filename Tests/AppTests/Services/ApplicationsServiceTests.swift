@@ -45,7 +45,7 @@ let normalUSerInfo = RegisterDto(email: "toto@toto.Com", name: "toto", password:
         try testCreateApplication()
         
         XCTAssertThrowsError(try testCreateApplication(), "") { error in
-            XCTAssertTrue((error as? ApplicationError) == ApplicationError.alreadyExist)
+            XCTAssertEqual((error as? ApplicationError), ApplicationError.alreadyExist)
         }
     }
     

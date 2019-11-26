@@ -108,6 +108,17 @@ final class PaginationControllerTests: BaseAppTests {
         XCTAssertEqual(usersFound.data.count,10)
     }
     
+    func testUsersPaginationBigValue() throws{
+        let token = try basePagination(nbre: 10,tempo:0.5)
+        let nbreOfUsers = 11
+        let configuration = try MdtConfiguration.loadConfig(from: nil, from: &app.environment)
+        try paginationRequest(path: "/v2/Users", perPage: 9999999, order: .ascending,sortBy:"email" ,pageNumber: 0, maxElt: nbreOfUsers, token: token) { (elt:UserDto?) in
+             XCTAssertEqual( configuration.initialAdminEmail , elt?.email)
+        }
+        
+    }
+    
+    
     func loginAsAdmin() throws -> String {
         let configuration = try MdtConfiguration.loadConfig(from: nil, from: &app.environment)
         return try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app).token
@@ -136,6 +147,16 @@ final class PaginationControllerTests: BaseAppTests {
         try populateApplications(nbre: 30, tempo: 0.4, token: token)
         
         let apps = try paginationRequest(path: "/v2/Applications", perPage: 20, order: .descending,sortBy:"created" ,searchby:"Application01" , pageNumber: 0, maxElt: 10, token: token) { (elt:ApplicationSummaryDto?) in
+                XCTAssertEqual( "Application019" , elt?.name)
+        }
+        XCTAssertEqual(apps.data.count,10)
+    }
+    
+    func testApplicationsPaginationSearchByNameBigValue() throws {
+        let token = try loginAsAdmin()
+        try populateApplications(nbre: 30, tempo: 0.4, token: token)
+        
+        let apps = try paginationRequest(path: "/v2/Applications", perPage: 99999999999999999, order: .descending,sortBy:"created" ,searchby:"Application01" , pageNumber: 0, maxElt: 10, token: token) { (elt:ApplicationSummaryDto?) in
                 XCTAssertEqual( "Application019" , elt?.name)
         }
         XCTAssertEqual(apps.data.count,10)
