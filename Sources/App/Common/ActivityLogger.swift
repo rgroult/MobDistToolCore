@@ -18,6 +18,7 @@ enum ActivityEvent {
     case CreateApp(app:MDTApplication, user:User)
     case DeleteApp(app:MDTApplication, user:User)
     case UpdateApp(app:MDTApplication, user:User)
+    case MaxVersion(app:MDTApplication?, failedError:Error? = nil)
     
     case UploadArtifact(artifact:Artifact? , failedError:Error? = nil)
     case DeleteArtifact(artifact:Artifact? , failedError:Error? = nil)

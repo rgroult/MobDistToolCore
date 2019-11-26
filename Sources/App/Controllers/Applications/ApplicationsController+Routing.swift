@@ -17,6 +17,7 @@ extension ApplicationsController {
         case specificAppVersionsGrouped(pathName:String)
         case specificAppLatestVersionsGrouped(pathName:String)
         case specificAppAdmins(pathName:String,email:String)
+        case maxVersion(pathName:String,versionName:String)
         var uri:String {
             switch self {
             case .allApplications:
@@ -35,6 +36,8 @@ extension ApplicationsController {
                 return "{\(pathName)}/versions/latest/grouped"
             case .specificAppAdmins(let pathName, let email):
                  return "{\(pathName)}/adminUsers/{\(email)}"
+            case .maxVersion(let pathName, let versionName):
+                return "{\(pathName)}/maxversion/{\(versionName)}"
             }
         }
     }
@@ -42,6 +45,8 @@ extension ApplicationsController {
     func configure(with router: Router, and protectedRouter:Router){
         let appRouter = router.grouped("\(controllerVersion)/\(pathPrefix)")
         appRouter.get("",String.parameter,PathComponent.constant("icon"), use:self.iconApplication)
+        //{appUUID}/maxversion/{name}
+        appRouter.get("",String.parameter,PathComponent.constant("maxversion"),String.parameter, use:self.maxVersion)
         
         let protectedAppsRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
         protectedAppsRouter.get("", use : self.applications)

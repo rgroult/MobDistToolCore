@@ -206,23 +206,6 @@ final class ApplicationsController:BaseController {
         }
     }
     
-    /*
-    func getApplicationVersionsWithParameters(_ req: Request,uuid:String,pageIndex:Int?,limitPerPage:Int?,selectedBranch:String?,isLatestBranch:Bool = false) throws -> Future<[ArtifactDto]> {
-        let context = try req.context()
-        return try retrieveUser(from:req)
-            .flatMap{ user in
-                guard let _ = user else { throw Abort(.unauthorized)}
-                return try App.findApplication(uuid: uuid, into: context)
-            }
-            .flatMap{ (app:MDTApplication?) -> Future<[ArtifactDto]> in
-                guard let app = app else { throw ApplicationError.notFound }
-                let excludedBranch = isLatestBranch ? nil : lastVersionBranchName
-                return try findArtifacts(app: app, pageIndex: pageIndex, limitPerPage: limitPerPage, selectedBranch:selectedBranch, excludedBranch: excludedBranch , into: context)
-                    .map(transform: {ArtifactDto(from: $0)})
-                    .getAllResults()
-        }
-    }*/
-    
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions/grouped?branch=master')
     func getApplicationVersionsGrouped(_ req: Request) throws -> Future<Paginated<ArtifactGroupedDto>> {
         let uuid = try req.parameters.next(String.self)
@@ -256,7 +239,37 @@ final class ApplicationsController:BaseController {
         //return try getApplicationVersionsWithParameters(req, uuid:uuid , pageIndex: nil, limitPerPage: nil, selectedBranch: lastVersionBranchName, isLatestBranch: true)
     }
     
-    //@ApiMethod(method: 'GET', path: 'app/{appId}/icon')
+    
+    //{appUUID}/maxversion/{name}
+    func maxVersion(_ req: Request) throws -> Future<DownloadInfoDto> {
+        let maxVersionAvailbaleDelay = 30.0 //30 Secs
+        let appId = try req.parameters.next(String.self)
+        let name = try req.parameters.next(String.self)
+        
+        let ts = try req.query.get(TimeInterval.self, at: "ts")
+        let hash = try req.query.get(String.self, at: "hash")
+        let branch = try req.query.get(String.self, at: "branch")
+        guard branch != lastVersionBranchName else { throw  VaporError(identifier: "invalidArgument", reason: "branch value is incorrect")}
+        
+        let currentDelay = Date().timeIntervalSince1970 - ts
+        
+        if currentDelay > maxVersionAvailbaleDelay {
+            throw ApplicationError.expirationTimestamp(delay: Int(currentDelay))
+        }
+        let context = try req.context()
+        return try App.findApplication(uuid: appId, into: context)
+            .flatMap{ app -> Future<Artifact?> in
+                guard let app = app, let secretKey  = app.maxVersionSecretKey else { throw ApplicationError.disabledFeature}
+                //compute Hash
+                let stringToHash = "ts=\(ts)&branch=\(branch)&hash=\(secretKey)"
+                let generatedHash = stringToHash.md5()
+                guard generatedHash == hash else { throw ApplicationError.invalidSignature}
+                return searchMaxArtifact(app: app, branch: branch, artifactName: name, into: context)
+        }.map{ _ in
+            DownloadInfoDto.sample()
+        }
+    }
+    
     
     private func findApplicationInfo(from req: Request, needAdmin:Bool) throws -> Future<(user:User,app:MDTApplication)>{
         let uuid = try req.parameters.next(String.self)

@@ -19,6 +19,9 @@ enum ApplicationError: Error {
     case deleteLastApplicationAdministrator
     case iconNotFound
     case invalidIconFormat
+    case expirationTimestamp(delay:Int)
+    case disabledFeature
+    case invalidSignature
     case unknownPlatform
 }
 
@@ -41,6 +44,12 @@ extension ApplicationError:Debuggable {
             return "ApplicationError.iconNotFound"
         case .invalidIconFormat:
             return "ApplicationError.invalidIconFormat"
+        case .expirationTimestamp:
+            return "ApplicationError.expirationTimestamp"
+        case .disabledFeature:
+            return "ApplicationError.disabledFeature"
+        case .invalidSignature:
+            return "ApplicationError.invalidSignature"
         }
     }
     
