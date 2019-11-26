@@ -107,6 +107,7 @@ extension UsersController:APIBuilderControllerProtocol {
                             APIAction(method: .get, route: generateRoute(Verb.activation.rawValue),
                                       summary: "Activation",
                                       description: "Activate User",
+                                      parameters: [APIParameter(name: "activationToken", parameterLocation:.query, description: "Activation token", required: true)],
                                       responses: [
                                         APIResponse(code: "200", description: "Sucess", object: MessageDto.self),
                                         APIResponse(code: "500", description: "Internal Error"),
