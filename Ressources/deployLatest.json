@@ -1,0 +1,7 @@
+[{
+    "name":"dev",
+     "file":"calculator.ipa"
+},{
+    "name":"prod",
+     "file":"calculator.ipa"
+}]

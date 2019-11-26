@@ -1,0 +1,11 @@
+[{
+    "branch":"master",
+    "version":"X.Y.Z",
+    "name":"dev",
+     "file":"calculator.ipa"
+},{
+    "branch":"master",
+    "version":"X.Y.Z",
+    "name":"prod",
+     "file":"calculator.ipa"
+}]
