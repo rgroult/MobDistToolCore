@@ -162,7 +162,7 @@ final class ArtifactsController:BaseController  {
         
         let durationInSecs = validity * 60
         //base download URL
-        let baseDownloadUrl = baseArtifactPath + self.generateRoute(Verb.artifactFile(uuid: artifactID).path)
+        let baseDownloadUrl = baseArtifactPath + self.generateRoute(Verb.artifactFile.path)
         //create token with Info
         let tokenInfo = [ArtifactTokenKeys.user.rawValue:user.email,
                          ArtifactTokenKeys.appName.rawValue:applicationName,
@@ -173,13 +173,19 @@ final class ArtifactsController:BaseController  {
                 let downloadUrl = baseDownloadUrl + "?token=\(token)"
                 let installUrl:String
                 if platform == .ios {
-                    let plistInstallUrl = baseArtifactPath + self.generateRoute(Verb.artifactiOSManifest(uuid: artifactID).path) + "?token=\(token)"
+                    let plistInstallUrl = baseArtifactPath + self.generateRoute(Verb.artifactiOSManifest.path) + "?token=\(token)"
                     installUrl = self.generateItmsUrl(plistUrl:plistInstallUrl)
                 }else {
                     installUrl = downloadUrl
                 }
-                return DownloadInfoDto(directLinkUrl: downloadUrl, installUrl: installUrl, validity: validity)
+                let installPageUrl = self.generateInstallPageUrl(serverExternalUrl: baseArtifactPath, token: token)
+                return DownloadInfoDto(directLinkUrl: downloadUrl, installUrl: installUrl, installPageUrl: installPageUrl, validity: validity)
         }
+    }
+    
+    private func generateInstallPageUrl(serverExternalUrl:String,token:String)->String {
+        let baseArtifactPath = serverExternalUrl
+        return baseArtifactPath + self.generateRoute(Verb.installPage.path) + "?token=\(token)"
     }
     
     private func generateItmsUrl(plistUrl:String) -> String {
@@ -194,7 +200,7 @@ final class ArtifactsController:BaseController  {
         return urlComponents.url?.absoluteString ?? plistUrl
     }
     
-    //GET {idArtifact}/ios_plist?token='
+    //GET /ios_plist?token='
     func downloadArtifactManifest(_ req: Request) throws -> Future<Response> {
         let reqToken = try? req.query.get(String.self, at: "token")
         guard let token = reqToken else { throw  Abort(.badRequest, reason: "Token not found") }
@@ -216,7 +222,29 @@ final class ArtifactsController:BaseController  {
         }
     }
     
-    //GET {idArtifact}/file?token='
+    //GET /install?token='
+    func installArtifactPage(_ req: Request) throws -> Future<Response> {
+        let reqToken = try? req.query.get(String.self, at: "token")
+        guard let token = reqToken else { throw  Abort(.badRequest, reason: "Token not found") }
+        let context = try req.context()
+        let config = try req.make(MdtConfiguration.self)
+        
+        return findInfo(with: token, into: context)
+            .flatMap{ info -> Future<Artifact?> in
+                guard let info = info, let id = info[ArtifactTokenKeys.artifactId.rawValue] else { throw  Abort(.badRequest, reason: "Token not found or expired") }
+                return try findArtifact(byID: id, into: context)
+        }
+        .flatMap{ artifact in
+            guard let artifact = artifact else { throw  Abort(.serviceUnavailable, reason: "Token content Invalid") }
+            return artifact.application.resolve(in: context)
+                .map({ app in
+                    let installUrl = self.generateInstallPageUrl(serverExternalUrl: config.serverUrl.absoluteString, token: token)
+                    return req.response(generateInstallPage(for: artifact, into: app,installUrl: installUrl), as:.html)
+                })
+        }
+    }
+    
+    //GET /file?token='
     func downloadArtifactFile(_ req: Request) throws -> Future<Response> {
         let reqToken = try? req.query.get(String.self, at: "token")
         guard let token = reqToken else { throw  Abort(.badRequest, reason: "Token not found") }

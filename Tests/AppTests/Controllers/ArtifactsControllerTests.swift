@@ -349,6 +349,13 @@ final class ArtifactsContollerTests: BaseAppTests {
         //  print(ipaFile.content)
     }
     
+    func testInstallPageIOS() throws {
+        let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
+        let dwInfo = try donwloadInfo(apiKey: iOSApiKey!, fileData: fileData)
+        let installPage = try app.clientSyncTest(.GET, dwInfo.installPageUrl ,isAbsoluteUrl:true)
+        print(installPage)
+    }
+    
     class func fileData(name:String,ext:String) throws -> Data {
         let dirConfig = DirectoryConfig.detect()
        let filePath = dirConfig.workDir+"Ressources/\(name).\(ext)"

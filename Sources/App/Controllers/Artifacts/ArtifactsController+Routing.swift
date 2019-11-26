@@ -12,8 +12,9 @@ extension ArtifactsController {
         case artifacts(apiKeyPathName:String,branchPathName:String,versionPathName:String,namePathName:String)
         case lastArtifacts(apiKeyPathName:String,namePathName:String)
         case artifactDownloadInfo
-        case artifactFile(uuid:String)
-        case artifactiOSManifest(uuid:String)
+        case artifactFile
+        case artifactiOSManifest
+        case installPage
         case deployScript(apiKeyPathName:String)
         var uri:String {
             switch self {
@@ -23,29 +24,38 @@ extension ArtifactsController {
                 return "{\(apiKeyPathName)}/latest/{\(namePathName)}"
             case .artifactDownloadInfo:
                 return "{uuid}/download"
-            case .artifactFile(let uuid):
-                return "{\(uuid)}/file"
-            case .artifactiOSManifest(let uuid):
-                return "{\(uuid)}/ios_plist"
+            case .artifactFile:
+                return "file"
+            case .artifactiOSManifest:
+                return "ios_plist"
+            case .installPage:
+                return "install"
             case .deployScript(let apiKeyPathName):
                 return "{\(apiKeyPathName)}/deploy"
             }
         }
         var path:String {
             switch self {
+            case .artifactFile, .artifactiOSManifest, .installPage:
+                return uri
+            default:
+                return "XXX"
+            }
+           /* switch self {
           /*  case .artifacts(let apiKeyPathName, let branchPathName, let versionPathName,let namePathName):
                 return "\(apiKeyPathName)}/{\(branchPathName)/\(versionPathName)/\(namePathName)"
             case .lastArtifacts(let apiKeyPathName,let namePathName):
                 return "\(apiKeyPathName)/latest/\(namePathName)"
             case .artifactDownloadInfo:
                 return "{uuid}/download"*/
-            case .artifactFile(let uuid):
-                return "\(uuid)/file"
-            case .artifactiOSManifest(let uuid):
-                return "\(uuid)/ios_plist"
+            case .artifactFile:
+                return "file"
+            case .artifactiOSManifest:
+                return "ios_plist"
+                case
             default:
                 return "XXX"
-            }
+            }*/
         }
     }
     
@@ -63,10 +73,13 @@ extension ArtifactsController {
         //DELETE '{apiKey}/last/{artifactName}
         artifactRouter.delete("", String.parameter ,PathComponent.constant("latest"),String.parameter,  use: self.deleteLastArtifactByApiKey)
         
-        //GET {artifact uuid}/file
-        artifactRouter.get("", String.parameter ,PathComponent.constant("file"),  use: self.downloadArtifactFile)
-        //GET {artifact uuid}/ios_plist
-        artifactRouter.get("", String.parameter ,PathComponent.constant("ios_plist"),  use: self.downloadArtifactManifest)
+        //GET /file?token='
+        artifactRouter.get("",PathComponent.constant("file"),  use: self.downloadArtifactFile)
+        //GET /ios_plist?token='
+        artifactRouter.get("", PathComponent.constant("ios_plist"),  use: self.downloadArtifactManifest)
+        
+        //GET /install?token='
+        artifactRouter.get("",PathComponent.constant("install"),  use: self.installArtifactPage)
         
         //protected
         //GET {artifact uuid}/download

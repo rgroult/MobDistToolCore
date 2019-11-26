@@ -122,11 +122,10 @@ extension ArtifactsController:APIBuilderControllerProtocol {
                                 ],
                                       authorization: true
                             ),
-                            APIAction(method: .get, route: generateRoute(Verb.artifactiOSManifest(uuid: "uuid").uri),
+                            APIAction(method: .get, route: generateRoute(Verb.artifactiOSManifest.uri),
                                       summary: "iOS OTA  Manifest file",
                                       description: "Retieve iOS OTA manifest artifact file",
                                       parameters: [
-                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Artifact UUID", required: true),
                                         APIParameter(name: "token", parameterLocation:.query, description: "token ", required: false)
                                 ],
                                       responses: [
@@ -137,17 +136,29 @@ extension ArtifactsController:APIBuilderControllerProtocol {
                                 ],
                                       authorization: false
                             ),
-                            APIAction(method: .get, route: generateRoute(Verb.artifactFile(uuid: "uuid").uri),
+                            APIAction(method: .get, route: generateRoute(Verb.artifactFile.uri),
                                       summary: "Artifact binary file file",
                                       description: "Retrieve binary file file",
                                       parameters: [
-                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Artifact UUID", required: true),
                                         APIParameter(name: "token", parameterLocation:.query, description: "token ", required: false)
                                 ],
                                       responses: [
                                         APIResponse(code: "200", description: "OTA binary file", object: Data.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: false
+                            ),
+                            APIAction(method: .get, route: generateRoute(Verb.installPage.uri),
+                                      summary: "Install Page",
+                                      description: "Artifact Install Page",
+                                      parameters: [
+                                        APIParameter(name: "token", parameterLocation:.query, description: "token ", required: false)
+                                ],
+                                      responses: [
+                                        APIResponse(code: "200", description: "Install Page", object: String.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "400", description: "Request error")
                                 ],
                                       authorization: false
