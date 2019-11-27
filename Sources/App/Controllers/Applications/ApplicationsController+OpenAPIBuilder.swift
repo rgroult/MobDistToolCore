@@ -181,23 +181,25 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                         APIResponse(code: "400", description: "Request error")
                                 ],
                                       authorization: true
-                            )/*,
-                            //App versions latest grouped
-                            APIAction(method: .get, route: generateRoute(Verb.specificAppLatestVersionsGrouped(pathName: "uuid").uri),
-                                      summary: "Application latest versions grouped",
-                                      description: "Retrieve latest grouped versions for specified app",
-                                      parameters:generatePaginationParameters(sortby: Array(artifactsSortFields.keys), searchByField: nil) +
-                                        [
-                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true)
+                            ),
+                            //App max version
+                            APIAction(method: .get, route: generateRoute(Verb.maxVersion(pathName: "uuid", branch: "branch", versionName: "name").uri),
+                                      summary: "Max Version",
+                                      description: "Retrieve max version off application for name and specific branch",
+                                      parameters:[
+                                        APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true),
+                                        APIParameter(name: "branch", parameterLocation:.path, description: "Application branch", required: true),
+                                        APIParameter(name: "name", parameterLocation:.path, description: "Artifact name", required: true),
+                                        APIParameter(name: "ts", parameterLocation:.query, description: "Timestamp of url signaure", required: true),
+                                        APIParameter(name: "hash", parameterLocation:.query, description: "Hash of url signature with secret", required: true)
                                 ],
                                       responses: [
-                                        APIResponse(code: "200", description: "applications latest versions", object: Paginated<ArtifactGroupedDto>.self),
+                                        APIResponse(code: "200", description: "Max Artifact Version", object: MaxVersionArtifactDto.self),
                                         APIResponse(code: "500", description: "Internal Error"),
-                                        APIResponse(code: "401", description: "Authentication error Error"),
                                         APIResponse(code: "400", description: "Request error")
                                 ],
-                                      authorization: true
-                            )*/
+                                      authorization: false
+                            )
                 ]
             )
         )
@@ -205,6 +207,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                             APIObject(object: ApplicationSummaryDto.sample()),
                             APIObject(object: ApplicationUpdateDto.sample()),
                             APIObject(object: ApplicationCreateDto.sample()),
+                            APIObject(object: MaxVersionArtifactDto.sample()),
                             APIObject(object: Paginated.sample(obj: ApplicationSummaryDto.sample())),
                             APIObject(object: Paginated.sample(obj: ArtifactDto.sample())),
                             APIObject(object: Paginated.sample(obj: ArtifactGroupedDto.sample()))

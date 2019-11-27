@@ -37,6 +37,12 @@ final class User: Model {
     }
 }
 
+extension User {
+    class func anonymous() -> User {
+        return User(email: "anonymous@localhost.com", name: "Anonymous User")
+    }
+}
+
 //extension User {
 //    convenience init(email:String, name:String){
 //        self.init(email:email,name:name,salt:"",password:"",isSystemAdmin:false,isActivated:false,activationToken:nil,createdAt: Date(),favoritesApplicationsUUID:nil)

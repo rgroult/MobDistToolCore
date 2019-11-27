@@ -25,7 +25,7 @@ final class ArtifactsController:BaseController  {
     
     let maxUploadSize = 1024*1024*1024*1024
     
-    init(apiBuilder:OpenAPIBuilder) {
+    init(apiBuilder:OpenAPIBuilder?) {
         super.init(version: "v2", pathPrefix: "Artifacts", apiBuilder: apiBuilder)
     }
     
@@ -145,7 +145,7 @@ final class ArtifactsController:BaseController  {
                         guard let artifact = artifact else { throw ArtifactError.notFound }
                         return artifact.application.resolve(in: context)
                             .flatMap{application in
-                                return try self.generateDownloadInfo(user: user, for: artifact._id.hexString, platform: application.platform,applicationName:application.name, config: config, into: context)
+                                return try self.generateDownloadInfo(user: user, artifactID: artifact._id.hexString, platform: application.platform,applicationName:application.name, config: config, into: context)
                         }
                         .do({[weak self] dto in self?.track(event: .DownloadArtifact(artifact:artifact,user:user), for: req)})
                     })
@@ -155,7 +155,7 @@ final class ArtifactsController:BaseController  {
     enum ArtifactTokenKeys:String {
         case user, appName, artifactId, baseDownloadUrl
     }
-    func generateDownloadInfo(user:User,for artifactID:String, platform:Platform, applicationName:String, config:MdtConfiguration,into context:Context) throws -> Future<DownloadInfoDto>{
+    func generateDownloadInfo(user:User,artifactID:String, platform:Platform, applicationName:String, config:MdtConfiguration,into context:Context) throws -> Future<DownloadInfoDto>{
         // let config = try req.make(MdtConfiguration.self)
         let validity = 3 // 3 mins
         let baseArtifactPath = config.serverUrl.absoluteString
