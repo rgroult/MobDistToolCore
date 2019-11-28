@@ -8,6 +8,7 @@
 import XCTest
 import Vapor
 import App
+@testable import App
 
 extension Application {
     static func runningAppTest(loadingEnv:Environment? = nil) throws -> Application {
@@ -52,8 +53,9 @@ extension Application {
         ) throws {
         let config = try make(NIOServerConfig.self)
         let path = path.hasPrefix("/") ? path : "/\(path)"
+        let mdtConfig = try make(MdtConfiguration.self)
         let req = Request(
-            http: .init(method: method, url: "http://0.0.0.0:\(config.port)" + path),
+            http: .init(method: method, url: "http://0.0.0.0:\(config.port)" + mdtConfig.pathPrefix + path),
             using: self
         )
         if let body = body {
@@ -79,12 +81,13 @@ extension Application {
         beforeSend: (Request) throws -> () = { _ in },
         isAbsoluteUrl:Bool = false) throws -> Response {
         let config = try make(NIOServerConfig.self)
+        let mdtConfig = try make(MdtConfiguration.self)
         let urlString:String
         if isAbsoluteUrl {
            urlString = path
         }else {
             let path = path.hasPrefix("/") ? path : "/\(path)"
-            urlString = "http://0.0.0.0:\(config.port)" + path
+            urlString = "http://0.0.0.0:\(config.port)" + mdtConfig.pathPrefix + path
         }
         let req = Request(
             http: .init(method: method, url: urlString),

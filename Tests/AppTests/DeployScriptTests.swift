@@ -33,12 +33,13 @@ final class DeployScriptTests: BaseAppTests {
     }
     
     func callScript(apiKey:String, args:[String],isSucess:Bool = true){
+        let config = try! app.make(MdtConfiguration.self)
         //call http://localhost:8080/great/v2/Artifacts/92f5cb62-610b-4a4c-9777-b2f0b4b1171e/deploy | | python -
         #if os(Linux)
         #else
         let curlTask = Process()
         curlTask.launchPath = "/usr/bin/curl"
-        curlTask.arguments = ["-Ls","http://localhost:8081/v2/Artifacts/\(apiKey)/deploy"]
+        curlTask.arguments = ["-Ls","http://localhost:8081\(config.pathPrefix)/v2/Artifacts/\(apiKey)/deploy"]
         let pipe = Pipe()
         curlTask.standardOutput = pipe
         

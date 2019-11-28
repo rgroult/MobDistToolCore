@@ -20,7 +20,7 @@ final class ApplicationsController:BaseController {
     let artifactController = ArtifactsController(apiBuilder: nil)
     
     init(apiBuilder:OpenAPIBuilder,externalUrl:URL) {
-        self.externalUrl = externalUrl.appendingPathComponent("v2/Applications")
+        self.externalUrl = externalUrl.appendingPathComponent(BaseController.basePathPrefix) .appendingPathComponent("v2/Applications")
         super.init(version: "v2", pathPrefix: "Applications", apiBuilder: apiBuilder)
     }
     

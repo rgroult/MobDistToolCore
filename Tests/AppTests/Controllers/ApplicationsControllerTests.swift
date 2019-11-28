@@ -185,6 +185,9 @@ final class ApplicationsControllerTests: BaseAppTests {
         XCTAssertEqual(updatedApp.description, updateDto.description)
         XCTAssertNotNil(updatedApp.apiKey)
         XCTAssertNotNil(updatedApp.maxVersionSecretKey)
+        //check icon Url content
+        let iconApp = try app.clientSyncTest(.GET, updatedApp.iconUrl!, isAbsoluteUrl:true)
+        XCTAssertEqual(iconApp.http.status.code , 200)
         
         //update 2
         updateDto = ApplicationUpdateDto(name: "NewName 2", description: "bla bla", maxVersionCheckEnabled: false,base64IconData:"")

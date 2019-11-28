@@ -1,6 +1,6 @@
 {
     "serverListeningPort":8081,
-    "basePathPrefix":"",
+    "basePathPrefix":"/unittest",
     "serverExternalUrl":"http://localhost:8081",
     "mongoServerUrl":"mongodb://localhost:27017/mobdisttoolXcode",
     "jwtSecretToken":"qsdqsdqsdqs",
