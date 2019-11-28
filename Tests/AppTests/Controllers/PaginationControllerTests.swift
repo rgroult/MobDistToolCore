@@ -152,6 +152,15 @@ final class PaginationControllerTests: BaseAppTests {
         XCTAssertEqual(apps.data.count,10)
     }
     
+    func testApplicationsPaginationSearchByNameInsensitive() throws {
+        let token = try loginAsAdmin()
+        try populateApplications(nbre: 3, tempo: 0, token: token)
+        
+        let apps = try paginationRequest(path: "/v2/Applications", perPage: 20, order: .descending,sortBy:"created" ,searchby:"APPLICATION" , pageNumber: 0, maxElt: 10, token: token) { (elt:ApplicationSummaryDto?) in
+        }
+        XCTAssertEqual(apps.data.count,3)
+    }
+    
     func testApplicationsPaginationSearchByNameBigValue() throws {
         let token = try loginAsAdmin()
         try populateApplications(nbre: 30, tempo: 0.4, token: token)

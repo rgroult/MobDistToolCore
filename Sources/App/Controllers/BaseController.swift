@@ -59,7 +59,7 @@ class BaseController {
     
     func extractSearch(from req:Request,searchField:String)  throws -> Query? {
         guard let searchValue = try? req.query.get(String.self, at: "searchby") else { return nil}
-        let query: Document = [searchField : ["$regex": searchValue]]
+        let query: Document = [searchField : ["$regex": searchValue,"$options": "i"]]
         return Query.custom(query)
     }
     
