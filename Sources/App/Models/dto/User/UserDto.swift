@@ -29,6 +29,13 @@ extension UserDto {
     static func create(from user:User, content:ModelVisibility) -> UserDto {
             return UserDto(from: user, content: content)
     }
+    
+    static func generateFavorites(from stringValue:String?) -> [String] {
+        if let appUUID = stringValue,let data = appUUID.data(using: .utf8) {
+            return (try? JSONDecoder().decode([String].self, from: data)) ?? []
+        }
+        return []
+    }
 
     private init(from user:User, content:ModelVisibility){
         email = user.email
@@ -36,9 +43,10 @@ extension UserDto {
         if content == .full {
             isSystemAdmin = user.isSystemAdmin
             isActivated = user.isActivated
-            if let appUUID = user.favoritesApplicationsUUID,let data = appUUID.data(using: .utf8) {
+            favoritesApplicationsUUID = UserDto.generateFavorites(from: user.favoritesApplicationsUUID)
+                /*if let appUUID = user.favoritesApplicationsUUID,let data = appUUID.data(using: .utf8) {
                  favoritesApplicationsUUID = (try? JSONDecoder().decode([String].self, from: data)) ?? []
-            }
+            }*/
             
             createdAt = user.createdAt
             lastLogin = user.lastLogin

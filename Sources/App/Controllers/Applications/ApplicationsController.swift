@@ -112,6 +112,19 @@ final class ApplicationsController:BaseController {
         }
     }
     
+    func applicationsFavorites(_ req: Request) throws -> Future<[ApplicationSummaryDto]> {
+        let serverUrl = externalUrl
+        return try retrieveMandatoryUser(from:req)
+            .flatMap{user in
+               // guard let `self` = self else { throw Abort(.internalServerError)}
+                let context = try req.context()
+                return try findApplications(with: UserDto.generateFavorites(from: user.favoritesApplicationsUUID), into: context)
+                    .map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
+                    .getAllResults()
+        }
+    }
+    
+    
     func applicationDetail(_ req: Request) throws -> Future<ApplicationDto> {
         let appUuid = try req.parameters.next(String.self)
         let serverUrl = externalUrl

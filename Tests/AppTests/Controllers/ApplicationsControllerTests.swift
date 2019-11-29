@@ -721,6 +721,30 @@ final class ApplicationsControllerTests: BaseAppTests {
         app = try returnAppDetail(uuid: appDetail.uuid, token: token)
         XCTAssertEqual(app.availableBranches, ["master","dev"])
     }
+    
+    func testFavoritesApplications() throws {
+        _ = try register(registerInfo: userIOS, inside: app)
+        //login
+        let token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
+        
+        try ApplicationsControllerTests.populateApplications(nbre: 20, inside: app, token: token)
+        let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
+        let allApps = try allAppsResp.content.decode(Paginated<ApplicationSummaryDto>.self).wait()
+        
+        let uuids = allApps.data.prefix(10).map{$0.uuid}
+        
+        let updateInfo = UpdateUserDto(favoritesApplicationsUUID:uuids)
+        let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        XCTAssertEqual(updateResp.http.status.code , 200)
+        
+        //retrieve favorites Apps
+        let favoritesAppResp = try app.clientSyncTest(.GET, "/v2/Applications/favorites", token: token)
+        print(favoritesAppResp.content)
+        let favoritesApp = try favoritesAppResp.content.decode([ApplicationSummaryDto].self).wait()
+        let favoritesAppUuid = favoritesApp.map{$0.uuid}
+       // XCTAssertNotEqual(favoritesAppUuid,uuids)
+        XCTAssertEqual(Set(favoritesAppUuid),Set(uuids))
+    }
 }
 
 extension ApplicationsControllerTests {
@@ -729,5 +753,15 @@ extension ApplicationsControllerTests {
         let result = try app.clientSyncTest(.POST, "/v2/Applications" , body,token:token)
         print(result.content)
         return try result.content.decode(ApplicationDto.self).wait()
+    }
+    class func populateApplications(nbre:Int,tempo:Double = 0,inside app:Application,token:String) throws{
+        for i in 1...nbre {
+            if tempo > 0.0 {
+                Thread.sleep(forTimeInterval: tempo)
+            }
+            let platform = i%2 == 0 ? Platform.android : Platform.ios
+            let appDto = ApplicationCreateDto(name: "Application\(String(format: "%03d",i))", platform: platform, description: "Desc App", base64IconData: nil, enableMaxVersionCheck: nil)
+            _ = try createApp(with: appDto, inside: app, token: token)
+        }
     }
 }

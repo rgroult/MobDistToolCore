@@ -32,6 +32,18 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                 ],
                                       authorization: true
                             ),
+                            //Favorites apps
+                            APIAction(method: .get, route: generateRoute(Verb.favoritesApp.uri),
+                                      summary: "Favorites Apps",
+                                      description: "Retrieve user favorites Applications",
+                                      responses: [
+                                        APIResponse(code: "200", description: "Favorites applications", object: [ApplicationSummaryDto].self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                        APIResponse(code: "400", description: "Request error")
+                                ],
+                                      authorization: true
+                            ),
                             //Manage App
                             APIAction(method: .post, route: generateRoute(Verb.allApplications.uri),
                                       summary: "Create App",

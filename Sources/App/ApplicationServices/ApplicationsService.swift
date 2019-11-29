@@ -69,6 +69,13 @@ func findApplications(platform:Platform? = nil ,into context:Meow.Context,additi
     return (query,context.find(MDTApplication.self,where:query))
 }
 
+func findApplications(with uuids:[String], into context:Meow.Context) throws  -> MappedCursor<FindCursor, MDTApplication>{
+    //ex : db.getCollection('feed').find({"_id" : {"$in" : [ObjectId("55880c251df42d0466919268"), ObjectId("55bf528e69b70ae79be35006")]}});
+    let query: Document = ["uuid" : ["$in": uuids]]
+    return context.find(MDTApplication.self, where: Query.custom(query))
+}
+
+
 func findApplications(for user:User, into context:Meow.Context) throws  -> MappedCursor<FindCursor, MDTApplication>{
     let query: Document = ["$eq": user._id]
     return context.find(MDTApplication.self, where: Query.containsElement(field: "adminUsers", match: Query.custom(query)))

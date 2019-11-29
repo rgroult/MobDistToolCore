@@ -10,6 +10,7 @@ import Vapor
 extension ApplicationsController {
     enum Verb {
         case allApplications
+        case favoritesApp
         case specificApp(pathName:String)
         case specificAppIcon(pathName:String)
         case specificAppVersions(pathName:String)
@@ -22,6 +23,8 @@ extension ApplicationsController {
             switch self {
             case .allApplications:
                 return ""
+            case .favoritesApp:
+                return "favorites"
             case .specificApp(let pathName):
                 return "{\(pathName)}"
             case .specificAppIcon(let pathName):
@@ -50,7 +53,8 @@ extension ApplicationsController {
         
         let protectedAppsRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
         protectedAppsRouter.get("", use : self.applications)
-        protectedAppsRouter.post("",  use: self.createApplication)
+        protectedAppsRouter.post("", use: self.createApplication)
+        protectedAppsRouter.get("", PathComponent.constant(Verb.favoritesApp.uri), use : self.applicationsFavorites)
         protectedAppsRouter.put("", String.parameter /*PathComponent.parameter("uuid")*/,  use: self.updateApplication)
         protectedAppsRouter.get("", String.parameter /*PathComponent.parameter("uuid")*/,  use: self.applicationDetail)
         protectedAppsRouter.delete("", String.parameter /*PathComponent.parameter("uuid")*/,  use: self.deleteApplication)
