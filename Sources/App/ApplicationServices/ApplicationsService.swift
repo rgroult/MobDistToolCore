@@ -173,3 +173,7 @@ extension MDTApplication {
         return save(to: context).map{self}
     }
 }
+
+extension MDTApplication {
+   // func permanentLinks()
+}
