@@ -12,6 +12,7 @@ before_script:
 - mkdir -p $PWD/data/db
 - cp binaries/aapt /usr/local/bin && chmod +x /usr/local/bin/aapt
 ## start mongo
+- brew services start mongodb-community
 - mongod --dbpath $PWD/data/db --fork --syslog
 - swift package generate-xcodeproj
 script:
