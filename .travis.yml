@@ -12,8 +12,8 @@ before_script:
 - mkdir -p $PWD/data/db
 - cp binaries/aapt /usr/local/bin && chmod +x /usr/local/bin/aapt
 ## start mongo
-- brew services start mongodb-community
-- mongod --dbpath $PWD/data/db --fork --syslog
+- brew services start mongodb/brew/mongodb-community@3.6
+#- mongod --dbpath $PWD/data/db --fork --syslog
 - swift package generate-xcodeproj
 script:
 - set -o pipefail && xcodebuild -scheme Run clean test -enableCodeCoverage YES | xcpretty -f `xcpretty-travis-formatter`
