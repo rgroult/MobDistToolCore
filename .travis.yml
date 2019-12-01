@@ -11,6 +11,8 @@ before_script:
 - brew install mongodb-community@3.6
 - mkdir -p $PWD/data/db
 - cp binaries/aapt /usr/local/bin && chmod +x /usr/local/bin/aapt
+- curl --version
+- python --version
 ## start mongo
 - brew services start mongodb/brew/mongodb-community@3.6
 #- mongod --dbpath $PWD/data/db --fork --syslog
