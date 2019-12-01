@@ -7,9 +7,8 @@ before_script:
 ##- gem install vapor
 - brew install pkg-config
 - brew install libressl
-- brew update
-- brew search mongodb
-- brew install mongodb
+- brew tap mongodb/brew
+- brew install mongodb-community@3.6
 - mkdir -p $PWD/data/db
 - cp binaries/aapt /usr/local/bin && chmod +x /usr/local/bin/aapt
 ## start mongo
