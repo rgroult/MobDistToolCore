@@ -16,3 +16,11 @@ struct PermanentLinkDto: Codable {
     let currentVersion:String
     let artifactName:String
 }
+
+
+extension PermanentLinkDto {
+    
+    init(from info:MDTApplication.PermanentLink,artifact:Artifact,installUrl:String,installPageUrl:String){
+        self.init(installUrl: installUrl, installPageUrl: installPageUrl, daysValidity: info.validity, branch: info.branch, currentVersion: artifact.version, artifactName: artifact.name)
+    }
+}

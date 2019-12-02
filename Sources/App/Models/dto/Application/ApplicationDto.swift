@@ -17,6 +17,7 @@ struct ApplicationDto: Codable {
     var adminUsers: [UserDto]
     var availableBranches:[String]
     //admin fields
+    var permanentLinks:[PermanentLinkDto]?
     var apiKey:String?
     var maxVersionSecretKey:String?
     var iconUrl:String? = nil
@@ -32,14 +33,19 @@ extension ApplicationDto {
         var appDto = ApplicationDto(from: app, content:content)
         
         return app.adminUsers
-            .map { $0.resolve(in: context) }
-            .flatten(on: context)
+            .map { $0.resolve(in: context) }.flatten(on: context)
             .and(findDistinctsBranches(app: app, into: context).mapIfError{ _ in []})
-            .map{ users,branches in
+           // .and((app.permanentLinks ?? []).map{ $0.resolve(in: context)}.flatten(on: context).mapIfError{ _ in []})
+            .and( (app.permanentLinks ?? []).map{ retrievePermanentLink(app: app, with: $0, into: context)}.flatten(on: context).mapIfError{ _ in []})
+           // .and((app.permanentLinks ?? []).map{ $0.resolve(in: context)}.flatten(on: context).mapIfError{ _ in []})
+            .map({ arg in
+                let ((users, branches), links) = arg
                 appDto.adminUsers = users.map{UserDto.create(from: $0, content: .light)}
                 appDto.availableBranches = branches
+                appDto.permanentLinks = content == .light ? nil : links.compactMap{ $0}
+                //appDto.permanentLinks = content == .light ? nil : tokensInfo.map{ PermanentLinkDto(from: $0)}.compactMap{ $0} //only as admin
                 return appDto
-            }
+            })
     }
     
     private init(from app:MDTApplication, content:ModelVisibility){

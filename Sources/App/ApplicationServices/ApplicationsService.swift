@@ -155,6 +155,33 @@ func deleteApplication(with name:String, and platform:Platform, into context:Meo
         })
 }
 
+func generatePermanentLink(with info:MDTApplication.PermanentLink, into context:Meow.Context) throws -> Future<TokenInfo> {
+    let permanentLinkInfoData = try JSONEncoder().encode(info)
+    let dictValues = try JSONSerialization.jsonObject(with: permanentLinkInfoData, options: []) as! [String:String]
+    let valitidyInSecs = TimeInterval(info.validity*3600*24) // in days
+    return storeTokenInfo(info: dictValues, durationInSecs: valitidyInSecs, into: context)
+}
+
+func retrievePermanentLink(app:MDTApplication, with info:TokenInfo, into context:Meow.Context) throws -> Future<PermanentLinkDto?> {
+    return findInfo(with: info.uuid, into: context).flatMap { dict in
+        guard let dict = dict else { return context.eventLoop.newSucceededFuture(result: nil)}
+        let permanentLink = try JSONDecoder().decode(MDTApplication.PermanentLink.self, from: try JSONSerialization.data(withJSONObject: dict, options: []))
+        return searchMaxArtifact(app: app, branch: permanentLink.branch, artifactName: permanentLink.artifactName, into: context)
+            .map{ artifact in
+                guard let artifact = artifact else { return nil}
+                return PermanentLinkDto(from: permanentLink, artifact: artifact, installUrl: "TODO", installPageUrl: "TODO")
+        }
+    }
+}
+
+func retrievePermanentLink(app:MDTApplication, with reference:Reference<TokenInfo>, into context:Meow.Context) -> Future<PermanentLinkDto?> {
+    return reference.resolveIfPresent(in: context).flatMap({tokenInfo -> Future<PermanentLinkDto?> in
+        guard let tokenInfo = tokenInfo else { return context.eventLoop.newSucceededFuture(result: nil)}
+        return try retrievePermanentLink(app: app, with: tokenInfo, into: context)
+    })
+}
+
+
 extension MDTApplication {
     func removeAdmin(user:User, into context:Meow.Context)throws -> Future<MDTApplication>{
         adminUsers.removeAll { reference -> Bool in
@@ -172,8 +199,4 @@ extension MDTApplication {
         adminUsers.append(Reference(to: user))
         return save(to: context).map{self}
     }
-}
-
-extension MDTApplication {
-   // func permanentLinks()
 }

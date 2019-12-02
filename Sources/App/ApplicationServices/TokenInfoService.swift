@@ -36,3 +36,8 @@ func store(info:[String:String], durationInSecs:TimeInterval, into context:Meow.
     let tokenInfo = TokenInfo(durationInSecs:durationInSecs,value:info)
     return context.save(tokenInfo).map { tokenInfo.uuid }
 }
+
+func storeTokenInfo(info:[String:String], durationInSecs:TimeInterval, into context:Meow.Context) -> Future<TokenInfo>{
+    let tokenInfo = TokenInfo(durationInSecs:durationInSecs,value:info)
+    return context.save(tokenInfo).map { tokenInfo }
+}

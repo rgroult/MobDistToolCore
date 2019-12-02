@@ -9,6 +9,11 @@ import MeowVapor
 import MongoKitten
 
  final class MDTApplication: Model {
+    struct PermanentLink:Codable {
+        let branch:String
+        let artifactName:String
+        let validity:Int
+    }
     //static let defaultIconPlaceholder = "images/placeholder.jpg"
     //static let collectionName = "MDTApplication"
     var _id = ObjectId()
@@ -20,6 +25,7 @@ import MongoKitten
     var apiKey:String
     var maxVersionSecretKey:String?
     var adminUsers: [Reference<User>]
+    var permanentLinks: [Reference<TokenInfo>]?
     var createdAt:Date
     
     func isAdmin(user:User) -> Bool {
@@ -35,6 +41,7 @@ import MongoKitten
         self.apiKey = UUID().uuidString
         self.uuid = UUID().uuidString
         self.maxVersionSecretKey = nil
+        self.permanentLinks = []
         self.createdAt = Date()
     }
     
