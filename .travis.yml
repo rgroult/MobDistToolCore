@@ -18,6 +18,7 @@ before_script:
 #- mongod --dbpath $PWD/data/db --fork --syslog
 - swift package generate-xcodeproj
 script:
-- set -o pipefail && xcodebuild -scheme Run clean test -enableCodeCoverage YES | xcpretty -f `xcpretty-travis-formatter`
+- set -o pipefail && xcodebuild -scheme Run clean test -enableCodeCoverage YES 
+#| xcpretty -f `xcpretty-travis-formatter`
 after_success:
   - bash <(curl -s https://codecov.io/bash)
