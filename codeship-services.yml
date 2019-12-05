@@ -20,7 +20,7 @@ docker:
    - modisttool-core-build
    
 mongo:
-  image: mongo:3.4
+  image: mongo:3.6
   command: --quiet
   
 modisttool-core-deploy:

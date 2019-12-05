@@ -16,6 +16,7 @@ final class DeployScriptTests: BaseAppTests {
     private var iOSApiKey:String!
     private var androidApiKey:String!
     private var token:String?
+    private var pythonPath:String!
 
     override func setUp() {
         super.setUp()
@@ -26,6 +27,11 @@ final class DeployScriptTests: BaseAppTests {
         do {
             iOSApiKey = try ApplicationsControllerTests.createApp(with: appDtoiOS, inside: app,token: token).apiKey
             androidApiKey = try ApplicationsControllerTests.createApp(with: appDtoAndroid, inside: app,token: token).apiKey
+            
+            let dirConfig = DirectoryConfig.detect()
+            let filePath = dirConfig.workDir+"Ressources/python.path"
+            pythonPath = String(data: try Data(contentsOf: URL(fileURLWithPath: filePath)),encoding: .utf8)
+            pythonPath = pythonPath.trimmingCharacters(in: .newlines)
         }catch{
             print("Error \(error)")
         }
@@ -44,7 +50,8 @@ final class DeployScriptTests: BaseAppTests {
         curlTask.standardOutput = pipe
         
         let pythonTask = Process()
-        pythonTask.launchPath = "/usr/bin/python3"
+        //pythonTask.launchPath = "/usr/bin/python3"
+        pythonTask.launchPath = pythonPath
         pythonTask.standardInput = pipe
         pythonTask.arguments = ["-"] + args
         let outputPipe = Pipe()
