@@ -10,8 +10,8 @@ import Foundation
 func pythonDeployScript(apiKey:String, exernalServerHost:String) -> String {
     return """
     import argparse
-    import urllib
-    import urllib2
+    #import urllib
+    #import urllib2
     import os
     import sys
     import json
@@ -20,10 +20,10 @@ func pythonDeployScript(apiKey:String, exernalServerHost:String) -> String {
     serverHost = '\(exernalServerHost)'
     #apiKey='583fa4c2-8865-4229-b89b-c1d36683425d'
     apiKey='\(apiKey)'
-    #how to use ex :curl -Ls http://localhost:8080/api/v2/artifacts/<api_key>/deploy | python - ADD fromFile sample.json
+    #how to use ex :curl -Ls http://localhost:8080/api/v2/artifacts/<api_key>/deploy | python3 - ADD fromFile sample.json
 
     def loadDeployInfoFromFile(filename) :
-        print 'load deploy info from '+filename
+        print ('load deploy info from '+ filename)
         with open(filename) as json_data:
             jsonData = json.load(json_data)
             return jsonData
@@ -33,10 +33,10 @@ func pythonDeployScript(apiKey:String, exernalServerHost:String) -> String {
             return serverHost+'/v2/Artifacts/'+apiKey+'/latest/'+name
         else:
             if branch is None:
-                print 'branch not defined'
+                print ('branch not defined')
                 exit(404)
             elif version is None:
-                print 'version not defined'
+                print ('version not defined')
                 exit(404)
             else:
                 return serverHost+'/v2/Artifacts/'+apiKey+'/'+branch+'/'+version+'/'+name
@@ -55,12 +55,12 @@ func pythonDeployScript(apiKey:String, exernalServerHost:String) -> String {
 
     def postArtifact(isLatest,branch,version,name,filename):
         url = urlForParameters(isLatest,branch,version,name)
-        print 'Artifact filename: ' + filename
+        print ('Artifact filename: ' + filename)
         try:
             mimetype = get_content_type(filename)
             print('MimeType ' + mimetype)
             # file = {'artifactFile': (os.path.basename(filename), open(filename, 'rb'), 'application/octet-stream')}
-            print 'send artifact '+os.path.basename(filename)+ ' to '+url
+            print ('send artifact '+os.path.basename(filename)+ ' to '+url)
             #branch+'/'+version+'/'+name
             # print 'send artifact '+url
             data = open(filename, 'rb').read()
@@ -70,27 +70,27 @@ func pythonDeployScript(apiKey:String, exernalServerHost:String) -> String {
 
            # r = requests.post(url, files=file)
             if r.status_code != 200:
-                print 'Error on post Artifact:'+r.text
+                print ('Error on post Artifact:'+r.text)
                 return False
             else:
                 return True
         except (requests.exceptions.RequestException,requests.packages.urllib3.exceptions.ProtocolError) as error :
-            print 'error '+ repr(error)
+            print ('error '+ repr(error))
             return False
         
 
     def deleteArtifact(isLatest,branch,version,name):
         url = urlForParameters(isLatest,branch,version,name)
         try:
-            print 'delete artifact at '+url
+            print ('delete artifact at '+url)
             r = requests.delete(url)
             if r.status_code in [ 200, 400]:
                 return True
             else:
-                print 'Error on delete Artifact:'+r.text
+                print ('Error on delete Artifact:'+r.text)
                 return False
         except (requests.exceptions.RequestException,requests.packages.urllib3.exceptions.ProtocolError) as error :
-            print 'error '+ repr(error)
+            print ('error '+ repr(error))
             return False
         
     def checkExitCode(isSuccess):
@@ -115,12 +115,12 @@ func pythonDeployScript(apiKey:String, exernalServerHost:String) -> String {
 
     if __name__ == '__main__':
         args = parser.parse_args()
-        print args
-        print 'Command:'+args.inputType
+        print (args)
+        print ('Command:'+args.inputType)
         if args.inputType == 'fromFile':
-            print 'Deploy from input values in file '+args.filename
+            print ('Deploy from input values in file '+args.filename)
             jsonData = loadDeployInfoFromFile(args.filename)
-            print jsonData
+           # print jsonData
             if type(jsonData).__name__ != 'list':
                 jsonData = [jsonData]
             for data in jsonData:

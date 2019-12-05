@@ -44,7 +44,7 @@ final class DeployScriptTests: BaseAppTests {
         curlTask.standardOutput = pipe
         
         let pythonTask = Process()
-        pythonTask.launchPath = "/usr/bin/python"
+        pythonTask.launchPath = "/usr/bin/python3"
         pythonTask.standardInput = pipe
         pythonTask.arguments = ["-"] + args
         let outputPipe = Pipe()
