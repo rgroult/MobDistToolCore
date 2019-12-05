@@ -19,6 +19,6 @@ before_script:
 - swift package generate-xcodeproj
 - set -o pipefail && xcodebuild -scheme Run | xcpretty -f `xcpretty-travis-formatter`
 script:
-- set -o pipefail && xcodebuild -scheme Run  test -enableCodeCoverage YES
+- set -o pipefail && xcodebuild -scheme Run  test 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
