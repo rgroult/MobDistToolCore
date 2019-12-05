@@ -13,7 +13,8 @@ before_script:
 - cp binaries/aapt /usr/local/bin && chmod +x /usr/local/bin/aapt
 - curl --version
 - python --version
-- pip3 install requests
+- easy_install pip
+- pip install requests
 ## start mongo
 - brew services start mongodb/brew/mongodb-community@3.6
 #- mongod --dbpath $PWD/data/db --fork --syslog
