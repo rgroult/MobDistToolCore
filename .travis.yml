@@ -14,6 +14,7 @@ before_script:
 - curl --version
 - python3 --version
 - pip3 install requests
+- which python3
 ## start mongo
 - brew services start mongodb/brew/mongodb-community@3.6
 #- mongod --dbpath $PWD/data/db --fork --syslog
