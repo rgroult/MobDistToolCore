@@ -20,7 +20,13 @@ final class ApplicationsController:BaseController {
     let artifactController = ArtifactsController(apiBuilder: nil)
     
     init(apiBuilder:OpenAPIBuilder,externalUrl:URL) {
-        self.externalUrl = externalUrl.appendingPathComponent(BaseController.basePathPrefix) .appendingPathComponent("v2/Applications")
+        if !BaseController.basePathPrefix.isEmpty{
+            //fix for swift on linux which crash with appendingPathComponent("")
+            self.externalUrl = externalUrl.appendingPathComponent(BaseController.basePathPrefix).appendingPathComponent("v2/Applications")
+        }else {
+            self.externalUrl = externalUrl.appendingPathComponent("v2/Applications")
+        }
+        
         super.init(version: "v2", pathPrefix: "Applications", apiBuilder: apiBuilder)
     }
     
