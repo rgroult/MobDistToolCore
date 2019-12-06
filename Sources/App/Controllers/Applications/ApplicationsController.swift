@@ -111,7 +111,7 @@ final class ApplicationsController:BaseController {
                 let context = try req.context()
                 let (queryUse,appFounds) = try findApplications(platform: platformFilter, into: context,additionalQuery:self.extractSearch(from: req, searchField: "name"))
                 return appFounds.map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
-                    .paginate(for: req, sortFields: self.sortFields,findQuery: queryUse)
+                    .paginate(for: req, sortFields: self.sortFields,defaultSort: "created", findQuery: queryUse)
                 /*return try findApplications(platform: platformFilter, into: context)
                  .map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
                  .getAllResults()*/
@@ -204,7 +204,7 @@ final class ApplicationsController:BaseController {
             let (queryUse,artifactsFound) = try findArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, into: context)
             return artifactsFound
                 .map(transform: {ArtifactDto(from: $0)})
-                .paginate(for: req, sortFields: self.artifactsSortFields,findQuery: queryUse)
+                .paginate(for: req, sortFields: self.artifactsSortFields,defaultSort: "created",findQuery: queryUse)
         }
     }
     
@@ -222,7 +222,7 @@ final class ApplicationsController:BaseController {
             let (artifactsFound,countFuture) = try findAndSortArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, into: context)
             return artifactsFound
                 .map(transform: {ArtifactGroupedDto(from: $0)})
-                .paginate(for: req, sortFields: self.groupedArtifactsSortFields,countQuery:countFuture)
+                .paginate(for: req, sortFields: self.groupedArtifactsSortFields,defaultSort: "created",countQuery:countFuture)
         }
     }
     

@@ -9,7 +9,7 @@ import Meow
 import Vapor
 import Pagination
 
-let MappedCursorDefaultPageSize = 50
+let MappedCursorDefaultPageSize:UInt = 50
 
 enum PaginationSort:String {
     case ascending
@@ -26,19 +26,20 @@ enum PaginationSort:String {
 
 extension MappedCursor  where Element:Content {
     
-    func paginate(for req:Request, sortFields:[String:String],countQuery:Future<Int>) -> Future<Paginated<Element>>{
+    func paginate(for req:Request, sortFields:[String:String],defaultSort:String,countQuery:Future<Int>) -> Future<Paginated<Element>>{
         return countQuery.flatMap{ count in
-            self.paginate(for: req, sortFields: sortFields, totalCount: count)
+            self.paginate(for: req, sortFields: sortFields,defaultSort:defaultSort, totalCount: count)
         }
     }
     
-    func paginate(for req:Request, sortFields:[String:String],findQuery:Query? = nil) -> Future<Paginated<Element>>{
+    func paginate(for req:Request, sortFields:[String:String],defaultSort:String,findQuery:Query? = nil) -> Future<Paginated<Element>>{
         //extract "page" and "per" parameters
         
         //page info
-        var page = (try? req.query.get(Int.self, at: "page")) ?? 0
+        var page = Int((try? req.query.get(UInt.self, at: "page")) ?? 0)
         page = max (0 , page)
-        let perPage = (try? req.query.get(Int.self, at: "per")) ?? MappedCursorDefaultPageSize
+        var perPage = Int((try? req.query.get(UInt.self, at: "per")) ?? MappedCursorDefaultPageSize)
+        perPage = max (0 , perPage)
         let skipItems = page * perPage
         
         //sort info
@@ -53,25 +54,27 @@ extension MappedCursor  where Element:Content {
         if let field = sortFields[sortValue ?? ""] {
             sortBy = field
         }else {
-            sortBy = sortFields.values.first!
+            sortBy = defaultSort
         }
+        
         
         return self.collection.count(findQuery).flatMap{ count in
             let pageData = PageData(per: perPage, total: count)
             let maxPosition = max(0, Int(ceil(-1.0 + Double(count) / Double(perPage))))
-            let position = Position(current: page, max: maxPosition /* Int(ceil(Double(count) / Double(perPage)) - 1) *//* start indice is 0 */)
+            let position = Position(current: Int(page), max: maxPosition /* Int(ceil(Double(count) / Double(perPage)) - 1) *//* start indice is 0 */)
             return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)
                 .getPageResult(position,pageData)
         }
     }
     
-    private func paginate(for req:Request, sortFields:[String:String],totalCount:Int) -> Future<Paginated<Element>>{
+    private func paginate(for req:Request, sortFields:[String:String],defaultSort:String,totalCount:Int) -> Future<Paginated<Element>>{
         //extract "page" and "per" parameters
         
         //page info
-        var page = (try? req.query.get(Int.self, at: "page")) ?? 0
+        var page = Int((try? req.query.get(UInt.self, at: "page")) ?? 0)
         page = max (0 , page)
-        let perPage = (try? req.query.get(Int.self, at: "per")) ?? MappedCursorDefaultPageSize
+        var perPage = Int((try? req.query.get(UInt.self, at: "per")) ?? MappedCursorDefaultPageSize)
+        perPage = max (0 , perPage)
         let skipItems = page * perPage
         
         //sort info
@@ -86,7 +89,7 @@ extension MappedCursor  where Element:Content {
         if let field = sortFields[sortValue ?? ""] {
             sortBy = field
         }else {
-            sortBy = sortFields.values.first!
+            sortBy = defaultSort
         }
         
         let pageData = PageData(per: perPage, total: totalCount)

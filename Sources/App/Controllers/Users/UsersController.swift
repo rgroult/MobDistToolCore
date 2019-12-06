@@ -156,7 +156,7 @@ final class UsersController:BaseController {
                 let cursor:MappedCursor<MappedCursor<FindCursor, User>, UserDto> = try allUsers(into: context, additionalQuery:searchQuery )
                     .map(transform: {UserDto.create(from: $0, content: .full)})
                 
-                let result:Future<Paginated<UserDto>> = cursor.paginate(for: req, sortFields: self.sortFields,findQuery: searchQuery)
+                let result:Future<Paginated<UserDto>> = cursor.paginate(for: req, sortFields: self.sortFields,defaultSort: "email", findQuery: searchQuery)
                 return result
             })
     }

@@ -37,7 +37,7 @@ struct JWTTokenPayload: JWTAuthenticatable, JWTPayload, Equatable {
     }
 }
 
-
+/*
 struct JWTRefreshTokenPayload: JWTAuthenticatable, JWTPayload, Equatable {
     
     init(_ id: String = UUID().uuidString) {
@@ -58,4 +58,4 @@ struct JWTRefreshTokenPayload: JWTAuthenticatable, JWTPayload, Equatable {
     static func == (lhs: JWTRefreshTokenPayload, rhs: JWTRefreshTokenPayload) -> Bool {
         return lhs.id == rhs.id
     }
-}
+}*/
