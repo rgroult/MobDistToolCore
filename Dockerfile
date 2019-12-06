@@ -17,5 +17,5 @@ WORKDIR /app
 RUN rm -fr /BUILD
 RUN ls -lh /app/bin/
 RUN ls -lh /app/
-# ENTRYPOINT ./bin/Run serve -e production -b 0.0.0.0
-CMD /app/bin/Run serve -e production -b 0.0.0.0
+ENTRYPOINT ["./bin/Run"," "serve", "-e", "production", "-b", "0.0.0.0"]
+#CMD /app/bin/Run serve -e production -b 0.0.0.0
