@@ -54,7 +54,7 @@ extension MappedCursor  where Element:Content {
         if let field = sortFields[sortValue ?? ""] {
             sortBy = field
         }else {
-            sortBy = defaultSort
+            sortBy = sortFields[defaultSort]!
         }
         
         
@@ -89,7 +89,7 @@ extension MappedCursor  where Element:Content {
         if let field = sortFields[sortValue ?? ""] {
             sortBy = field
         }else {
-            sortBy = defaultSort
+            sortBy = sortFields[defaultSort]!
         }
         
         let pageData = PageData(per: perPage, total: totalCount)
