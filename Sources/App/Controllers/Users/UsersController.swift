@@ -102,6 +102,7 @@ final class UsersController:BaseController {
     func login(_ req: Request) throws -> Future<LoginRespDto> {
         let config = try req.make(MdtConfiguration.self)
         let delay = config.loginResponseDelay
+        //return try self.loginDelayed(req)
         return req.eventLoop.scheduleTask(in: TimeAmount.seconds(delay)) { return try self.loginDelayed(req)}
             .futureResult.flatMap{$0}
     }
@@ -111,7 +112,18 @@ final class UsersController:BaseController {
             .flatMap{ loginDto -> Future<LoginRespDto>  in
                 let context = try req.context()
                 return try findUser(by: loginDto.email, and: loginDto.password, updateLastLogin: true, into: context)
-                    .flatMap({ user in
+                .map({ user in
+                    // user is activated ?
+                    guard user.isActivated else { throw UserError.notActivated}
+                    let signers = try req.make(JWTSigners.self)
+                   // let signer = try signers.requireSigner(kid:signerIdentifier)
+                    let signer = JWTSigner.hs256(key: Data("secret".utf8))
+                    let jwt = JWT(header: JWTHeader(), payload: JWTTokenPayload(email: user.email))
+                    let signatureData = try jwt.sign(using: signer)
+                    let token = String(bytes: signatureData, encoding: .utf8)!
+                    return LoginRespDto( email: user.email, name: user.name,token:token)
+                })
+                    /*.flatMap({ user in
                         // user is activated ?
                         guard user.isActivated else { throw UserError.notActivated}
                         //generate token in header
@@ -123,7 +135,7 @@ final class UsersController:BaseController {
                                 let token = String(bytes: signatureData, encoding: .utf8)!
                                 return LoginRespDto( email: user.email, name: user.name,token:token)
                         }
-                    })
+                    })*/
                     .do({[weak self]  dto in self?.track(event: .Login(email: dto.email, isSuccess: true), for: req)})
                     .catch({[weak self]  error in self?.track(event: .Login(email: loginDto.email, isSuccess: false,failedError:error), for: req)})
         }

@@ -171,7 +171,7 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                         APIParameter(name: "branch", parameterLocation:.query, description: "Specific branch", required: false)
                                 ],//artifactsSortFields
                                       responses: [
-                                        APIResponse(code: "200", description: "applications versions", object: Paginated<ArtifactDto>.self),
+                                        APIResponse(code: "200", description: "applications versions", object: Paginated<ArtifactGroupedDto>.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                         APIResponse(code: "400", description: "Request error")
