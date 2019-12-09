@@ -118,7 +118,7 @@ final class UsersController:BaseController {
                     let signers = try req.make(JWTSigners.self)
                    // let signer = try signers.requireSigner(kid:signerIdentifier)
                     let signer = JWTSigner.hs256(key: Data("secret".utf8))
-                    let jwt = JWT(header: JWTHeader(), payload: JWTTokenPayload(email: user.email))
+                    let jwt = JWT(header: JWTHeader(kid: signerIdentifier), payload: JWTTokenPayload(email: user.email))
                     let signatureData = try jwt.sign(using: signer)
                     let token = String(bytes: signatureData, encoding: .utf8)!
                     return LoginRespDto( email: user.email, name: user.name,token:token)
