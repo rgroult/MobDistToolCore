@@ -588,6 +588,7 @@ final class ApplicationsControllerTests: BaseAppTests {
                 let version = formatter.string(from: NSNumber(value: idx))
                 for name in names {
                      _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: apiKey, branch: branch, version: "1.2.\(version!)", name: name, contentType:ipaContentType, inside: app)
+                   // Thread.sleep(forTimeInterval: 0.3)
                 }
                
             }

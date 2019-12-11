@@ -19,6 +19,7 @@ extension ApplicationsController {
         case specificAppLatestVersionsGrouped(pathName:String)
         case specificAppAdmins(pathName:String,email:String)
         case maxVersion(pathName:String,branch:String,versionName:String)
+        case permanentLinks
         var uri:String {
             switch self {
             case .allApplications:
@@ -41,6 +42,8 @@ extension ApplicationsController {
                  return "{\(pathName)}/adminUsers/{\(email)}"
             case .maxVersion(let pathName, let branch, let versionName):
                 return "{\(pathName)}/maxversion/{\(branch)}/{\(versionName)}"
+            case .permanentLinks:
+                return "{uuid}/links"
             }
         }
     }
@@ -67,5 +70,9 @@ extension ApplicationsController {
         //admin user
         protectedAppsRouter.put("", PathComponent.parameter("uuid"),PathComponent.constant("adminUsers"),String.parameter,/*PathComponent.parameter("email"),*/ use: self.addAdminUser)
         protectedAppsRouter.delete("", PathComponent.parameter("uuid"),PathComponent.constant("adminUsers"),String.parameter,/*PathComponent.parameter("email"),*/ use: self.deleteAdminUser)
+        //links
+        protectedAppsRouter.get("",String.parameter, PathComponent.parameter("links"), use: self.applicationPermanentLinks)
+        protectedAppsRouter.post("",String.parameter, PathComponent.parameter("links"), use: self.createApplicationPermanentLink)
+        protectedAppsRouter.delete("",String.parameter, PathComponent.parameter("links"), use: self.deleteApplicationPermanentLink)
     }
 }

@@ -13,14 +13,16 @@ struct PermanentLinkDto: Codable {
     let installPageUrl:String
     let daysValidity:Int
     let branch:String
-    let currentVersion:String
+    let currentVersion:String?
     let artifactName:String
 }
 
 
 extension PermanentLinkDto {
     
-    init(from info:MDTApplication.PermanentLink,artifact:Artifact,installUrl:String,installPageUrl:String){
-        self.init(installUrl: installUrl, installPageUrl: installPageUrl, daysValidity: info.validity, branch: info.branch, currentVersion: artifact.version, artifactName: artifact.name)
+    init(from info:MDTApplication.PermanentLink,artifact:Artifact?,installUrl:String,installPageUrl:String){
+        self.init(installUrl: installUrl, installPageUrl: installPageUrl, daysValidity: info.validity, branch: info.branch, currentVersion: artifact?.version, artifactName: info.artifactName)
     }
 }
+
+extension PermanentLinkDto: Content {}

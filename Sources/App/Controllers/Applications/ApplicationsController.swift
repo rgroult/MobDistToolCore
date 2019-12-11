@@ -122,7 +122,7 @@ final class ApplicationsController:BaseController {
         let serverUrl = externalUrl
         return try retrieveMandatoryUser(from:req)
             .flatMap{user in
-               // guard let `self` = self else { throw Abort(.internalServerError)}
+                // guard let `self` = self else { throw Abort(.internalServerError)}
                 let context = try req.context()
                 return try findApplications(with: UserDto.generateFavorites(from: user.favoritesApplicationsUUID), into: context)
                     .map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
@@ -130,6 +130,48 @@ final class ApplicationsController:BaseController {
         }
     }
     
+    //GET /<uuid>/link
+    func applicationPermanentLinks(_ req: Request) throws -> Future<[PermanentLinkDto]> {
+        let appUuid = try req.parameters.next(String.self)
+        
+        //let test:Future<[(MDTApplication.PermanentLink,Artifact?)]> =
+        return try retrieveUser(from:req)
+            .flatMap{user in
+                guard let user = user else { throw Abort(.unauthorized)}
+                let context = try req.context()
+                return try findApplication(uuid: appUuid, into: context)
+                    .flatMap({app -> Future<[(MDTApplication.PermanentLink,Artifact?)]> in
+                        guard let app = app else { throw ApplicationError.notFound }
+                        guard app.isAdmin(user: user) else { throw Abort(.unauthorized)}
+                        
+                        return try retrievePermanentLinks(app: app, into: context)
+                        //return (app.permanentLinks ?? []).map{ retrievePermanentLink(app: app, with: $0, into: context)}.flatten(on: context).mapIfError{ _ in []})
+                    })
+                    .map{ permanentLinkInfoList throws -> [PermanentLinkDto] in
+                        return try permanentLinkInfoList.map {[weak self] permanentLinkInfo throws in
+                            guard let `self` = self else { throw Abort(.internalServerError)}
+                            let  (link, artifact)  = permanentLinkInfo
+                            let (installUrl,intallPage) = try self.generateUrls(with: link)
+                            return PermanentLinkDto(from: link, artifact: artifact, installUrl: installUrl.absoluteString, installPageUrl: intallPage.absoluteString)
+                        }
+                }
+        }
+    }
+    
+    //POST /<uuid>/link
+    func createApplicationPermanentLink(_ req: Request) throws -> Future<PermanentLinkDto> {
+        throw "not implemented"
+    }
+    
+    //DELETE /<uuid>/link
+    func deleteApplicationPermanentLink(_ req: Request) throws -> Future<MessageDto> {
+        throw "not implemented"
+    }
+    
+    private func generateUrls(with info:MDTApplication.PermanentLink) throws -> (installUrl:URL,installPageUrl:URL){
+        let serverUrl = externalUrl
+        throw "not implemented"
+    }
     
     func applicationDetail(_ req: Request) throws -> Future<ApplicationDto> {
         let appUuid = try req.parameters.next(String.self)
@@ -139,10 +181,17 @@ final class ApplicationsController:BaseController {
                 guard let user = user else { throw Abort(.unauthorized)}
                 let context = try req.context()
                 return try findApplication(uuid: appUuid, into: context)
-                    .flatMap({ app in
+                    .flatMap({app in
                         guard let app = app else { throw ApplicationError.notFound }
-                        return ApplicationDto.create(from: app, content:app.isAdmin(user: user) ? .full : .light , in : context)
+                        //  guard let `self` = self else { throw Abort(.internalServerError)}
+                        
+                        let isAdminForApp = app.isAdmin(user: user)
+                        //find permanent links
+                        // let permanentLinks:Future<[PermanentLinkDto]?> = isAdminForApp ? req.eventLoop.future(nil) : try self.applicationPermanentLinks(req, application: app)
+                        
+                        return ApplicationDto.create(from: app, content:isAdminForApp ? .full : .light , in : context)
                             .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
+                        
                     })}
     }
     
