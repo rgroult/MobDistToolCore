@@ -140,21 +140,21 @@ final class ApplicationsController:BaseController {
                 guard let user = user else { throw Abort(.unauthorized)}
                 let context = try req.context()
                 return try findApplication(uuid: appUuid, into: context)
-                    .flatMap({app -> Future<[(MDTApplication.PermanentLink,Artifact?)]> in
+                    .flatMap({app  in
                         guard let app = app else { throw ApplicationError.notFound }
                         guard app.isAdmin(user: user) else { throw Abort(.unauthorized)}
                         
                         return try retrievePermanentLinks(app: app, into: context)
-                        //return (app.permanentLinks ?? []).map{ retrievePermanentLink(app: app, with: $0, into: context)}.flatten(on: context).mapIfError{ _ in []})
-                    })
-                    .map{ permanentLinkInfoList throws -> [PermanentLinkDto] in
-                        return try permanentLinkInfoList.map {[weak self] permanentLinkInfo throws in
-                            guard let `self` = self else { throw Abort(.internalServerError)}
-                            let  (link, artifact)  = permanentLinkInfo
-                            let (installUrl,intallPage) = try self.generateUrls(with: link)
-                            return PermanentLinkDto(from: link, artifact: artifact, installUrl: installUrl.absoluteString, installPageUrl: intallPage.absoluteString)
+                            .map{ permanentLinkInfoList throws -> [PermanentLinkDto] in
+                                return try permanentLinkInfoList.map {[weak self] permanentLinkInfo throws in
+                                    guard let `self` = self else { throw Abort(.internalServerError)}
+                                    let  (token, artifact)  = permanentLinkInfo
+                                    let (installUrl,intallPage) = try self.generateUrls(with: token, platform: app.platform)
+                                    return PermanentLinkDto(from: token.link, artifact: artifact, installUrl: installUrl, installPageUrl: intallPage)
+                                }
                         }
-                }
+                    })
+                
         }
     }
     
@@ -168,9 +168,50 @@ final class ApplicationsController:BaseController {
         throw "not implemented"
     }
     
-    private func generateUrls(with info:MDTApplication.PermanentLink) throws -> (installUrl:URL,installPageUrl:URL){
-        let serverUrl = externalUrl
-        throw "not implemented"
+    
+    enum InstallType:String,Decodable {
+        case direct
+        case page
+    }
+    //GET /permanentLink?token=dsf&install=direct|page
+    func installPermanentLink(_ req: Request) throws -> Future<Response> {
+        let reqToken = try req.query.get(String.self, at: "token")
+        let installType = try req.query.get(InstallType.self, at: "install")
+        let context = try req.context()
+        
+        return try retriveTokenInfo(tokenId: reqToken, into: context)
+            .flatMap{try retrievePermanentLinkArtifact(token: $0, into: context)}
+            .flatMap({ (tokenLink, artifact) in
+                guard let app = tokenLink.application else { throw ApplicationError.notFound }
+                guard let artifact = artifact else { throw ArtifactError.notFound }
+                let config = try req.make(MdtConfiguration.self)
+                
+                return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact.uuid, platform: app.platform, applicationName: app.name, config: config, into: context)
+                    .map{ dwInfo -> Response in
+                        let installUrl:String
+                        switch installType{
+                        case .direct:
+                            installUrl = dwInfo.installUrl
+                        case .page:
+                            installUrl = dwInfo.installPageUrl
+                        }
+                        return req.redirect(to: installUrl)
+                }
+            })
+    }
+    
+    private func generateUrls(with token:MDTApplication.TokenLink,platform:Platform) throws -> (installUrl:String,installPageUrl:String){
+        let serverUrl = externalUrl.absoluteString
+        let baseInstallUrl = serverUrl + self.generateRoute(Verb.permanentLinkInstall.uri)
+        
+        let installUrl = baseInstallUrl + "?token=\(token.link)&install=\(InstallType.direct.rawValue)"
+        let installPageUrl = baseInstallUrl + "?token=\(token.link)&install=\(InstallType.page.rawValue)"
+        
+        /* let installUrl = artifactController.generateDirectInstallUrl(serverExternalUrl: serverUrl, token: token.tokenId, platform: platform)
+         let installPageUrl = artifactController.generateInstallPageUrl(serverExternalUrl: serverUrl, token: token.tokenId)
+         */
+        return (installUrl,installPageUrl)
+        //throw "not implemented"
     }
     
     func applicationDetail(_ req: Request) throws -> Future<ApplicationDto> {

@@ -183,12 +183,12 @@ final class ArtifactsController:BaseController  {
         }
     }
     
-    private func generateInstallPageUrl(serverExternalUrl:String,token:String)->String {
+    func generateInstallPageUrl(serverExternalUrl:String,token:String)->String {
         let baseArtifactPath = serverExternalUrl
         return baseArtifactPath + self.generateRoute(Verb.installPage.path) + "?token=\(token)"
     }
     
-    private func generateDirectInstallUrl(serverExternalUrl:String,token:String,platform:Platform)->String {
+    func generateDirectInstallUrl(serverExternalUrl:String,token:String,platform:Platform)->String {
         let baseArtifactPath = serverExternalUrl
         let installUrl:String
         if platform == .ios {

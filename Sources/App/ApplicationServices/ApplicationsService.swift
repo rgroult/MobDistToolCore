@@ -23,6 +23,7 @@ enum ApplicationError: Error,Equatable {
     case disabledFeature
     case invalidSignature
     case unknownPlatform
+    case expiredLink
 }
 
 extension ApplicationError:Debuggable {
@@ -50,6 +51,8 @@ extension ApplicationError:Debuggable {
             return "ApplicationError.disabledFeature"
         case .invalidSignature:
             return "ApplicationError.invalidSignature"
+        case .expiredLink:
+            return "ApplicationError.expiredLink"
         }
     }
     
@@ -174,20 +177,34 @@ func retrievePermanentLink(app:MDTApplication, with info:TokenInfo, into context
     }
 }*/
 
-func retrievePermanentLink(app:MDTApplication,link:MDTApplication.PermanentLink, into context:Meow.Context) throws -> Future<(MDTApplication.PermanentLink,Artifact?)> {
-    return searchMaxArtifact(app: app, branch: link.branch, artifactName: link.artifactName, into: context)
-        .map { artifact in
-            return (link,artifact)
+func retrievePermanentLinkArtifact(token:MDTApplication.TokenLink, into context:Meow.Context) throws -> Future<(MDTApplication.TokenLink,Artifact?)> {
+    return try findApplication(uuid: token.link.applicationUuid, into: context)
+        .flatMap { app in
+            guard let app = app else { throw ApplicationError.notFound }
+            return searchMaxArtifact(app: app, branch: token.link.branch, artifactName: token.link.artifactName, into: context)
+                .map { artifact in
+                    return (token,artifact)
+            }
     }
 }
 
-func retrievePermanentLinks(app:MDTApplication, into context:Meow.Context) throws -> Future<[(MDTApplication.PermanentLink,Artifact?)]> {
+
+func retriveTokenInfo(tokenId:String, into context:Meow.Context) throws -> Future<MDTApplication.TokenLink> {
+    return findInfo(with: tokenId, into: context)
+        .map{ dict in
+            guard let dict = dict else { throw ApplicationError.expiredLink}
+            return dict
+        }
+        .map { MDTApplication.TokenLink(tokenId: tokenId, link: try JSONDecoder().decode(MDTApplication.PermanentLink.self, from: try JSONSerialization.data(withJSONObject: $0, options: [])))}
+}
+
+func retrievePermanentLinks(app:MDTApplication, into context:Meow.Context) throws -> Future<[(MDTApplication.TokenLink,Artifact?)]> {
     return (app.permanentLinks ?? []).map { $0.resolve(in: context) }.flatten(on: context)
         .flatMap { allTokens throws in
             let validLinks = try allTokens.filter{!$0.isExpired}
-                .map { try JSONDecoder().decode(MDTApplication.PermanentLink.self, from: try JSONSerialization.data(withJSONObject: $0, options: []))}
+                .map { MDTApplication.TokenLink(tokenId: $0.uuid, link: try JSONDecoder().decode(MDTApplication.PermanentLink.self, from: try JSONSerialization.data(withJSONObject: $0.value, options: [])))}
             
-            return try validLinks.map{ try retrievePermanentLink(app: app, link: $0, into: context) }
+            return try validLinks.map{ try retrievePermanentLinkArtifact(token: $0, into: context) }
             .flatten(on: context)
         }
 }

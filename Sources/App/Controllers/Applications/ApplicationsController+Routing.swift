@@ -20,6 +20,7 @@ extension ApplicationsController {
         case specificAppAdmins(pathName:String,email:String)
         case maxVersion(pathName:String,branch:String,versionName:String)
         case permanentLinks
+        case permanentLinkInstall
         var uri:String {
             switch self {
             case .allApplications:
@@ -44,6 +45,8 @@ extension ApplicationsController {
                 return "{\(pathName)}/maxversion/{\(branch)}/{\(versionName)}"
             case .permanentLinks:
                 return "{uuid}/links"
+            case .permanentLinkInstall:
+                return "permanentLink"
             }
         }
     }
@@ -74,5 +77,6 @@ extension ApplicationsController {
         protectedAppsRouter.get("",String.parameter, PathComponent.parameter("links"), use: self.applicationPermanentLinks)
         protectedAppsRouter.post("",String.parameter, PathComponent.parameter("links"), use: self.createApplicationPermanentLink)
         protectedAppsRouter.delete("",String.parameter, PathComponent.parameter("links"), use: self.deleteApplicationPermanentLink)
+        router.get("", PathComponent.constant(Verb.permanentLinkInstall.uri), use: self.installPermanentLink)
     }
 }

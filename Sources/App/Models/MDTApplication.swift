@@ -9,7 +9,13 @@ import MeowVapor
 import MongoKitten
 
  final class MDTApplication: Model {
+    struct TokenLink {
+        let tokenId:String
+        var application:MDTApplication?
+        let link:PermanentLink
+    }
     struct PermanentLink:Codable {
+        let applicationUuid:String
         let branch:String
         let artifactName:String
         let validity:Int
