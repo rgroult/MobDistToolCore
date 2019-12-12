@@ -3,6 +3,6 @@
     "mongoServerUrl":"mongodb://mongo:27017/mobdisttool",
     "loginResponseDelay":1000,
     "automaticRegistration":false,
-    "minimumPasswordStrength":4
+    "minimumPasswordStrength":4,
+    "jwtSecretToken":"DONT_FORGET_TO_CHANGE_IT"
 }
-

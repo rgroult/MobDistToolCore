@@ -115,9 +115,8 @@ final class UsersController:BaseController {
                 .map({ user in
                     // user is activated ?
                     guard user.isActivated else { throw UserError.notActivated}
-                    let signers = try req.make(JWTSigners.self)
-                   // let signer = try signers.requireSigner(kid:signerIdentifier)
-                    let signer = JWTSigner.hs256(key: Data("secret".utf8))
+                    let signers = try req.make(MDT_Signers.self)
+                    let signer = signers.signer()
                     let jwt = JWT(header: JWTHeader(kid: signerIdentifier), payload: JWTTokenPayload(email: user.email))
                     let signatureData = try jwt.sign(using: signer)
                     let token = String(bytes: signatureData, encoding: .utf8)!

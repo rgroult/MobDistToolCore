@@ -23,7 +23,7 @@ public struct MdtConfiguration: Codable {
     var pathPrefix:String {
         return basePathPrefix ?? ""
     }
-    var jwtSecretToken:String?
+    var jwtSecretToken:String
     //delay (in ms) before login resquest response (limit brut attack).
     var loginResponseDelay:Int
     

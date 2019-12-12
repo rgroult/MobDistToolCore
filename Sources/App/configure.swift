@@ -6,6 +6,21 @@ import JWT
 
 let signerIdentifier = "mdt_jwt_signer"
 
+// Use this to avoid SEGFAULT on heavy load on HMAC : create new JWRTSigner every time, no reuse
+struct MDT_Signers:JWTSignerRepository {
+    let key:String
+    
+    public func signer() -> JWTSigner {
+        return JWTSigner.hs256(key: Data(key.utf8))
+    }
+    public func get(kid: String, on worker: Container) throws -> Future<JWTSigner> {
+        return worker.future(signer())
+    }
+    static func makeService(for container: Container) throws -> Self {
+        throw "Unable to make empty service"
+    }
+}
+
 /// Called before your application initializes.
 public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
     //load config
@@ -57,15 +72,18 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     
     // register Authentication provider
     let jwtProvider = JWTAuthProvider()
+   // try! services.register(AuthenticationProvider())
     
     try services.register(jwtProvider)
     
     //JWT
-    let signer = JWTSigner.hs256(key: Data("secret".utf8))
+   /* let signer = JWTSigner.hs256(key: Data("secret".utf8))
     let signers = JWTSigners()
     signers.use(signer, kid: signerIdentifier)
-    services.register(signers)
-    let authenticationMiddleware = JWTAuthenticationMiddleware(JWTTokenPayload.self,signers:signers)
+    services.register(signers)*/
+    let mdtSigners = MDT_Signers(key: configuration.jwtSecretToken)
+    services.register(mdtSigners)
+    let authenticationMiddleware = JWTAuthenticationMiddleware(JWTTokenPayload.self,signers:mdtSigners)
     
     //Storage
      let storageProtocol:StorageServiceProtocol
