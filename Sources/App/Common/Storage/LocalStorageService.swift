@@ -45,11 +45,29 @@ final class LocalStorageService: StorageServiceProtocol {
     
     func store(file: Foundation.FileHandle, with info:StorageInfo, into eventLoop:EventLoop) throws -> EventLoopFuture<StorageAccessUrl> {
         //generate relative Path for file
+        let addStorePathUrl = { (baseUrl:inout URL) in
+            baseUrl.appendPathComponent(info.platform.rawValue)
+            baseUrl.appendPathComponent(info.applicationName)
+            baseUrl.appendPathComponent(info.version)
+        }
+        
+        let filename = "\(info.uploadFilename ?? "JohnDoe")\(random(5))"
+        let addStoreFileUrl = { (baseUrl:inout URL) in
+            baseUrl.appendPathComponent(filename)
+        }
+        
         var absolutePathName = URL(fileURLWithPath: rootStoragePath)
-        absolutePathName.appendPathComponent(info.platform.rawValue)
+        addStorePathUrl(&absolutePathName)
+        
+        var storageUrl = URL(fileURLWithPath: "/")
+        addStorePathUrl(&storageUrl)
+        addStoreFileUrl(&storageUrl)
+        
+        
+      /*  absolutePathName.appendPathComponent(info.platform.rawValue)
         absolutePathName.appendPathComponent(info.applicationName)
         absolutePathName.appendPathComponent(info.version)
-        
+        */
        
         //absolutePathName.appendPathComponent(random(5))
         
@@ -58,10 +76,11 @@ final class LocalStorageService: StorageServiceProtocol {
         //create directory if needed
         try fileManager.createDirectory(at: absolutePathName, withIntermediateDirectories: true, attributes: nil)
         //add random to filename to avoid collision
-        absolutePathName.appendPathComponent("\(info.uploadFilename ?? "JohnDoe")\(random(5))")
+        addStoreFileUrl(&absolutePathName)
+       // absolutePathName.appendPathComponent("\(info.uploadFilename ?? "JohnDoe")\(random(5))")
         
         let storePath = absolutePathName.path
-        let resultStoreUrl = makeStorageAccessUrl(from: storePath)
+        let resultStoreUrl = makeStorageAccessUrl(from: storageUrl.path)
         fileQueue.async {
             do {
                 //Create File
@@ -87,11 +106,17 @@ final class LocalStorageService: StorageServiceProtocol {
     }
     
     func getStoredFile(storedIn :StorageAccessUrl, into eventLoop:EventLoop) throws -> EventLoopFuture<StoredResult> {
-        let filePath = try extractStorageId(storageInfo: storedIn)
-        guard FileManager.default.fileExists(atPath: filePath) else { throw StorageError.notFound }
-        guard let escapingPath = filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else { throw StorageError.badFormat }
-        guard let url = URL(string:  "file://\(escapingPath)") else { throw StorageError.internalError }
-        return eventLoop.newSucceededFuture(result:StoredResult.asUrI(url:url))
+        let relativeFilePath = try extractStorageId(storageInfo: storedIn)
+        let filePathUrl = URL(fileURLWithPath: rootStoragePath).appendingPathComponent(relativeFilePath)
+       
+        guard FileManager.default.fileExists(atPath: filePathUrl.path) else { throw StorageError.notFound }
+       // guard let url = URL(string:  "file://\(filePath.path)") else { throw StorageError.internalError }
+        
+        
+        
+        //guard let escapingPath = filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else { throw StorageError.badFormat }
+        //guard let url = URL(string:  "file://\(escapingPath)") else { throw StorageError.internalError }
+        return eventLoop.newSucceededFuture(result:StoredResult.asUrI(url:filePathUrl))
         
         //guard let filenameUrl = URL(string:  try extractStorageId(storageInfo: storedIn)) else { throw StorageError.badFormat }
        /* guard FileManager.default.fileExists(atPath: filenameUrl.path) else { throw StorageError.notFound }
@@ -108,7 +133,9 @@ final class LocalStorageService: StorageServiceProtocol {
     
     func deleteStoredFileStorageId(storedIn:StorageAccessUrl, into eventLoop:EventLoop) throws-> Future<Void>{
         //guard let filename = URL(fileURLWithPath:  try extractStorageId(storageInfo: storedIn)) else { throw StorageError.badFormat }
-        let filename = URL(fileURLWithPath:  try extractStorageId(storageInfo: storedIn))
+        let relativeFilePath = try extractStorageId(storageInfo: storedIn)
+        let filename = URL(fileURLWithPath: rootStoragePath).appendingPathComponent(relativeFilePath)
+       // let filename = URL(fileURLWithPath:  try extractStorageId(storageInfo: storedIn))
         let fileManager = FileManager.default
         if !fileManager.fileExists(atPath: filename.path) {
             throw StorageError.notFound
