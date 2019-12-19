@@ -28,7 +28,7 @@ let package = Package(
         .package(url: "https://github.com/OpenKitten/MeowVapor.git", from: "2.0.0"),
         
         // open APi
-        .package(url: "https://github.com/mczachurski/Swiftgger.git", from: "1.2.1"),
+        .package(url: "https://github.com/mczachurski/Swiftgger.git", from: "1.3.1"),
         
         //🔐 crypto
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMinor(from: "0.9.0")),

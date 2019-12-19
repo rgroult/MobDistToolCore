@@ -22,6 +22,22 @@ public func routes(_ baseRouter: Router, authenticateMiddleware:Middleware,confi
     router.get("/status") { req in
         return ["name":"MobileDistributionTool Core", "version" : MDT_Version ]
     }
+    //add status swagger
+    openAPIBuilder.add(
+        APIController(name: "",
+                      description: "Status",
+                      actions: [
+                        APIAction(method: .get, route: "\(BaseController.basePathPrefix)/status",
+                                  summary: "Status",
+                                  description: "Retrieve Server status and version",
+                                  responses: [
+                                    APIResponse(code: "200", description: "Info"),
+                            ],
+                                  authorization: false
+                        )
+            ]
+    ))
+    
     
     let protected = router.grouped(authenticateMiddleware,JWTTokenPayload.guardAuthMiddleware())
     
