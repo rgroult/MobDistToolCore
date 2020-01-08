@@ -130,37 +130,73 @@ final class ApplicationsController:BaseController {
         }
     }
     
+    private func retrieveUserAndApp(_ req: Request, appUuid:String,needToBeAdmin:Bool) throws -> Future<(User,MDTApplication)> {
+        let context = try req.context()
+        return try retrieveUser(from:req)
+            .flatMap{user in
+                guard let user = user else { throw Abort(.unauthorized)}
+                return try findApplication(uuid: appUuid, into: context)
+                    .map({ app  in
+                        guard let app = app else {throw ApplicationError.notFound }
+                        if needToBeAdmin {
+                            guard app.isAdmin(user: user) else { throw ApplicationError.notAnApplicationAdministrator }
+                        }
+                        return (user,app)
+                    })
+        }
+    }
+    
+    private func generatePermanentLink(token:MDTApplication.TokenLink,artifact:Artifact?,platform:Platform) throws -> PermanentLinkDto {
+        let (installUrl,intallPage) = try generateUrls(with: token, platform: platform)
+        return PermanentLinkDto(from: token.link, artifact: artifact, installUrl: installUrl, installPageUrl: intallPage)
+    }
+    
     //GET /<uuid>/link
     func applicationPermanentLinks(_ req: Request) throws -> Future<[PermanentLinkDto]> {
         let appUuid = try req.parameters.next(String.self)
         
-        //let test:Future<[(MDTApplication.PermanentLink,Artifact?)]> =
-        return try retrieveUser(from:req)
-            .flatMap{user in
-                guard let user = user else { throw Abort(.unauthorized)}
+        return try retrieveUserAndApp(req, appUuid: appUuid, needToBeAdmin: true)
+            .flatMap { (user, app) in
                 let context = try req.context()
-                return try findApplication(uuid: appUuid, into: context)
-                    .flatMap({app  in
-                        guard let app = app else { throw ApplicationError.notFound }
-                        guard app.isAdmin(user: user) else { throw Abort(.unauthorized)}
-                        
-                        return try retrievePermanentLinks(app: app, into: context)
-                            .map{ permanentLinkInfoList throws -> [PermanentLinkDto] in
-                                return try permanentLinkInfoList.map {[weak self] permanentLinkInfo throws in
-                                    guard let `self` = self else { throw Abort(.internalServerError)}
-                                    let  (token, artifact)  = permanentLinkInfo
-                                    let (installUrl,intallPage) = try self.generateUrls(with: token, platform: app.platform)
-                                    return PermanentLinkDto(from: token.link, artifact: artifact, installUrl: installUrl, installPageUrl: intallPage)
-                                }
+                return try retrievePermanentLinks(app: app, into: context)
+                    .map{ permanentLinkInfoList throws -> [PermanentLinkDto] in
+                        return try permanentLinkInfoList.map {[weak self] permanentLinkInfo throws in
+                            guard let `self` = self else { throw Abort(.internalServerError)}
+                            let  (token, artifact)  = permanentLinkInfo
+                            let (installUrl,intallPage) = try self.generateUrls(with: token, platform: app.platform)
+                            return PermanentLinkDto(from: token.link, artifact: artifact, installUrl: installUrl, installPageUrl: intallPage)
                         }
-                    })
-                
+                }
         }
+        
     }
     
     //POST /<uuid>/link
     func createApplicationPermanentLink(_ req: Request) throws -> Future<PermanentLinkDto> {
-        throw "not implemented"
+        let appUuid = try req.parameters.next(String.self)
+        
+        return try retrieveUserAndApp(req, appUuid: appUuid, needToBeAdmin: true)
+            .flatMap { (user, app) in
+                let context = try req.context()
+                return try req.content.decode(PermanentLinkCreateDto.self)
+                    .flatMap{ linkCreateDto in
+                        let link = MDTApplication.PermanentLink(applicationUuid: appUuid, branch: linkCreateDto.branch, artifactName: linkCreateDto.artifactName, validity: linkCreateDto.daysValidity)
+                        return try App.generatePermanentLink(with: link, into: context)
+                            .flatMap{ tokenInfo in
+                                let tokenLink = MDTApplication.TokenLink(tokenId: tokenInfo.uuid, application: app, link: link)
+                                //throw "not implemented"
+                                
+                                return try retrievePermanentLinkArtifact(token: tokenLink, into: context )
+                                    .map { [weak self] permanentLinkInfo throws in
+                                        guard let `self` = self else { throw Abort(.internalServerError)}
+                                        let  (token, artifact)  = permanentLinkInfo
+                                        return try self.generatePermanentLink(token: token, artifact: artifact, platform: app.platform)
+                                }
+                        }
+                        
+                }
+                
+        }
     }
     
     //DELETE /<uuid>/link
