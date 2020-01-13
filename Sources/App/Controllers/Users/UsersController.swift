@@ -20,6 +20,8 @@ enum RegistrationError : Error {
 }
 
 final class UsersController:BaseController {
+    weak var appController:ApplicationsController?
+    
     /*  override var  controllerVersion = "v2"
      var pathPrefix = "Users"
      */
@@ -142,11 +144,13 @@ final class UsersController:BaseController {
     
     func me(_ req: Request) throws -> Future<UserDto> {
         return try retrieveMandatoryUser(from: req)
-            .flatMap({user throws -> Future<UserDto> in
+            .flatMap({[weak self]user throws -> Future<UserDto> in
                 let context = try req.context()
+                guard let appController = self?.appController else { throw Abort(.internalServerError)}
                 //administreted Applications
                 return try findApplications(for: user, into: context)
-                    .map(transform: {ApplicationSummaryDto(from: $0)})
+                    .map(transform: {appController.generateSummaryDto(from: $0)})
+                   // .map(transform: {ApplicationSummaryDto(from: $0)})
                     .getAllResults()
                     .map{apps -> UserDto in
                         var userDto = UserDto.create(from: user, content: .full)

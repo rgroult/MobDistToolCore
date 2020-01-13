@@ -104,18 +104,22 @@ final class ApplicationsController:BaseController {
         }else {
             platformFilter = nil
         }
-        let serverUrl = externalUrl
         return try retrieveMandatoryUser(from:req)
             .flatMap{[weak self]user in
                 guard let `self` = self else { throw Abort(.internalServerError)}
                 let context = try req.context()
                 let (queryUse,appFounds) = try findApplications(platform: platformFilter, into: context,additionalQuery:self.extractSearch(from: req, searchField: "name"))
-                return appFounds.map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
+                return appFounds.map(transform: {self.generateSummaryDto(from:$0)})
+                //return appFounds.map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
                     .paginate(for: req, sortFields: self.sortFields,defaultSort: "created", findQuery: queryUse)
                 /*return try findApplications(platform: platformFilter, into: context)
                  .map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
                  .getAllResults()*/
         }
+    }
+    
+    func generateSummaryDto(from app:MDTApplication) -> ApplicationSummaryDto {
+        return ApplicationSummaryDto(from: app).setIconUrl(url: app.generateIconUrl(externalUrl: externalUrl))
     }
     
     func applicationsFavorites(_ req: Request) throws -> Future<[ApplicationSummaryDto]> {
@@ -195,7 +199,6 @@ final class ApplicationsController:BaseController {
                         }
                         
                 }
-                
         }
     }
     

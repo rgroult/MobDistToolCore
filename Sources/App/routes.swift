@@ -41,11 +41,12 @@ public func routes(_ baseRouter: Router, authenticateMiddleware:Middleware,confi
     
     let protected = router.grouped(authenticateMiddleware,JWTTokenPayload.guardAuthMiddleware())
     
-    let usersController = UsersController(apiBuilder: openAPIBuilder)
-    usersController.configure(with: router, and: protected)
-    
     let appsController = ApplicationsController(apiBuilder: openAPIBuilder,externalUrl: config.serverUrl)
     appsController.configure(with: router, and: protected)
+    
+    let usersController = UsersController(apiBuilder: openAPIBuilder)
+    usersController.configure(with: router, and: protected)
+    usersController.appController = appsController
     
     let artifactController = ArtifactsController(apiBuilder: openAPIBuilder)
     artifactController.configure(with: router, and: protected)
