@@ -19,7 +19,7 @@ public func routes(_ baseRouter: Router, authenticateMiddleware:Middleware,confi
     //common datamodel
         _ = openAPIBuilder.add([APIObject(object: MessageDto( message: "message"))])
     
-    router.get("/status") { req in
+    router.get("/v2/status") { req in
         return ["name":"MobileDistributionTool Core", "version" : MDT_Version ]
     }
     //add status swagger
@@ -27,7 +27,7 @@ public func routes(_ baseRouter: Router, authenticateMiddleware:Middleware,confi
         APIController(name: "",
                       description: "Status",
                       actions: [
-                        APIAction(method: .get, route: "\(BaseController.basePathPrefix)/status",
+                        APIAction(method: .get, route: "\(BaseController.basePathPrefix)/v2/status",
                                   summary: "Status",
                                   description: "Retrieve Server status and version",
                                   responses: [
