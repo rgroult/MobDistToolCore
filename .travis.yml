@@ -2,6 +2,7 @@ language: swift
 os: osx
 osx_image: xcode11.3
 before_script:
+- brew update-reset
 - gem install xcpretty
 - gem install xcpretty-travis-formatter
 ##- gem install vapor
