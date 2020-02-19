@@ -96,20 +96,22 @@ func findApplication(uuid:String,into context:Meow.Context) throws -> Future<MDT
     return context.findOne(MDTApplication.self, where: Query.valEquals(field: "uuid", val: uuid))
 }
 
-func createApplication(name:String,platform:Platform,description:String,adminUser:User, base64Icon:String? = nil,into context:Meow.Context) throws -> Future<MDTApplication> {
+func createApplication(name:String,platform:Platform,description:String,adminUser:User, base64Icon:String? = nil,maxVersionCheckEnabled:Bool? = nil, into context:Meow.Context) throws -> Future<MDTApplication> {
     return try findApplication(name: name, platform: platform, into: context)
         .flatMap({ app  in
             guard app == nil else { throw ApplicationError.alreadyExist }
-            
+            let createdApplication = MDTApplication(name: name, platform: platform, adminUser: adminUser, description: description)
+            return try updateApplicationWithParameters(from: createdApplication, name: name, description: description, maxVersionCheckEnabled: maxVersionCheckEnabled, iconData: base64Icon, into: context)
+            /*
             return ImageDto.create(within: context.eventLoop, base64Image: base64Icon)
                 .flatMap({icon in
                     //base64Icon AND icon ?
                     if let _ = base64Icon {
                         guard let _ = icon  else { throw ApplicationError.invalidIconFormat }
                     }
-                    let createdApplication = MDTApplication(name: name, platform: platform, adminUser: adminUser, description: description, base64Icon: base64Icon)
+                    let createdApplication = MDTApplication(name: name, platform: platform, adminUser: adminUser, description: description, base64Icon: base64Icon,maxVersionCheckEnabled:maxVersionCheckEnabled)
                     return  createdApplication.save(to: context).map{ createdApplication}
-                })
+                })*/
             /*
             if let iconData = base64Icon {
                 guard let _ = ImageDto(from: iconData) else { throw ApplicationError.invalidIconFormat }
@@ -119,6 +121,44 @@ func createApplication(name:String,platform:Platform,description:String,adminUse
         })
 }
 
+func updateApplicationWithParameters(from app:MDTApplication, name:String?, description:String?, maxVersionCheckEnabled:Bool?, iconData:String?,into context:Meow.Context)  throws -> Future<MDTApplication> {
+    if let name = name {
+        app.name = name
+    }
+    if let description = description {
+        app.description = description
+    }
+    if let maxVersionCheckEnabled = maxVersionCheckEnabled {
+        //already enabled : Do nothing
+        if maxVersionCheckEnabled  && app.maxVersionSecretKey == nil{
+            app.maxVersionSecretKey = random(15)
+        }
+        
+        if !maxVersionCheckEnabled {
+            app.maxVersionSecretKey = nil
+        }
+    }
+    var base64Icon = iconData
+    if base64Icon?.isEmpty == true {
+        app.base64IconData = nil
+        base64Icon = nil
+    }
+    
+    let savedClosure = { return app.save(to: context).map{ app }}
+    if let base64Icon = base64Icon {
+        return ImageDto.create(within: context.eventLoop, base64Image: base64Icon)
+            .map{icon in
+                guard let _ = icon  else { throw ApplicationError.invalidIconFormat }
+                app.base64IconData = base64Icon
+            }
+            .flatMap{  return savedClosure() }
+        
+    }else {
+        return savedClosure()
+    }
+}
+
+/*
 func updateApplication(from app:MDTApplication, maxVersionCheckEnabled:Bool?, iconData:String?){
     updateApplication(from: app, with:ApplicationUpdateDto(maxVersion: maxVersionCheckEnabled, iconData: iconData))
 }
@@ -141,7 +181,7 @@ func updateApplication(from app:MDTApplication, with appDto:ApplicationUpdateDto
         }
         
     }
-}
+}*/
 
 func saveApplication(app:MDTApplication,into context:Meow.Context) -> Future<MDTApplication>{
     return app.save(to: context).map{app}

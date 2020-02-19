@@ -38,12 +38,12 @@ import MongoKitten
         return user.isSystemAdmin || adminUsers.contains(Reference(to: user))
     }
     
-    init(name:String,platform:Platform,adminUser:User, description:String, base64Icon:String? = nil){
+    init(name:String,platform:Platform,adminUser:User, description:String){
         self.name = name
         self.platform = platform
         self.description = description
         self.adminUsers = [Reference(to: adminUser)]
-        self.base64IconData = base64Icon
+        self.base64IconData = nil
         self.apiKey = UUID().uuidString
         self.uuid = UUID().uuidString
         self.maxVersionSecretKey = nil

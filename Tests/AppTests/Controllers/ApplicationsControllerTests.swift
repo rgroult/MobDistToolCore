@@ -34,9 +34,14 @@ final class ApplicationsControllerTests: BaseAppTests {
            // print(res.content)
             let app = try res.content.decode(ApplicationDto.self).wait()
             XCTAssertTrue(app.description == appDtoiOS.description)
-            XCTAssertTrue(app.maxVersionSecretKey == nil)
-            XCTAssertTrue(app.name == appDtoiOS.name)
-            XCTAssertTrue(app.platform == appDtoiOS.platform)
+            if appCreation.enableMaxVersionCheck == true {
+                XCTAssertTrue(app.maxVersionSecretKey != nil)
+            }else {
+                XCTAssertTrue(app.maxVersionSecretKey == nil)
+            }
+            
+            XCTAssertTrue(app.name == appCreation.name)
+            XCTAssertTrue(app.platform == appCreation.platform)
             XCTAssertNotNil(app.uuid)
             XCTAssertNotNil(app.apiKey)
             if let _ = appData.base64IconData {
@@ -745,6 +750,93 @@ final class ApplicationsControllerTests: BaseAppTests {
         let favoritesAppUuid = favoritesApp.map{$0.uuid}
        // XCTAssertNotEqual(favoritesAppUuid,uuids)
         XCTAssertEqual(Set(favoritesAppUuid),Set(uuids))
+    }
+    
+    func testMaxVersion() throws {
+        var appWithMaxVersion = appDtoiOS
+        appWithMaxVersion.enableMaxVersionCheck = true
+        try createApplication(appData: appWithMaxVersion)
+        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
+        let token = loginDto.token
+        
+        let appFound = try findApp(token: token, name: appWithMaxVersion.name)
+        let appDetail = try returnAppDetail(uuid: appFound!.uuid, token: token)
+        XCTAssertNotNil(appDetail.maxVersionSecretKey)
+        let appSecret = appDetail.maxVersionSecretKey!
+        
+        //upload artifacts
+        let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
+        var version = "1.0.0"
+        let branch = "test"
+        _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: appDetail.apiKey!, branch: branch, version: version, name: "prod", contentType:ipaContentType, inside: app)
+        
+        //retrieve latest
+        //v2/Applications/{appUUID}/maxversion/{branch}/{name}
+        var query = generateMaxVersionUrl(secret: appSecret, branch: "test")
+        var maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",nil,query,token:token)
+        var maxVersion = try maxVersionResp.content.decode(MaxVersionArtifactDto.self).wait()
+        XCTAssertEqual(maxVersion.branch, branch)
+        XCTAssertEqual(maxVersion.version, version)
+        
+         version = "1.0.1"
+        _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: appDetail.apiKey!, branch: branch, version: version, name: "prod", contentType:ipaContentType, inside: app)
+        query = generateMaxVersionUrl(secret: appSecret, branch: "test")
+        maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",nil,query,token:token)
+        maxVersion = try maxVersionResp.content.decode(MaxVersionArtifactDto.self).wait()
+        XCTAssertEqual(maxVersion.branch, branch)
+        XCTAssertEqual(maxVersion.version, version)
+        
+    }
+    func testMaxVersionNotActivated() throws {
+        let (token,appDetail) = try createAndReturnAppDetail()
+        
+        let query = generateMaxVersionUrl(secret: "secret", branch: "test")
+        let maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",nil,query,token:token)
+        XCTAssertEqual(maxVersionResp.http.status.code, 400)
+        let errorResp = try maxVersionResp.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(errorResp.reason , "ApplicationError.disabledFeature")
+    }
+    
+    func testMaxVersionKO() throws {
+        var appWithMaxVersion = appDtoiOS
+        appWithMaxVersion.enableMaxVersionCheck = true
+        try createApplication(appData: appWithMaxVersion)
+        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
+        let token = loginDto.token
+        
+        let appFound = try findApp(token: token, name: appWithMaxVersion.name)
+        let appDetail = try returnAppDetail(uuid: appFound!.uuid, token: token)
+        XCTAssertNotNil(appDetail.maxVersionSecretKey)
+        let appSecret = appDetail.maxVersionSecretKey!
+        
+        //after 30 seconds delay
+        var query = generateMaxVersionUrl(secret: appSecret, branch: "test",dateDelta: 31) //max delay of 30secs
+        var maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",nil,query,token:token)
+        XCTAssertEqual(maxVersionResp.http.status.code, 400)
+        var errorResp = try maxVersionResp.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(errorResp.reason , "ApplicationError.expirationTimestamp")
+        
+        //not artifact found
+        query = generateMaxVersionUrl(secret: appSecret, branch: "test")
+        maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",nil,query,token:token)
+        XCTAssertEqual(maxVersionResp.http.status.code, 400)
+        errorResp = try maxVersionResp.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(errorResp.reason , "ArtifactError.notFound")
+        
+        //invalid hash
+        query = generateMaxVersionUrl(secret: "toto", branch: "test")
+        maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",nil,query,token:token)
+        XCTAssertEqual(maxVersionResp.http.status.code, 400)
+        errorResp = try maxVersionResp.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(errorResp.reason , "ApplicationError.invalidSignature")
+    }
+    
+    private func generateMaxVersionUrl(secret:String,branch:String,dateDelta:TimeInterval = 0) -> [String:String] {
+        let ts = Date().timeIntervalSince1970 + dateDelta
+        let stringToHash = "ts=\(ts)&branch=\(branch)&hash=\(secret)"
+        let generatedHash = stringToHash.md5()
+        
+        return ["ts": "\(ts)", "branch":branch, "hash" : generatedHash]
     }
 }
 
