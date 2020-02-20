@@ -1,0 +1,24 @@
+FROM swift:5.1 AS builder
+RUN apt-get  update && apt-get install -y libssl-dev zlib1g-dev unzip aapt && apt-get -qqy purge apport && rm -rf /var/lib/apt/lists/*
+WORKDIR /BUILD
+ADD . ./
+RUN swift package clean
+RUN swift package resolve
+RUN swift build -c release
+RUN mkdir -p /app/bin
+RUN mv `swift build -c release --show-bin-path`/Run /app/bin/
+ADD ./Sources/App/Config/envs/production/configDockerFull.json /app/config/config.json
+
+
+FROM swift:5.1-bionic-slim
+RUN apt-get update && apt-get install -y unzip aapt && apt-get -qqy purge apport && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /app/bin
+ADD Public /app/Public/
+WORKDIR /app
+COPY --from=builder /app/bin/Run /app/bin/
+COPY --from=builder /app/config/config.json /app/config/
+EXPOSE 8080
+RUN ls /app/bin/Run
+RUN ls /app/config/config.json
+
+ENTRYPOINT ["/app/bin/Run", "serve", "-e", "production", "-b", "0.0.0.0"]
