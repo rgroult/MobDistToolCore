@@ -20,7 +20,7 @@ public func routes(_ baseRouter: Router, authenticateMiddleware:Middleware,confi
         _ = openAPIBuilder.add([APIObject(object: MessageDto( message: "message"))])
     
     router.get("/v2/status") { req in
-        return ["name":"MobileDistributionTool Core", "version" : MDT_Version ]
+        return ["name":"MobileDistributionTool Core", "version" : "\(MDT_Version)-(\(MDT_GitCommit))" ]
     }
     //add status swagger
     openAPIBuilder.add(
