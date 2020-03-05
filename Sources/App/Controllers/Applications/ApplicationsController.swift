@@ -94,14 +94,20 @@ final class ApplicationsController:BaseController {
         let appUuid = try req.parameters.next(String.self)
         let context = try req.context()
         return try findApplication(uuid: appUuid, into: context)
-            .flatMap{ app -> Future<ImageDto?> in
+            .flatMap{ app -> Future<ImageDto> in
                 guard let base64 = app?.base64IconData else { throw ApplicationError.iconNotFound }
                 // guard let icon =  ImageDto(from: base64) else { throw ApplicationError.invalidIconFormat}
                 // return icon
                 return ImageDto.create(for: req, base64Image: base64)
-        }.map{ image -> ImageDto in
-            guard let image = image else { throw ApplicationError.invalidIconFormat}
-            return image
+                    .map{ image -> ImageDto in
+                        guard let image = image else {
+                            //invalid icon format, erase it
+                            if let app = app {
+                                _ = try updateApplicationWithParameters(from: app, name: nil, description: nil, maxVersionCheckEnabled: nil, iconData: "", into: context)
+                            }
+                            throw ApplicationError.invalidIconFormat}
+                        return image
+                }
         }
     }
     
