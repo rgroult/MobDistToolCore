@@ -11,6 +11,7 @@ enum ActivityEvent {
     case Register(email:String,isSuccess:Bool, failedError:Error? = nil)
     case Activation(email:String,isSuccess:Bool, failedError:Error? = nil)
     case Login(email:String,isSuccess:Bool, failedError:Error? = nil)
+    case RefreshLogin(email:String,isSuccess:Bool, failedError:Error? = nil)
     case UpdateUser(email:String,isSuccess:Bool, failedError:Error? = nil)
     case DeleteUser(email:String,isSuccess:Bool, failedError:Error? = nil)
     case ForgotPassword(email:String)

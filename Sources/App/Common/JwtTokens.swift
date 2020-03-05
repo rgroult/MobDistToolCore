@@ -11,7 +11,7 @@ import JWTAuth
 import Authentication
 
 let tokenExpiration:TimeInterval = 3*60 // 3 mins
-let refreshTokenExpiration:TimeInterval = 16*60 // 15mins
+let refreshTokenExpiration:TimeInterval = 45*60 // 15mins
 
 struct JWTTokenPayload: JWTAuthenticatable, JWTPayload, Equatable {
     
@@ -27,12 +27,6 @@ struct JWTTokenPayload: JWTAuthenticatable, JWTPayload, Equatable {
     
     func verify(using signer: JWTSigner) throws {
         try self.expireAt.verifyNotExpired()
-        //print("verify")
-        /*guard Date().addingTimeInterval(tokenExpiration) < expireAt else {
-            //print("WARNING : token expired")
-            //throw AuthenticationError()
-            return
-        }*/
     }
     
     static func == (lhs: JWTTokenPayload, rhs: JWTTokenPayload) -> Bool {
@@ -40,25 +34,24 @@ struct JWTTokenPayload: JWTAuthenticatable, JWTPayload, Equatable {
     }
 }
 
-/*
+
 struct JWTRefreshTokenPayload: JWTAuthenticatable, JWTPayload, Equatable {
     
-    init(_ id: String = UUID().uuidString) {
-        self.id = id
-        self.expireAt = Date().addingTimeInterval(refreshTokenExpiration)
+    init(email:String) {
+        self.expireAt = ExpirationClaim(value: Date().addingTimeInterval(refreshTokenExpiration))
+        self.username = email
+        self.id = UUID().uuidString
     }
-    
+
     let id: String
-    let expireAt:Date
+    let username:String
+    let expireAt:ExpirationClaim
     
     func verify(using signer: JWTSigner) throws {
-        guard Date().addingTimeInterval(tokenExpiration) < expireAt else {
-            print("WARNING : token expired")
-            return
-        }
+        try self.expireAt.verifyNotExpired()
     }
     
     static func == (lhs: JWTRefreshTokenPayload, rhs: JWTRefreshTokenPayload) -> Bool {
         return lhs.id == rhs.id
     }
-}*/
+}

@@ -49,6 +49,17 @@ extension UsersController:APIBuilderControllerProtocol {
                                 ],
                                       authorization: false
                             ),
+                            APIAction(method: .post, route: generateRoute(Verb.refresh.rawValue),
+                                      summary: "Refresh Login",
+                                      description: "Refresh login with refresh token and retrieve JWT token",
+                                      request: APIRequest(object: RefreshTokenDto.self, description: "Refresh info."),
+                                      responses: [
+                                        APIResponse(code: "200", description: "Password reseted", object: LoginRespDto.self),
+                                        APIResponse(code: "500", description: "Registration error"),
+                                        APIResponse(code: "400", description: "Contact an administrator to retrieve new password")
+                                ],
+                                      authorization: false
+                            ),
                             APIAction(method: .get, route: generateRoute(Verb.me.rawValue),
                                       summary: "Me",
                                       description: "Retrieve Profile",
@@ -118,7 +129,7 @@ extension UsersController:APIBuilderControllerProtocol {
                 ]
             )
         )
-        _ = apiBuilder.add([APIObject(object: LoginReqDto( email: "email@test.com", password: "1234")),APIObject(object: LoginRespDto(email:"john@doe.com",name:"John Doe",token:"554dsr45f8sdf5"))])
+        _ = apiBuilder.add([APIObject(object: LoginReqDto( email: "email@test.com", password: "1234")),APIObject(object: LoginRespDto(email:"john@doe.com",name:"John Doe",token:"554dsr45f8sdf5",refreshToken: "1223434")), APIObject(object: RefreshTokenDto(email: "john@doe.com", refreshToken: "ZEAZRS124325EFS"))])
         _ = apiBuilder.add([APIObject(object: UserDto.sample()),APIObject(object: UpdateUserDto.sample()),APIObject(object: MessageDto.sample()),APIObject(object: UpdateUserFullDto.sample())])
         _ = apiBuilder.add([APIObject(object: RegisterDto( email: "email@test.com", name: "John Doe", password: "password"))])
         _ = apiBuilder.add([APIObject(object: ForgotPasswordDto( email: "email@test.com"))])

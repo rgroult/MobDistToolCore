@@ -101,6 +101,31 @@ final class UsersController:BaseController {
             })
         // throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
     }
+    
+    func refreshLogin(_ req: Request) throws -> Future<LoginRespDto> {
+        return try req.content.decode(RefreshTokenDto.self)
+            .flatMap{ refreshDto -> Future<LoginRespDto>  in
+                let signers = try req.make(MDT_Signers.self)
+                let signer = signers.signer()
+                //verify refreshToken
+                let token:JWT<JWTRefreshTokenPayload>
+                do {
+                    token = try JWT<JWTRefreshTokenPayload>(from: refreshDto.refreshToken, verifiedUsing: signer)
+                }catch {
+                    throw Abort(.unauthorized, reason: "Invalid credentials")
+                }
+                guard token.payload.username == refreshDto.email else { throw JWTError(identifier: "invalid", reason: "Invalid credentials") }
+                let context = try req.context()
+                return try findUser(by: refreshDto.email, into: context)
+                    .map { user in
+                        guard let user = user else { throw UserError.notFound }
+                        return try UsersController.generateDto(req, user: user, generateRefeshToken: false)
+                }
+                .do({[weak self]  dto in self?.track(event: .RefreshLogin(email: dto.email, isSuccess: true), for: req)})
+                .catch({[weak self]  error in self?.track(event: .RefreshLogin(email: refreshDto.email, isSuccess: false,failedError:error), for: req)})
+        }
+    }
+    
     func login(_ req: Request) throws -> Future<LoginRespDto> {
         let config = try req.make(MdtConfiguration.self)
         let delay = config.loginResponseDelay
@@ -114,32 +139,29 @@ final class UsersController:BaseController {
             .flatMap{ loginDto -> Future<LoginRespDto>  in
                 let context = try req.context()
                 return try findUser(by: loginDto.email, and: loginDto.password, updateLastLogin: true, into: context)
-                .map({ user in
-                    // user is activated ?
-                    guard user.isActivated else { throw UserError.notActivated}
-                    let signers = try req.make(MDT_Signers.self)
-                    let signer = signers.signer()
-                    let jwt = JWT(header: JWTHeader(kid: signerIdentifier), payload: JWTTokenPayload(email: user.email))
-                    let signatureData = try jwt.sign(using: signer)
-                    let token = String(bytes: signatureData, encoding: .utf8)!
-                    return LoginRespDto( email: user.email, name: user.name,token:token)
-                })
-                    /*.flatMap({ user in
-                        // user is activated ?
-                        guard user.isActivated else { throw UserError.notActivated}
-                        //generate token in header
-                        let signers = try req.make(JWTSigners.self)
-                        return try signers.get(kid: signerIdentifier, on: req)
-                            .map{ signer in
-                                let jwt = JWT(header: .init(kid: signerIdentifier), payload: JWTTokenPayload(email: user.email))
-                                let signatureData = try jwt.sign(using: signer)
-                                let token = String(bytes: signatureData, encoding: .utf8)!
-                                return LoginRespDto( email: user.email, name: user.name,token:token)
-                        }
-                    })*/
+                    .map({ user in
+                        return try UsersController.generateDto(req, user: user, generateRefeshToken: true)
+                    })
                     .do({[weak self]  dto in self?.track(event: .Login(email: dto.email, isSuccess: true), for: req)})
                     .catch({[weak self]  error in self?.track(event: .Login(email: loginDto.email, isSuccess: false,failedError:error), for: req)})
         }
+    }
+    
+    
+    class func generateDto(_ req: Request,user:User,generateRefeshToken:Bool)throws -> LoginRespDto{
+        // user is activated ?
+        guard user.isActivated else { throw UserError.notActivated}
+        let signers = try req.make(MDT_Signers.self)
+        let signer = signers.signer()
+        let jwt = JWT(header: JWTHeader(kid: signerIdentifier), payload: JWTTokenPayload(email: user.email))
+        let token = String(bytes: try jwt.sign(using: signer), encoding: .utf8)!
+        var refreshToken:String? = nil
+        if generateRefeshToken {
+            let jwt = JWT(header: JWTHeader(kid: signerIdentifier), payload: JWTRefreshTokenPayload(email: user.email))
+            refreshToken = String(bytes: try jwt.sign(using: signer), encoding: .utf8)!
+        }
+        
+        return LoginRespDto( email: user.email, name: user.name,token:token,refreshToken: refreshToken)
     }
     
     func me(_ req: Request) throws -> Future<UserDto> {
@@ -150,7 +172,7 @@ final class UsersController:BaseController {
                 //administreted Applications
                 return try findApplications(for: user, into: context)
                     .map(transform: {appController.generateSummaryDto(from: $0)})
-                   // .map(transform: {ApplicationSummaryDto(from: $0)})
+                    // .map(transform: {ApplicationSummaryDto(from: $0)})
                     .getAllResults()
                     .map{apps -> UserDto in
                         var userDto = UserDto.create(from: user, content: .full)

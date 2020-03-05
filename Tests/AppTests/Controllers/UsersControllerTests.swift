@@ -233,6 +233,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
             XCTAssertTrue(loginResp.email == userIOS.email)
             XCTAssertTrue(loginResp.name == userIOS.name)
             XCTAssertNotNil(loginResp.token)
+            XCTAssertNotNil(loginResp.refreshToken)
         }
     }
     
@@ -251,6 +252,41 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
             XCTAssertTrue(errorResp.reason == "UserError.invalidLoginOrPassword")
         }
     }
+    
+    func testRefreshLogin() throws {
+         try testActivation()
+        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
+        //refresh Login
+        let login = RefreshTokenDto(email: userIOS.email, refreshToken: loginDto.refreshToken!)
+        let bodyJSON = try JSONEncoder().encode(login)
+        
+        let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/refresh", body){ res in
+            print(res.content)
+            XCTAssertEqual(res.http.status.code , 200)
+            XCTAssertNotNil(res)
+            let loginResp = try res.content.decode(LoginRespDto.self).wait()
+            XCTAssertTrue(loginResp.email == userIOS.email)
+            XCTAssertTrue(loginResp.name == userIOS.name)
+            XCTAssertNotNil(loginResp.token)
+            XCTAssertNil(loginResp.refreshToken)
+        }
+    }
+    
+    func testRefreshLoginKO() throws {
+         try testActivation()
+        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
+        //refresh Login
+        let login = RefreshTokenDto(email: userIOS.email, refreshToken: "Bad Token")
+        let bodyJSON = try JSONEncoder().encode(login)
+        
+        let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/refresh", body){ res in
+            print(res.content)
+            XCTAssertEqual(res.http.status.code , 401)
+        }
+    }
+    
     
     func testForgotPassword() throws {
         try testActivation()
@@ -300,6 +336,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         }
     }
     
+    
     func testMe() throws {
         try testActivation()
         let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
@@ -321,6 +358,24 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
             XCTAssertTrue(me.email == userIOS.email)
             XCTAssertTrue(me.isActivated ?? false)
         }*/
+    }
+    
+    func testMeKOBadToken() throws {
+        try testActivation()
+        let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
+        XCTAssertNotNil(loginResp.token)
+        let token = "Bad Token"
+        let result = try app.clientSyncTest(.GET, "/v2/Users/me", token: token)
+        XCTAssertEqual(result.http.status.code , 401)
+    }
+    
+    func testMeKOWithRefreshToken() throws {
+        try testActivation()
+        let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
+        XCTAssertNotNil(loginResp.refreshToken)
+        let token = loginResp.refreshToken!
+        let result = try app.clientSyncTest(.GET, "/v2/Users/me", token: token)
+        XCTAssertEqual(result.http.status.code , 401)
     }
     
     func testUpdate() throws {
