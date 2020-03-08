@@ -2,7 +2,8 @@ FROM swift:5.1 AS builder
 RUN apt-get  update && apt-get install -y libssl-dev zlib1g-dev unzip aapt && apt-get -qqy purge apport && rm -rf /var/lib/apt/lists/*
 WORKDIR /BUILD
 ADD . ./
-RUN echo let MDT_GitCommit = \""${SOURCE_COMMIT}\"" > ./Sources/App/gitCommit.swift
+RUN export hash=$(cat .git/$(cat .git/HEAD | cut -d' ' -f2)) && echo $hash
+RUN echo let MDT_GitCommit = \""${hash}\"" > ./Sources/App/gitCommit.swift
 RUN swift package clean
 RUN swift package resolve
 RUN swift build -c release
