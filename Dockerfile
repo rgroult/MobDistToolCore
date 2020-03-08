@@ -4,6 +4,7 @@ WORKDIR /BUILD
 ADD . ./
 RUN export hash=$(cat .git/$(cat .git/HEAD | cut -d' ' -f2)) && echo $hash
 RUN echo let MDT_GitCommit = \""${hash}\"" > ./Sources/App/gitCommit.swift
+RUN echo ./Sources/App/gitCommit.swift
 RUN swift package clean
 RUN swift package resolve
 RUN swift build -c release
