@@ -443,7 +443,7 @@ final class ApplicationsController:BaseController {
                         guard let `self` = self else { throw ApplicationError.unknownPlatform }
                         guard let artifact = artifact else {throw ArtifactError.notFound }
                         let config = try req.make(MdtConfiguration.self)
-                        return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact.uuid, platform: app.platform, applicationName: app.name, config: config, into: context)
+                        return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact._id.hexString, platform: app.platform, applicationName: app.name, config: config, into: context)
                             .map { dwInfo in
                                 return MaxVersionArtifactDto(branch: branch, name: name, version: artifact.version, info: dwInfo)
                         }
