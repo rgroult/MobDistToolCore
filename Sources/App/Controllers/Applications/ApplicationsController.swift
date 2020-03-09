@@ -415,6 +415,7 @@ final class ApplicationsController:BaseController {
         let name = try req.parameters.next(String.self)
         
         let ts = try req.query.get(TimeInterval.self, at: "ts")
+        let tsStr = try req.query.get(String.self, at: "ts")
         let hash = try req.query.get(String.self, at: "hash")
         
         guard branch != lastVersionBranchName else {
@@ -434,7 +435,7 @@ final class ApplicationsController:BaseController {
             .flatMap{ app  in
                 guard let app = app, let secretKey  = app.maxVersionSecretKey else { throw ApplicationError.disabledFeature}
                 //compute Hash
-                let stringToHash = "ts=\(ts)&branch=\(branch)&hash=\(secretKey)"
+                let stringToHash = "ts=\(tsStr)&branch=\(branch)&hash=\(secretKey)"
                 let generatedHash = stringToHash.md5()
                 guard generatedHash == hash else { throw ApplicationError.invalidSignature}
                 return searchMaxArtifact(app: app, branch: branch, artifactName: name, into: context)
