@@ -11,7 +11,7 @@ import JWTAuth
 import Authentication
 
 let tokenExpiration:TimeInterval = 3*60 // 3 mins
-let refreshTokenExpiration:TimeInterval = 45*60 // 15mins
+let refreshTokenExpiration:TimeInterval = 45*60 // 45mins
 
 struct JWTTokenPayload: JWTAuthenticatable, JWTPayload, Equatable {
     

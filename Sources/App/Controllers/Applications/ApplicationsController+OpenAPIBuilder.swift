@@ -202,8 +202,8 @@ extension ApplicationsController:APIBuilderControllerProtocol {
                                         APIParameter(name: "uuid", parameterLocation:.path, description: "Application uuid", required: true),
                                         APIParameter(name: "branch", parameterLocation:.path, description: "Application branch", required: true),
                                         APIParameter(name: "name", parameterLocation:.path, description: "Artifact name", required: true),
-                                        APIParameter(name: "ts", parameterLocation:.query, description: "Timestamp of url signaure", required: true),
-                                        APIParameter(name: "hash", parameterLocation:.query, description: "Hash of url signature with secret", required: true)
+                                        APIParameter(name: "ts", parameterLocation:.query, description: "Timestamp of url signature (in secs since 01/01/1970)", required: true),
+                                        APIParameter(name: "hash", parameterLocation:.query, description: "Hash of url signature with secret <br/><b> Hash = MD5(ts=$timestamp&branch=$branch&hash=$maxVersionSecretKey)</b>", required: true)
                                 ],
                                       responses: [
                                         APIResponse(code: "200", description: "Max Artifact Version", object: MaxVersionArtifactDto.self),

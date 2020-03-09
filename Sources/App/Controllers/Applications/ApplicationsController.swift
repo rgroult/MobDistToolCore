@@ -417,12 +417,17 @@ final class ApplicationsController:BaseController {
         let ts = try req.query.get(TimeInterval.self, at: "ts")
         let hash = try req.query.get(String.self, at: "hash")
         
-        guard branch != lastVersionBranchName else { throw  VaporError(identifier: "invalidArgument", reason: "branch value is incorrect")}
+        guard branch != lastVersionBranchName else {
+            let error = VaporError(identifier: "invalidArgument", reason: "branch value is incorrect")
+            track(event: .MaxVersion(app:nil,appUuid:appId,failedError:error), for: req)
+            throw  error }
         
         let currentDelay = abs(Date().timeIntervalSince1970 - ts)
         
         if currentDelay > maxVersionAvailbaleDelay {
-            throw ApplicationError.expirationTimestamp(delay: Int(currentDelay))
+            let error = ApplicationError.expirationTimestamp(delay: Int(currentDelay))
+            track(event: .MaxVersion(app:nil,appUuid:appId,failedError:error), for: req)
+            throw error
         }
         let context = try req.context()
         return try App.findApplication(uuid: appId, into: context)
@@ -443,9 +448,9 @@ final class ApplicationsController:BaseController {
                         }
                         
                 }
-        }
+        }.do({[weak self]  dto in self?.track(event: .MaxVersion(app: nil, appUuid: appId, failedError: nil), for: req)})
+        .catch({[weak self]  error in self?.track(event: .MaxVersion(app: nil, appUuid: appId, failedError: error), for: req)})
     }
-    
     
     private func findApplicationInfo(from req: Request, needAdmin:Bool) throws -> Future<(user:User,app:MDTApplication)>{
         let uuid = try req.parameters.next(String.self)
