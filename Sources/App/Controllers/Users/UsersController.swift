@@ -114,7 +114,7 @@ final class UsersController:BaseController {
                 }catch {
                     throw Abort(.unauthorized, reason: "Invalid credentials")
                 }
-                guard token.payload.username == refreshDto.email else { throw JWTError(identifier: "invalid", reason: "Invalid credentials") }
+                guard token.payload.username == refreshDto.email else { throw Abort(.unauthorized, reason: "Invalid credentials") }
                 let context = try req.context()
                 return try findUser(by: refreshDto.email, into: context)
                     .map { user in

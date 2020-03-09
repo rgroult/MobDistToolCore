@@ -273,11 +273,25 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         }
     }
     
-    func testRefreshLoginKO() throws {
+    func testRefreshLoginKOBadToken() throws {
          try testActivation()
         let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         //refresh Login
         let login = RefreshTokenDto(email: userIOS.email, refreshToken: "Bad Token")
+        let bodyJSON = try JSONEncoder().encode(login)
+        
+        let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/refresh", body){ res in
+            print(res.content)
+            XCTAssertEqual(res.http.status.code , 401)
+        }
+    }
+    
+    func testRefreshLoginKOBadEmail() throws {
+         try testActivation()
+        let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
+        //refresh Login
+        let login = RefreshTokenDto(email: "user@email.Com", refreshToken: loginDto.refreshToken!)
         let bodyJSON = try JSONEncoder().encode(login)
         
         let body = bodyJSON.convertToHTTPBody()
