@@ -270,10 +270,38 @@ final class ArtifactsContollerTests: BaseAppTests {
         XCTAssertEqual(artifact.sortIdentifier,nil)
     }
     
-    func testDownloadInfo() throws {
+    func testDownloadInfoIOS() throws {
         XCTAssertNotNil(iOSApiKey)
         let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
         let dwInfo = try donwloadInfo(apiKey: iOSApiKey!, fileData: fileData)
+        //test all Urls
+        try [dwInfo.directLinkUrl,dwInfo.installPageUrl].map{
+            let resp = try app.clientSyncTest(.GET, $0,isAbsoluteUrl:true)
+            #if os(Linux)
+                //URLSEssion on linux doens not handle redirect by default
+            XCTAssertTrue( [.seeOther,.ok].contains(resp.http.status))
+            #else
+            XCTAssertEqual(resp.http.status,.ok)
+            #endif
+        }
+        print(dwInfo)
+    }
+    
+    func testDownloadInfoAndroid() throws {
+        XCTAssertNotNil(androidApiKey)
+        let fileData = try type(of:self).fileData(name: "testdroid-sample-app", ext: "apk")
+        let dwInfo = try donwloadInfo(apiKey: androidApiKey!, fileData: fileData,contentType:apkContentType)
+        //test all Urls
+        try [dwInfo.directLinkUrl,dwInfo.installPageUrl,dwInfo.installUrl].map{
+            let resp = try app.clientSyncTest(.GET, $0,isAbsoluteUrl:true)
+            //print(resp.content)
+            #if os(Linux)
+                //URLSEssion on linux doens not handle redirect by default
+            XCTAssertTrue( [.seeOther,.ok].contains(resp.http.status))
+            #else
+            XCTAssertEqual(resp.http.status,.ok)
+            #endif
+        }
         print(dwInfo)
     }
     
@@ -334,7 +362,8 @@ final class ArtifactsContollerTests: BaseAppTests {
         let fileData = try type(of:self).fileData(name: "testdroid-sample-app", ext: "apk")
         let dwInfo = try donwloadInfo(apiKey: androidApiKey!, fileData: fileData,contentType:apkContentType)
         print(dwInfo.directLinkUrl)
-        let ipaFile = try app.clientSyncTest(.GET, dwInfo.directLinkUrl,isAbsoluteUrl:true)
+        XCTAssertEqual(dwInfo.installUrl,dwInfo.directLinkUrl)
+        let ipaFile = try app.clientSyncTest(.GET, dwInfo.installUrl,isAbsoluteUrl:true)
         #if os(Linux)
             //URLSEssion on linux doens not handle redirect by default
             XCTAssertEqual(ipaFile.http.status, .seeOther)
