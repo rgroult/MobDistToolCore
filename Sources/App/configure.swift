@@ -62,10 +62,6 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
         services.register(emailService)
     }
     
-    
-    // Register providers first
-   // try services.register(FluentSQLiteProvider())
-    
     //Meow
     let meow = try MeowProvider(uri: configuration.mongoServerUrl.absoluteString,lazy: true)
     try services.register(meow)
@@ -86,7 +82,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     let authenticationMiddleware = JWTAuthenticationMiddleware(JWTTokenPayload.self,signers:mdtSigners)
     
     //Storage
-     let storageProtocol:StorageServiceProtocol
+    let storageProtocol:StorageServiceProtocol
     switch configuration.storageMode {
     case .local:
         //need to register instance of concrete class, not interface
@@ -140,22 +136,6 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     myServerConfig.port = configuration.serverListeningPort
     myServerConfig.hostname = "0.0.0.0"
     myServerConfig.maxBodySize = 2_000_000_000
+    myServerConfig.supportCompression = true
     services.register(myServerConfig)
-    
-    
-    
-    
-    // Configure a SQLite database
-    /*let sqlite = try SQLiteDatabase(storage: .memory)
-
-    // Register the configured SQLite database to the database config.
-    var databases = DatabasesConfig()
-    databases.add(database: sqlite, as: .sqlite)
-    services.register(databases)
-*/
-  
-    // Configure migrations
-    //var migrations = MigrationConfig()
-//    migrations.add(model: Todo.self, database: .sqlite)
-//    services.register(migrations)
 }
