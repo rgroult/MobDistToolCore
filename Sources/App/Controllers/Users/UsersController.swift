@@ -19,6 +19,21 @@ enum RegistrationError : Error {
     case invalidEmailFormat, emailDomainForbidden
 }
 
+extension RegistrationError:Debuggable {
+    var reason: String {
+        switch self {
+        case .invalidEmailFormat:
+            return "RegistrationError.invalidEmailFormat"
+        case .emailDomainForbidden:
+        return "RegistrationError.emailDomainForbidden"
+        }
+    }
+    
+    var identifier: String {
+        return "RegistrationError"
+    }
+}
+
 final class UsersController:BaseController {
     weak var appController:ApplicationsController?
     
@@ -38,7 +53,7 @@ final class UsersController:BaseController {
                 guard registerDto.email.isValidEmail() else { throw RegistrationError.invalidEmailFormat}
                 
                 //check in white domains
-                if let whiteDomains = config.registrationWhiteDomains, whiteDomains.isEmpty {
+                if let whiteDomains = config.registrationWhiteDomains, !whiteDomains.isEmpty {
                     if whiteDomains.firstIndex(where: {registerDto.email.hasSuffix($0)}) == nil {
                         throw RegistrationError.emailDomainForbidden
                     }

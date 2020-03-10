@@ -32,6 +32,20 @@ final class UsersControllerAutomaticRegistrationTests: BaseAppTests {
         }
     }
     
+    func testRegisterInavlidEmailFormat() throws{
+        let registerReq = RegisterDto(email: "toto_toto.com", name: "toto", password: "VéRyComCET1DePQ55WD")
+        let registerJSON = try JSONEncoder().encode(registerReq)
+        
+        let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+            XCTAssertNotNil(res)
+            XCTAssertEqual(res.http.status.code , 400)
+            let errorResp = try res.content.decode(ErrorDto.self).wait()
+            XCTAssertTrue(errorResp.reason == "RegistrationError.invalidEmailFormat")
+        }
+    }
+    
+
     func testLogin() throws {
         try testRegister()
         XCTAssertNoThrow(try login(withEmail: userIOS.email, password: userIOS.password, inside: app))
@@ -50,7 +64,38 @@ final class UsersControllerAutomaticRegistrationTests: BaseAppTests {
             XCTAssertTrue(resp.reason == "Contact an administrator to retrieve new password")
         }
     }
+}
+
+final class UsersControllerWhiteDomainsRegistrationTests: BaseAppTests {
+    override func setUp() {
+        var env = Environment.xcode
+        env.arguments += ["-DregistrationWhiteDomains=[\"@toto.com\"]"]
+        configure(with: env)
+    }
     
+    func testRegisterOK() throws{
+        let registerReq = userIOS
+        let registerJSON = try JSONEncoder().encode(registerReq)
+        
+        let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+            XCTAssertNotNil(res)
+            XCTAssertEqual(res.http.status.code , 200)
+        }
+    }
+    
+    func testRegisterKO() throws{
+        let registerReq = userANDROID
+        let registerJSON = try JSONEncoder().encode(registerReq)
+        
+        let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+            XCTAssertNotNil(res)
+            XCTAssertEqual(res.http.status.code , 400)
+            let errorResp = try res.content.decode(ErrorDto.self).wait()
+            XCTAssertTrue(errorResp.reason == "RegistrationError.emailDomainForbidden")
+        }
+    }
 }
 
 
