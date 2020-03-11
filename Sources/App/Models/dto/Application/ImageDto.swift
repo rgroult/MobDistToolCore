@@ -29,12 +29,15 @@ struct ImageDto {
         data = decodeData
     }
     
-    static func create(within eventLoop:EventLoop, base64Image:String?) -> Future<ImageDto?> {
+    static func create(within eventLoop:EventLoop, base64Image:String?,alternateBase64:String? = nil) -> Future<ImageDto?> {
         let promise = eventLoop.newPromise(ImageDto?.self)
         
         /// Dispatch  work to happen on a background thread
         DispatchQueue.global().async {
-            let imageDecoded = ImageDto(from: base64Image)
+            var imageDecoded = ImageDto(from: base64Image)
+            if let alternateBase64 = alternateBase64, imageDecoded == nil {
+                imageDecoded = ImageDto(from: alternateBase64)
+            }
             promise.succeed(result: imageDecoded)
         }
         

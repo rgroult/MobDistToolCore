@@ -145,7 +145,7 @@ final class ArtifactsController:BaseController  {
                         guard let artifact = artifact else { throw ArtifactError.notFound }
                         return artifact.application.resolve(in: context)
                             .flatMap{application in
-                                return try self.generateDownloadInfo(user: user, artifactID: artifact._id.hexString, platform: application.platform,applicationName:application.name, config: config, into: context)
+                                return try self.generateDownloadInfo(user: user, artifactID: artifact._id.hexString, application:application, config: config, into: context)
                         }
                         .do({[weak self] dto in self?.track(event: .DownloadArtifact(artifact:artifact,user:user), for: req)})
                     })
@@ -153,9 +153,9 @@ final class ArtifactsController:BaseController  {
     }
     
     enum ArtifactTokenKeys:String {
-        case user, appName, artifactId, baseDownloadUrl
+        case user, appName, artifactId, baseDownloadUrl, baseIconUrl
     }
-    func generateDownloadInfo(user:User,artifactID:String, platform:Platform, applicationName:String, config:MdtConfiguration,into context:Context) throws -> Future<DownloadInfoDto>{
+    func generateDownloadInfo(user:User,artifactID:String,application:MDTApplication, config:MdtConfiguration,into context:Context) throws -> Future<DownloadInfoDto>{
         // let config = try req.make(MdtConfiguration.self)
         let validity = 3 // 3 mins
         let baseArtifactPath = config.serverUrl.absoluteString
@@ -163,15 +163,17 @@ final class ArtifactsController:BaseController  {
         let durationInSecs = validity * 60
         //base download URL
         let baseDownloadUrl = baseArtifactPath + self.generateRoute(Verb.artifactFile.path)
+        let iconUrl = baseArtifactPath + self.generateRoute(Verb.icon.path)
         //create token with Info
         let tokenInfo = [ArtifactTokenKeys.user.rawValue:user.email,
-                         ArtifactTokenKeys.appName.rawValue:applicationName,
+                         ArtifactTokenKeys.appName.rawValue:application.name,
                          ArtifactTokenKeys.artifactId.rawValue:artifactID,
-                         ArtifactTokenKeys.baseDownloadUrl.rawValue: baseDownloadUrl]
+                         ArtifactTokenKeys.baseDownloadUrl.rawValue: baseDownloadUrl,
+                         ArtifactTokenKeys.baseIconUrl.rawValue: iconUrl]
         return store(info: tokenInfo, durationInSecs: TimeInterval(durationInSecs) , into: context)
             .map{[unowned self] token  in
                 let downloadUrl = baseDownloadUrl + "?token=\(token)"
-                let installUrl = self.generateDirectInstallUrl(serverExternalUrl: baseArtifactPath, token: token, platform: platform)
+                let installUrl = self.generateDirectInstallUrl(serverExternalUrl: baseArtifactPath, token: token, platform: application.platform)
                 /*  if platform == .ios {
                     let plistInstallUrl = baseArtifactPath + self.generateRoute(Verb.artifactiOSManifest.path) + "?token=\(token)"
                     installUrl = self.generateItmsUrl(plistUrl:plistInstallUrl)
@@ -182,6 +184,7 @@ final class ArtifactsController:BaseController  {
                 return DownloadInfoDto(directLinkUrl: downloadUrl, installUrl: installUrl, installPageUrl: installPageUrl, validity: validity)
         }
     }
+    
     
     func generateInstallPageUrl(serverExternalUrl:String,token:String)->String {
         let baseArtifactPath = serverExternalUrl
@@ -215,6 +218,30 @@ final class ArtifactsController:BaseController  {
         return urlComponents.url?.absoluteString ?? plistUrl
     }
     
+    //GET /icon?token='
+    func downloadArtifactIcon(_ req: Request) throws -> Future<ImageDto> {
+        let reqToken = try? req.query.get(String.self, at: "token")
+        guard let token = reqToken else { throw  Abort(.badRequest, reason: "Token not found") }
+        let context = try req.context()
+        
+        return findInfo(with: token, into: context)
+            .flatMap{ info -> Future<Artifact?> in
+                guard let info = info, let id = info[ArtifactTokenKeys.artifactId.rawValue] else { throw  Abort(.badRequest, reason: "Token not found or expired") }
+                return try findArtifact(byID: id, into: context)
+        }
+        .flatMap{ artifact -> Future<MDTApplication> in
+            guard let artifact = artifact else { throw  Abort(.serviceUnavailable, reason: "Token content Invalid") }
+            return artifact.application.resolve(in: context)
+        }
+        .flatMap{ app ->  Future<ImageDto> in
+            return ImageDto.create(within: req.eventLoop, base64Image: app.base64IconData, alternateBase64: defaultDownloadIcon)
+                .map{ imgDto in
+                    guard let imageDto = imgDto else { throw  Abort(.notFound, reason: "Icon not found") }
+                    return imageDto
+            }
+        }
+    }
+    
     //GET /ios_plist?token='
     func downloadArtifactManifest(_ req: Request) throws -> Future<Response> {
         let reqToken = try? req.query.get(String.self, at: "token")
@@ -222,15 +249,16 @@ final class ArtifactsController:BaseController  {
         let context = try req.context()
         return findInfo(with: token, into: context)
             .flatMap{ info in
-                guard let info = info, let id = info[ArtifactTokenKeys.artifactId.rawValue], let baseDwUrl = info[ArtifactTokenKeys.baseDownloadUrl.rawValue] , let name = info[ArtifactTokenKeys.appName.rawValue] else { throw  Abort(.badRequest, reason: "Token not found or expired") }
+                guard let info = info, let id = info[ArtifactTokenKeys.artifactId.rawValue], let baseDwUrl = info[ArtifactTokenKeys.baseDownloadUrl.rawValue] , let name = info[ArtifactTokenKeys.appName.rawValue], let baseIconUrl =  info[ArtifactTokenKeys.baseIconUrl.rawValue] else { throw  Abort(.badRequest, reason: "Token not found or expired") }
                 return try findArtifact(byID: id, into: context)
                     .map {artifact -> Response in
                         guard let artifact = artifact else { throw  Abort(.serviceUnavailable, reason: "Artifact not found for ID") }
                         //file download
                         let downloadUrl = baseDwUrl + "?token=\(token)"
+                        let iconUrl = baseIconUrl + "?token=\(token)"
                         let metaData = artifact.retrieveMetaData()
                         guard let bundleID = metaData?["CFBundleIdentifier"], let bundleVersion = metaData?["CFBundleVersion"] else { throw  Abort(.serviceUnavailable, reason: "Artifact infos not found for ID") }
-                        let manifest = ArtifactsController.generateiOsManifest(absoluteIpaUrl: downloadUrl, bundleIdentifier: bundleID, bundleVersion: bundleVersion, ApplicationName: name)
+                        let manifest = ArtifactsController.generateiOsManifest(absoluteIpaUrl: downloadUrl, bundleIdentifier: bundleID, bundleVersion: bundleVersion, ApplicationName: name, ApplicationIconUrl: iconUrl)
                         return req.response(manifest, as: .xml)
                         
                 }

@@ -90,14 +90,11 @@ final class ApplicationsController:BaseController {
     }
     
     func iconApplication(_ req: Request) throws -> Future<ImageDto> {
-        //   throw "not implemented"
         let appUuid = try req.parameters.next(String.self)
         let context = try req.context()
         return try findApplication(uuid: appUuid, into: context)
             .flatMap{ app -> Future<ImageDto> in
                 guard let base64 = app?.base64IconData else { throw ApplicationError.iconNotFound }
-                // guard let icon =  ImageDto(from: base64) else { throw ApplicationError.invalidIconFormat}
-                // return icon
                 return ImageDto.create(for: req, base64Image: base64)
                     .map{ image -> ImageDto in
                         guard let image = image else {
@@ -243,7 +240,7 @@ final class ApplicationsController:BaseController {
                 guard let artifact = artifact else { throw ArtifactError.notFound }
                 let config = try req.make(MdtConfiguration.self)
                 
-                return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact.uuid, platform: app.platform, applicationName: app.name, config: config, into: context)
+                return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact.uuid, application: app, config: config, into: context)
                     .map{ dwInfo -> Response in
                         let installUrl:String
                         switch installType{
@@ -443,7 +440,7 @@ final class ApplicationsController:BaseController {
                         guard let `self` = self else { throw ApplicationError.unknownPlatform }
                         guard let artifact = artifact else {throw ArtifactError.notFound }
                         let config = try req.make(MdtConfiguration.self)
-                        return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact._id.hexString, platform: app.platform, applicationName: app.name, config: config, into: context)
+                        return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact._id.hexString, application: app, config: config, into: context)
                             .map { dwInfo in
                                 return MaxVersionArtifactDto(branch: branch, name: name, version: artifact.version, info: dwInfo)
                         }

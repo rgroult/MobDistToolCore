@@ -332,11 +332,17 @@ final class ArtifactsContollerTests: BaseAppTests {
             let manifestPlistDict =  try PropertyListSerialization.propertyList(from: data, format: nil) as! [String:Any]
             let metadata = (((manifestPlistDict["items"] as? Array<Any>)?.first as? [String:Any])?["metadata"]) as? [String:Any]
             let assets = ((((manifestPlistDict["items"] as? Array<Any>)?.first as? [String:Any])?["assets"]) as? [Any])?.first as? [String:Any]
+            let kind = ((((manifestPlistDict["items"] as? Array<Any>)?.first as? [String:Any])?["assets"]) as? [Any])?[1] as? [String:Any]
             XCTAssertEqual(metadata?["title"] as? String, appDtoiOS.name)
             XCTAssertEqual(metadata?["bundle-version"] as? String, "1")
             XCTAssertEqual(metadata?["bundle-identifier"] as? String, "com.petri.calculator.calculator")
             
             XCTAssertEqual(assets?["url"] as? String, dwInfo.directLinkUrl)
+            let iconUrl = kind?["url"] as? String
+            XCTAssertNotNil(iconUrl)
+            //test icon
+            let iconFile = try app.clientSyncTest(.GET, iconUrl! ,isAbsoluteUrl:true)
+            XCTAssertEqual(iconFile.http.status, .ok)
         }
     }
     

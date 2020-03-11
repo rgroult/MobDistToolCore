@@ -13,6 +13,7 @@ extension ArtifactsController {
         case lastArtifacts(apiKeyPathName:String,namePathName:String)
         case artifactDownloadInfo
         case artifactFile
+        case icon
         case artifactiOSManifest
         case installPage
         case deployScript(apiKeyPathName:String)
@@ -26,6 +27,8 @@ extension ArtifactsController {
                 return "{uuid}/download"
             case .artifactFile:
                 return "file"
+            case .icon:
+                return "icon"
             case .artifactiOSManifest:
                 return "ios_plist"
             case .installPage:
@@ -36,7 +39,7 @@ extension ArtifactsController {
         }
         var path:String {
             switch self {
-            case .artifactFile, .artifactiOSManifest, .installPage:
+            case .artifactFile, .artifactiOSManifest, .installPage, .icon:
                 return uri
             default:
                 return "XXX"
@@ -80,7 +83,9 @@ extension ArtifactsController {
         
         //GET /install?token='
         artifactRouter.get("",PathComponent.constant("install"),  use: self.installArtifactPage)
-        
+        //GET /icon?token='
+        artifactRouter.get("",PathComponent.constant("icon"),  use: self.downloadArtifactIcon)
+
         //protected
         //GET {artifact uuid}/download
         let protectedArtifactRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
