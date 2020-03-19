@@ -25,7 +25,7 @@ extension RegistrationError:Debuggable {
         case .invalidEmailFormat:
             return "RegistrationError.invalidEmailFormat"
         case .emailDomainForbidden:
-        return "RegistrationError.emailDomainForbidden"
+            return "RegistrationError.emailDomainForbidden"
         }
     }
     
@@ -222,6 +222,20 @@ final class UsersController:BaseController {
                         let context = try req.context()
                         return try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID,isSystemAdmin: nil,isActivated: nil, into: context)
                             .map{UserDto.create(from: $0, content: .full)}
+                            //Add administrated App
+                            .flatMap({[weak self] userDto in
+                                guard let appController = self?.appController else { throw Abort(.internalServerError)}
+                                //administreted Applications
+                                return try findApplications(for: user, into: context)
+                                    .map(transform: {appController.generateSummaryDto(from: $0)})
+                                    // .map(transform: {ApplicationSummaryDto(from: $0)})
+                                    .getAllResults()
+                                    .map{apps -> UserDto in
+                                        var result = userDto
+                                        result.administeredApplications = apps
+                                        return result
+                                }
+                            })
                     })
                     .do({[weak self]  dto in self?.track(event: .UpdateUser(email: user.email, isSuccess: true), for: req)})
                     .catch({[weak self]  error in self?.track(event: .UpdateUser(email: user.email, isSuccess: false,failedError:error), for: req)})

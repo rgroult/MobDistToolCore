@@ -473,6 +473,25 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         XCTAssertEqual(updated2Me.favoritesApplicationsUUID, [])
     }
     
+    func testUpdateWithApp() throws {
+        try testActivation()
+        var loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
+        var token = loginResp.token
+        try ApplicationsControllerTests.createApp(with: appDtoAndroid, inside: app, token: token)
+        
+        let me = try profile(with: token, inside: app)
+        XCTAssertTrue(me.email == userIOS.email)
+        XCTAssertTrue(me.administeredApplications.count == 1)
+        
+        //update Me : ex password
+        let updateInfo = UpdateUserDto(name: nil, password: "azerty",favoritesApplicationsUUID:nil)
+        let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        //check update resp
+        let updatedMe = try updateResp.content.decode(UserDto.self).wait()
+        XCTAssertEqual(updatedMe.name, userIOS.name)
+        XCTAssertTrue(updatedMe.administeredApplications.count == 1)
+    }
+    
     func testUpdateNotAdmin() throws {
         try testActivation()
         let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
