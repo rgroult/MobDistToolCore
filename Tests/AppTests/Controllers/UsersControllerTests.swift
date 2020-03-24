@@ -500,7 +500,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         XCTAssertTrue(me.administeredApplications.count == 1)
         
         //update Me : ex password
-        let updateInfo = UpdateUserDto(name: nil, password: "azerty",favoritesApplicationsUUID:nil)
+        let updateInfo = UpdateUserDto(name: nil,favoritesApplicationsUUID:nil)
         let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
         //check update resp
         let updatedMe = try updateResp.content.decode(UserDto.self).wait()
@@ -515,7 +515,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         
         let me = try profile(with: token, inside: app)
         
-        let updateInfo = UpdateUserFullDto(name: "Foo Super User", password: "azerty",favoritesApplicationsUUID:["XXX_XXX-XXX"],isActivated: !me.isActivated!,isSystemAdmin: !me.isSystemAdmin!)
+        let updateInfo = UpdateUserFullDto(name: "Foo Super User", favoritesApplicationsUUID:["XXX_XXX-XXX"],isActivated: !me.isActivated!,isSystemAdmin: !me.isSystemAdmin!)
         let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
         XCTAssertEqual(updateResp.http.status.code, 200)
         let updatedDto = try updateResp.content.decode(UserDto.self).wait()
