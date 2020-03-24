@@ -388,7 +388,26 @@ final class ArtifactsContollerTests: BaseAppTests {
         let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
         let dwInfo = try donwloadInfo(apiKey: iOSApiKey!, fileData: fileData)
         let installPage = try app.clientSyncTest(.GET, dwInfo.installPageUrl ,isAbsoluteUrl:true)
-        print(installPage)
+        //check install page contains installUrl
+        if let data =  installPage.http.body.data, let stringContent = String(data: data, encoding: .utf8) {
+            XCTAssertTrue(stringContent.contains(dwInfo.installUrl))
+        }else {
+            XCTAssertTrue(false)
+        }
+       // print(installPage)
+    }
+
+    func testInstallPageAndroid() throws {
+        let fileData = try type(of:self).fileData(name: "testdroid-sample-app", ext: "apk")
+        let dwInfo = try donwloadInfo(apiKey: androidApiKey!, fileData: fileData,contentType:apkContentType)
+        let installPage = try app.clientSyncTest(.GET, dwInfo.installPageUrl ,isAbsoluteUrl:true)
+        //check install page contains installUrl
+        if let data =  installPage.http.body.data, let stringContent = String(data: data, encoding: .utf8) {
+            XCTAssertTrue(stringContent.contains(dwInfo.installUrl))
+        }else {
+            XCTAssertTrue(false)
+        }
+
     }
     
     class func fileData(name:String,ext:String) throws -> Data {

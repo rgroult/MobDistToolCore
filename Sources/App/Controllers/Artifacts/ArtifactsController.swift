@@ -281,7 +281,7 @@ final class ArtifactsController:BaseController  {
             guard let artifact = artifact else { throw  Abort(.serviceUnavailable, reason: "Token content Invalid") }
             return artifact.application.resolve(in: context)
                 .map({ app in
-                    let installUrl = self.generateInstallPageUrl(serverExternalUrl: config.serverUrl.absoluteString, token: token)
+                    let installUrl = self.generateDirectInstallUrl(serverExternalUrl: config.serverUrl.absoluteString, token: token, platform: app.platform)
                     return req.response(generateInstallPage(for: artifact, into: app,installUrl: installUrl), as:.html)
                 })
         }

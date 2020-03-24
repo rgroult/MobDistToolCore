@@ -439,26 +439,19 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     
     func testUpdate() throws {
         try testActivation()
-        var loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
-        var token = loginResp.token
+        let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
+        let token = loginResp.token
         
         var me = try profile(with: token, inside: app)
         XCTAssertEqual(me.name, userIOS.name)
         XCTAssertEqual(me.favoritesApplicationsUUID,[])
         //XCTAssertNil(me.)
-        let updateInfo = UpdateUserDto(name: "Foo Super User", password: "azerty",favoritesApplicationsUUID:["XXX_XXX-XXX"])
+        let updateInfo = UpdateUserDto(name: "Foo Super User",favoritesApplicationsUUID:["XXX_XXX-XXX"])
         let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
         //check update resp
         let updatedMe = try updateResp.content.decode(UserDto.self).wait()
         XCTAssertEqual(updatedMe.name, updateInfo.name)
         XCTAssertEqual(updatedMe.favoritesApplicationsUUID, updateInfo.favoritesApplicationsUUID)
-        
-        //login with old password must failed
-        XCTAssertThrowsError(try login(withEmail: userIOS.email,password:userIOS.password,inside:app))
-        
-        //login with new password
-        loginResp = try login(withEmail: userIOS.email,password:updateInfo.password!,inside:app)
-        token = loginResp.token
         
         //retrieve profile
         me = try profile(with: token, inside: app)
@@ -471,6 +464,29 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         let update2Resp = try app.clientSyncTest(.PUT, "/v2/Users/me", update2Info.convertToHTTPBody() , token: token)
         let updated2Me = try update2Resp.content.decode(UserDto.self).wait()
         XCTAssertEqual(updated2Me.favoritesApplicationsUUID, [])
+    }
+
+    func testUpdatePassword() throws {
+        try testActivation()
+        let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
+        let token = loginResp.token
+
+        //should failed without current password
+        var updateInfo = UpdateUserDto(password:"new password")
+        var httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        XCTAssertEqual(httpResult.http.status.code , 400)
+
+        let newPassword = "new password"
+        updateInfo = UpdateUserDto(password:newPassword,currentPassword:userIOS.password )
+        httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        XCTAssertEqual(httpResult.http.status.code , 200)
+        let _ = try httpResult.content.decode(UserDto.self).wait()
+
+        //login with old password must failed
+        XCTAssertThrowsError(try login(withEmail: userIOS.email,password:userIOS.password,inside:app))
+
+        //login with new password
+        _ = try login(withEmail: userIOS.email,password:newPassword,inside:app)
     }
     
     func testUpdateWithApp() throws {

@@ -220,6 +220,19 @@ final class UsersController:BaseController {
                     .flatMap({ updateDto  in
                         //update user
                         let context = try req.context()
+
+                        if let password = updateDto.password {
+                            //check password strength
+                            let config = try req.make(MdtConfiguration.self)
+                            let strength = Zxcvbn.estimateScore(password)
+                            guard strength >= config.minimumPasswordStrength else { throw UserError.invalidPassworsStrength(required: config.minimumPasswordStrength)}
+
+                            //check if current password is correct
+                            guard let currentPassword = updateDto.currentPassword else { throw UserError.invalidLoginOrPassword }
+                            let passwordHash = generateHashedPassword(plain: currentPassword,salt: user.salt)
+                            guard passwordHash == user.password else { throw UserError.invalidLoginOrPassword }
+                        }
+
                         return try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID,isSystemAdmin: nil,isActivated: nil, into: context)
                             .map{UserDto.create(from: $0, content: .full)}
                             //Add administrated App

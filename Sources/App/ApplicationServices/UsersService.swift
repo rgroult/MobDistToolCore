@@ -175,6 +175,6 @@ private func generateSalt() -> String {
     return UUID().uuidString
 }
 
-private func generateHashedPassword(plain:String,salt:String) -> String {
+func generateHashedPassword(plain:String,salt:String) -> String {
     return "\(plain):\(salt)".md5()
 }
