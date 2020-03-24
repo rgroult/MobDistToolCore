@@ -227,10 +227,12 @@ final class UsersController:BaseController {
                             let strength = Zxcvbn.estimateScore(password)
                             guard strength >= config.minimumPasswordStrength else { throw UserError.invalidPassworsStrength(required: config.minimumPasswordStrength)}
 
-                            //check if current password is correct
-                            guard let currentPassword = updateDto.currentPassword else { throw UserError.invalidLoginOrPassword }
-                            let passwordHash = generateHashedPassword(plain: currentPassword,salt: user.salt)
-                            guard passwordHash == user.password else { throw UserError.invalidLoginOrPassword }
+                            //check if current password is correct if user is not Admin
+                            if !user.isSystemAdmin {
+                                guard let currentPassword = updateDto.currentPassword else { throw UserError.invalidLoginOrPassword }
+                                let passwordHash = generateHashedPassword(plain: currentPassword,salt: user.salt)
+                                guard passwordHash == user.password else { throw UserError.invalidLoginOrPassword }
+                            }
                         }
 
                         return try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID,isSystemAdmin: nil,isActivated: nil, into: context)
