@@ -488,6 +488,27 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         //login with new password
         _ = try login(withEmail: userIOS.email,password:newPassword,inside:app)
     }
+
+    func testUpdatePasswordAsSysAdmin() throws {
+        try testActivation()
+
+        let configuration = try MdtConfiguration.loadConfig(from: nil, from: &app.environment)
+        let loginResp = try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app)
+        let token = loginResp.token
+
+        //should sucess without current password because sysadmin
+        let newPassword = "new password"
+        let updateInfo = UpdateUserDto(password:newPassword)
+        let httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        XCTAssertEqual(httpResult.http.status.code , 200)
+        let _ = try httpResult.content.decode(UserDto.self).wait()
+
+        //login with old password must failed
+        XCTAssertThrowsError(try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app))
+
+        //login with new password
+        _ = try login(withEmail: configuration.initialAdminEmail,password:newPassword,inside:app)
+    }
     
     func testUpdateWithApp() throws {
         try testActivation()
