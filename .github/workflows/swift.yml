@@ -8,15 +8,21 @@ on:
 
 jobs:
   macos:
-    services:
-      mongodb:
-        image: mongo:3.6
-        ports:
-        - 27017:27017
 
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
+    - run: brew install pkg-config
+    - run: brew install libressl
+    - run: brew tap mongodb/brew
+    - run: brew install mongodb-community@3.6
+    - run: mkdir -p $PWD/data/db
+    - run: cp binaries/aapt /usr/local/bin && chmod +x /usr/local/bin/aapt
+    - run: curl --version
+    - run: python3 --version
+    - run: pip3 install requests
+    - run: which python3 > Ressources/python.path
+    - run: python3  testDeps.py 
     - run: xcrun swift test --enable-test-discovery --sanitize=thread
       
   linux:
