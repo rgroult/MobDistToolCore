@@ -320,6 +320,9 @@ final class ArtifactsController:BaseController  {
                                     let contentType = MediaType.parse(artifact.contentType?.data(using: .utf8) ?? Data()) ?? MediaType.binary
                                     response.http.contentType = contentType
                                     response.http.headers.add(name: "Content-Disposition", value: "attachment; filename=\(artifact.filename ?? "file")")
+                                    if let contentSize =  artifact.size {
+                                         response.http.headers.add(name: .contentLength, value: "\(contentSize)")
+                                    }
                                     return response
                             }
                         }else {

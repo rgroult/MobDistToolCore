@@ -358,8 +358,8 @@ final class ArtifactsContollerTests: BaseAppTests {
         #else
             XCTAssertTrue(ipaFile.http.contentType == .binary)
             XCTAssertEqual(ipaFile.http.body.count,fileData.count)
+            XCTAssertEqual( ipaFile.http.headers.firstValue(name: .contentLength),"\(fileData.count)")
         #endif
-        
         //print(ipaFile.http.headers)
       //  print(ipaFile.content)
     }
