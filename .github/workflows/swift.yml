@@ -36,6 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - run: apt-get update && apt-get install -y libssl-dev zlib1g-dev unzip aapt
     - run: swift test --enable-test-discovery --sanitize=thread
   linux_bionic:
     services:
@@ -48,5 +49,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - run: apt-get update && apt-get install -y libssl-dev zlib1g-dev unzip aapt
     - run: swift test --enable-test-discovery --sanitize=thread
       
