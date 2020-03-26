@@ -8,12 +8,23 @@ on:
 
 jobs:
   macos:
+    services:
+      mongodb:
+        image: mongo:3.6
+        ports:
+        - 27017:27017
+
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
     - run: xcrun swift test --enable-test-discovery --sanitize=thread
       
   linux:
+    services:
+      mongodb:
+        image: mongo:3.6
+        ports:
+        - 27017:27017
     container: 
       image: vapor/swift:5.2-xenial
     runs-on: ubuntu-latest
@@ -21,6 +32,11 @@ jobs:
     - uses: actions/checkout@v2
     - run: swift test --enable-test-discovery --sanitize=thread
   linux_bionic:
+    services:
+      mongodb:
+        image: mongo:3.6
+        ports:
+        - 27017:27017
     container: 
       image: vapor/swift:5.2-bionic
     runs-on: ubuntu-latest
