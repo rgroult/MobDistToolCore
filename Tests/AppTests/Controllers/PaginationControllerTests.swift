@@ -120,7 +120,8 @@ final class PaginationControllerTests: BaseAppTests {
     
     
     func loginAsAdmin() throws -> String {
-        let configuration = try MdtConfiguration.loadConfig(from: nil, from: &app.environment)
+        var environment = app.environment
+        let configuration = try MdtConfiguration.loadConfig(from: nil, from: &environment)
         return try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app).token
     }
     
