@@ -2,7 +2,7 @@ name: Swift
 
 on:
   push:
-    branches: [ master,develop ]
+    branches: [ master, develop ]
   pull_request:
     branches: [ master ]
 
@@ -23,6 +23,7 @@ jobs:
     - run: pip3 install requests
     - run: which python3 > Ressources/python.path
     - run: python3  testDeps.py 
+    - run: brew services start mongodb/brew/mongodb-community@3.6
     - run: xcrun swift test --enable-test-discovery --sanitize=thread
       
   linux:
@@ -32,12 +33,12 @@ jobs:
         ports:
         - 27017:27017
     container: 
-      image: vapor/swift:5.2-xenial
+      image: vapor/swift:5.1-xenial
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - run: apt-get update && apt-get install -y libssl-dev zlib1g-dev unzip aapt
-    - run: swift test --enable-test-discovery --sanitize=thread
+    - run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery --sanitize=thread
   linux_bionic:
     services:
       mongodb:
@@ -45,10 +46,10 @@ jobs:
         ports:
         - 27017:27017
     container: 
-      image: vapor/swift:5.2-bionic
+      image: vapor/swift:5.1-bionic
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - run: apt-get update && apt-get install -y libssl-dev zlib1g-dev unzip aapt
-    - run: swift test --enable-test-discovery --sanitize=thread
+    - run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery --sanitize=thread
       
