@@ -11,6 +11,8 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
+    - run: gem install xcpretty
+    - run: gem install xcpretty-travis-formatter
     - run: brew install pkg-config
     - run: brew install libressl
     - run: brew tap mongodb/brew
@@ -23,7 +25,9 @@ jobs:
     - run: which python3 > Ressources/python.path
     - run: python3  testDeps.py 
     - run: brew services start mongodb/brew/mongodb-community@3.6
-    - run: xcrun swift test --enable-test-discovery --sanitize=thread
+    - run: swift package generate-xcodeproj
+    - run: set -o pipefail && xcodebuild -scheme Run clean test -enableCodeCoverage YES -enableAddressSanitizer YES | xcpretty -f `xcpretty-travis-formatter`
+    - run: bash <(curl -s https://codecov.io/bash)
       
   linux:
     services:
