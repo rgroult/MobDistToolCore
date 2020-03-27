@@ -1,4 +1,4 @@
-name: Swift
+name: Test And Deploy
 
 on:
   push:
