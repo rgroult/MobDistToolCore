@@ -1,0 +1,15 @@
+version: '2'
+services:
+    mdtcore:
+        image: "rgroult2/mobdisttool-core:latest"
+        ports:
+            - "8080:8080"
+        environment:
+            - MDT_mongoServerUrl=mongodb://mongo/mobdisttool
+            - MDT_serverExternalUrl=http://localhost:8080
+            - MDT_storageMode=FilesLocalStorage
+            - MDT_storageConfiguration={"RootDirectory":"/tmp/mdt"}
+        links:
+            - mongo
+    mongo:
+        image: 'mongo:3.6'

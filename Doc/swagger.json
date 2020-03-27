@@ -1,0 +1,2716 @@
+{
+  "openapi" : "3.0.1",
+  "servers" : [
+    
+  ],
+  "paths" : {
+    "/api/v2/Applications/" : {
+      "get" : {
+        "tags" : [
+          "Applications"
+        ],
+        "parameters" : [
+          {
+            "deprecated" : false,
+            "description" : "Number of results per page : default 50",
+            "name" : "per",
+            "in" : "query",
+            "allowEmptyValue" : false,
+            "schema" : {
+              "type" : "string"
+            },
+            "required" : false
+          },
+          {
+            "deprecated" : false,
+            "description" : "Page number required : default 0",
+            "name" : "page",
+            "in" : "query",
+            "allowEmptyValue" : false,
+            "schema" : {
+              "type" : "string"
+            },
+            "required" : false
+          },
+          {
+            "deprecated" : false,
+            "description" : "Order results : descending[Default] , ascending",
+            "name" : "orderby",
+            "in" : "query",
+            "allowEmptyValue" : false,
+            "schema" : {
+              "type" : "string"
+            },
+            "required" : false
+          },
+          {
+            "deprecated" : false,
+            "description" : "Search into name",
+            "name" : "searchby",
+            "in" : "query",
+            "allowEmptyValue" : false,
+            "schema" : {
+              "type" : "string"
+            },
+            "required" : false
+          },
+          {
+            "deprecated" : false,
+            "description" : "Possible sort fields: created[default] name",
+            "name" : "sortby",
+            "in" : "query",
+            "allowEmptyValue" : false,
+            "schema" : {
+              "type" : "string"
+            },
+            "required" : false
+          },
+          {
+            "deprecated" : false,
+            "description" : "Filter by platorm -  [android,ios]",
+            "name" : "platform",
+            "in" : "query",
+            "allowEmptyValue" : false,
+            "schema" : {
+              "type" : "string"
+            },
+            "required" : false
+          }
+        ],
+        "description" : "Retrieve Applications",
+        "summary" : "Apps",
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "deprecated" : false,
+        "responses" : {
+          "200" : {
+            "description" : "All applications",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Paginated<ApplicationSummaryDto>"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        }
+      },
+      "post" : {
+        "tags" : [
+          "Applications"
+        ],
+        "description" : "Create new Application",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ApplicationCreateDto"
+              }
+            }
+          },
+          "description" : "App info.",
+          "required" : false
+        },
+        "summary" : "Create App",
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "deprecated" : false,
+        "responses" : {
+          "200" : {
+            "description" : "application created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApplicationDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        }
+      }
+    },
+    "/api/v2/Users/me" : {
+      "get" : {
+        "summary" : "Me",
+        "description" : "Retrieve Profile",
+        "deprecated" : false,
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "responses" : {
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "200" : {
+            "description" : "My profile",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDto"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        },
+        "tags" : [
+          "Users"
+        ]
+      },
+      "put" : {
+        "tags" : [
+          "Users"
+        ],
+        "description" : "Update Profile",
+        "requestBody" : {
+          "required" : false,
+          "description" : "Update info.",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "summary" : "Update",
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "deprecated" : false,
+        "responses" : {
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDto"
+                }
+              }
+            },
+            "description" : "My profile"
+          }
+        }
+      }
+    },
+    "/api/v2/Applications/{uuid}/versions/latest" : {
+      "get" : {
+        "tags" : [
+          "Applications"
+        ],
+        "parameters" : [
+          {
+            "name" : "per",
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Number of results per page : default 50",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : false
+          },
+          {
+            "name" : "page",
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Page number required : default 0",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : false
+          },
+          {
+            "name" : "orderby",
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Order results : descending[Default] , ascending",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : false
+          },
+          {
+            "name" : "sortby",
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Possible sort fields: created[default] version",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : false
+          },
+          {
+            "name" : "uuid",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Application uuid",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : true
+          }
+        ],
+        "description" : "Retrieve latest versions for specified app",
+        "summary" : "Application latest versions",
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "deprecated" : false,
+        "responses" : {
+          "200" : {
+            "description" : "applications latest versions",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Paginated<ArtifactDto>"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        }
+      }
+    },
+    "/api/v2/Applications/{uuid}" : {
+      "get" : {
+        "tags" : [
+          "Applications"
+        ],
+        "parameters" : [
+          {
+            "name" : "uuid",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Application uuid",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : true
+          }
+        ],
+        "description" : "Get all Application Info",
+        "summary" : "Get App Detail",
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "deprecated" : false,
+        "responses" : {
+          "200" : {
+            "description" : "applications updated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApplicationDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        }
+      },
+      "put" : {
+        "tags" : [
+          "Applications"
+        ],
+        "parameters" : [
+          {
+            "name" : "uuid",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Application uuid",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : true
+          }
+        ],
+        "description" : "Update new Application",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ApplicationUpdateDto"
+              }
+            }
+          },
+          "description" : "App info.",
+          "required" : false
+        },
+        "summary" : "Update App",
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "deprecated" : false,
+        "responses" : {
+          "200" : {
+            "description" : "applications updated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApplicationDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [
+          "Applications"
+        ],
+        "parameters" : [
+          {
+            "name" : "uuid",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Application uuid",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : true
+          }
+        ],
+        "description" : "Delete existing Application",
+        "summary" : "Delete App",
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "deprecated" : false,
+        "responses" : {
+          "200" : {
+            "description" : "sucess",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        }
+      }
+    },
+    "/api/v2/status" : {
+      "get" : {
+        "summary" : "Status",
+        "deprecated" : false,
+        "description" : "Retrieve Server status and version",
+        "responses" : {
+          "200" : {
+            "description" : "Info"
+          }
+        },
+        "tags" : [
+          ""
+        ]
+      }
+    },
+    "/api/v2/Applications/{uuid}/maxversion/{branch}/{name}" : {
+      "get" : {
+        "deprecated" : false,
+        "description" : "Retrieve max version off application for name and specific branch",
+        "summary" : "Max Version",
+        "parameters" : [
+          {
+            "in" : "path",
+            "description" : "Application uuid",
+            "required" : true,
+            "allowEmptyValue" : false,
+            "name" : "uuid",
+            "deprecated" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "path",
+            "description" : "Application branch",
+            "required" : true,
+            "allowEmptyValue" : false,
+            "name" : "branch",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false
+          },
+          {
+            "in" : "path",
+            "description" : "Artifact name",
+            "required" : true,
+            "allowEmptyValue" : false,
+            "name" : "name",
+            "deprecated" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "description" : "Timestamp of url signature (in secs since 01/01/1970)",
+            "required" : true,
+            "allowEmptyValue" : false,
+            "name" : "ts",
+            "deprecated" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "query",
+            "description" : "Hash of url signature with secret <br/><b> Hash = MD5(ts=$timestamp&branch=$branch&hash=$maxVersionSecretKey)</b>",
+            "required" : true,
+            "allowEmptyValue" : false,
+            "name" : "hash",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false
+          }
+        ],
+        "responses" : {
+          "400" : {
+            "description" : "Request error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "200" : {
+            "description" : "Max Artifact Version",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MaxVersionArtifactDto"
+                }
+              }
+            }
+          }
+        },
+        "tags" : [
+          "Applications"
+        ]
+      }
+    },
+    "/api/v2/Users/login" : {
+      "post" : {
+        "summary" : "Login",
+        "description" : "Login and retrieve JWT token",
+        "deprecated" : false,
+        "requestBody" : {
+          "description" : "Login info.",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginReqDto"
+              }
+            }
+          },
+          "required" : false
+        },
+        "responses" : {
+          "400" : {
+            "description" : "Contact an administrator to retrieve new password"
+          },
+          "500" : {
+            "description" : "Registration error"
+          },
+          "200" : {
+            "description" : "Password reseted",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LoginRespDto"
+                }
+              }
+            }
+          }
+        },
+        "tags" : [
+          "Users"
+        ]
+      }
+    },
+    "/api/v2/Users/register" : {
+      "post" : {
+        "deprecated" : false,
+        "description" : "Action for getting specific user from server",
+        "summary" : "Register",
+        "requestBody" : {
+          "description" : "Register user information.",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RegisterDto"
+              }
+            }
+          },
+          "required" : false
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Registration error"
+          },
+          "200" : {
+            "description" : "User created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "tags" : [
+          "Users"
+        ]
+      }
+    },
+    "/api/v2/Users/refresh" : {
+      "post" : {
+        "summary" : "Refresh Login",
+        "deprecated" : false,
+        "description" : "Refresh login with refresh token and retrieve JWT token",
+        "requestBody" : {
+          "description" : "Refresh info.",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          },
+          "required" : false
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Registration error"
+          },
+          "400" : {
+            "description" : "Contact an administrator to retrieve new password"
+          },
+          "200" : {
+            "description" : "Password reseted",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LoginRespDto"
+                }
+              }
+            }
+          }
+        },
+        "tags" : [
+          "Users"
+        ]
+      }
+    },
+    "/api/v2/Artifacts/{apiKey}/latest/{artifactName}" : {
+      "delete" : {
+        "summary" : "Delete Last Artifact",
+        "description" : "Delete Last artifact with apiKey",
+        "deprecated" : false,
+        "tags" : [
+          "Artifacts"
+        ],
+        "responses" : {
+          "400" : {
+            "description" : "Request error"
+          },
+          "200" : {
+            "description" : "Artifact deleted",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApplicationDto"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          }
+        },
+        "parameters" : [
+          {
+            "name" : "apiKey",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Api Key",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : true
+          },
+          {
+            "name" : "artifactName",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Artifact name (ex:prod,demo,...)",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : true
+          }
+        ]
+      },
+      "post" : {
+        "description" : "Create Last artifact with apiKey",
+        "responses" : {
+          "200" : {
+            "description" : "Artifact created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApplicationDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        },
+        "tags" : [
+          "Artifacts"
+        ],
+        "summary" : "Create Last Artifact",
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "name" : "apiKey",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false,
+            "required" : true,
+            "description" : "Api Key"
+          },
+          {
+            "allowEmptyValue" : false,
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "artifactName",
+            "deprecated" : false,
+            "description" : "Artifact name (ex:prod,demo,...)",
+            "required" : true
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "x-mimetype",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "header",
+            "deprecated" : false,
+            "required" : true,
+            "description" : "Artifact content Type [IPA:application/octet-stream ipa] [APK:application/vnd.android.package-archive]"
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "x-filename",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "header",
+            "deprecated" : false,
+            "description" : "Artifact filename",
+            "required" : false
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "x-metatags",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "header",
+            "deprecated" : false,
+            "description" : "Additional metatags for this Artifact",
+            "required" : false
+          }
+        ],
+        "requestBody" : {
+          "required" : false,
+          "description" : "Artifact binary",
+          "content" : {
+            "application/octet-stream" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Data"
+              }
+            }
+          }
+        },
+        "deprecated" : false
+      }
+    },
+    "/api/v2/Applications/{uuid}/versions/grouped" : {
+      "get" : {
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "summary" : "Application versions grouped",
+        "responses" : {
+          "200" : {
+            "description" : "applications versions",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Paginated<ArtifactGroupedDto>"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        },
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "name" : "per",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "query",
+            "deprecated" : false,
+            "description" : "Number of results per page : default 50",
+            "required" : false
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "page",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "query",
+            "deprecated" : false,
+            "description" : "Page number required : default 0",
+            "required" : false
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "orderby",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "query",
+            "deprecated" : false,
+            "description" : "Order results : descending[Default] , ascending",
+            "required" : false
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "sortby",
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false,
+            "description" : "Possible sort fields: created[default] version",
+            "required" : false
+          },
+          {
+            "allowEmptyValue" : false,
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "uuid",
+            "deprecated" : false,
+            "description" : "Application uuid",
+            "required" : true
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "branch",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "query",
+            "deprecated" : false,
+            "description" : "Specific branch",
+            "required" : false
+          }
+        ],
+        "deprecated" : false,
+        "tags" : [
+          "Applications"
+        ],
+        "description" : "Retrieve grouped versions for specified app"
+      }
+    },
+    "/api/v2/Users/forgotPassword" : {
+      "post" : {
+        "deprecated" : false,
+        "description" : "Send re activation email with new password if self registration, otherwise throw error",
+        "summary" : "Forgot Password",
+        "requestBody" : {
+          "description" : "User email.",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          },
+          "required" : false
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Registration error"
+          },
+          "400" : {
+            "description" : "Contact an administrator to retrieve new password"
+          },
+          "200" : {
+            "description" : "Password reseted",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags" : [
+          "Users"
+        ]
+      }
+    },
+    "/api/v2/Artifacts/{apiKey}/deploy" : {
+      "get" : {
+        "parameters" : [
+          {
+            "name" : "apiKey",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Api Key",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : true
+          }
+        ],
+        "description" : "Python Deployement script.ex :curl -Ls http://<your_server>/<base_path>/v2/Artifacts/<api_key>/deploy | python - ADD fromFile sample.json ",
+        "summary" : "Deploy Artifacts",
+        "deprecated" : false,
+        "responses" : {
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "200" : {
+            "description" : "Artifact created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApplicationDto"
+                }
+              }
+            }
+          }
+        },
+        "tags" : [
+          "Artifacts"
+        ]
+      }
+    },
+    "/api/v2/Monitoring/summary" : {
+      "get" : {
+        "summary" : "Summary",
+        "description" : "Retrieve system metrics summary",
+        "deprecated" : false,
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "responses" : {
+          "400" : {
+            "description" : "Request error"
+          },
+          "200" : {
+            "description" : "All applications",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MetricsSummaryDto"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          }
+        },
+        "tags" : [
+          "Monitoring"
+        ]
+      }
+    },
+    "/api/v2/Applications/{uuid}/versions" : {
+      "get" : {
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "summary" : "Application versions",
+        "tags" : [
+          "Applications"
+        ],
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "per",
+            "deprecated" : false,
+            "required" : false,
+            "description" : "Number of results per page : default 50"
+          },
+          {
+            "allowEmptyValue" : false,
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "page",
+            "deprecated" : false,
+            "description" : "Page number required : default 0",
+            "required" : false
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "orderby",
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false,
+            "description" : "Order results : descending[Default] , ascending",
+            "required" : false
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "sortby",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "query",
+            "deprecated" : false,
+            "required" : false,
+            "description" : "Possible sort fields: created[default] version"
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "uuid",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false,
+            "required" : true,
+            "description" : "Application uuid"
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "branch",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "query",
+            "deprecated" : false,
+            "description" : "Specific branch",
+            "required" : false
+          }
+        ],
+        "deprecated" : false,
+        "description" : "Retrieve versions for specified app",
+        "responses" : {
+          "200" : {
+            "description" : "applications versions",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Paginated<ArtifactDto>"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        }
+      }
+    },
+    "/api/v2/Users/{email}" : {
+      "delete" : {
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "description" : "Delete user : need be admin",
+        "tags" : [
+          "Users"
+        ],
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "email",
+            "deprecated" : false,
+            "required" : true,
+            "description" : "Email"
+          }
+        ],
+        "summary" : "Delete User",
+        "deprecated" : false,
+        "responses" : {
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Paginated<MessageDto>"
+                }
+              }
+            },
+            "description" : "Profiles found"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        }
+      },
+      "put" : {
+        "description" : "Update user Profile : need be admin",
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "responses" : {
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "200" : {
+            "description" : "Profiles found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Paginated<UserDto>"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        },
+        "summary" : "Update User",
+        "tags" : [
+          "Users"
+        ],
+        "requestBody" : {
+          "required" : false,
+          "description" : "Update info.",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateUserFullDto"
+              }
+            }
+          }
+        },
+        "deprecated" : false,
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "name" : "email",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "path",
+            "deprecated" : false,
+            "required" : true,
+            "description" : "Email"
+          }
+        ]
+      }
+    },
+    "/api/v2/Artifacts/{uuid}/download" : {
+      "get" : {
+        "description" : "Retieve download/intall info for specific artifact",
+        "responses" : {
+          "200" : {
+            "description" : "Artifact download info",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DownloadInfoDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        },
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "summary" : "Download/intall info",
+        "deprecated" : false,
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "name" : "uuid",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "path",
+            "deprecated" : false,
+            "required" : true,
+            "description" : "Artifact UUID"
+          }
+        ],
+        "tags" : [
+          "Artifacts"
+        ]
+      }
+    },
+    "/api/v2/Monitoring/activity" : {
+      "get" : {
+        "description" : "Retrieve System Tracking Activity",
+        "summary" : "Activity",
+        "tags" : [
+          "Monitoring"
+        ],
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "name" : "lines",
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false,
+            "description" : "Number of last lines (default: 150)",
+            "required" : false
+          }
+        ],
+        "deprecated" : false,
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "All applications",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        }
+      }
+    },
+    "/api/v2/Artifacts/ios_plist" : {
+      "get" : {
+        "summary" : "iOS OTA  Manifest file",
+        "description" : "Retieve iOS OTA manifest artifact file",
+        "deprecated" : false,
+        "parameters" : [
+          {
+            "name" : "token",
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "token ",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : false
+          }
+        ],
+        "responses" : {
+          "400" : {
+            "description" : "Request error"
+          },
+          "200" : {
+            "description" : "OTA Manifest file",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/String"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          }
+        },
+        "tags" : [
+          "Artifacts"
+        ]
+      }
+    },
+    "/api/v2/Applications/{uuid}/adminUsers/{email}" : {
+      "delete" : {
+        "description" : "Delete admin user for this Application",
+        "summary" : "Delete admin Users",
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "applications updated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        },
+        "deprecated" : false,
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "uuid",
+            "deprecated" : false,
+            "required" : true,
+            "description" : "Application uuid"
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "email",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "path",
+            "deprecated" : false,
+            "description" : "Admin email",
+            "required" : true
+          }
+        ],
+        "tags" : [
+          "Applications"
+        ]
+      },
+      "put" : {
+        "summary" : "Add admin Users",
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "tags" : [
+          "Applications"
+        ],
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "uuid",
+            "deprecated" : false,
+            "description" : "Application uuid",
+            "required" : true
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "email",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false,
+            "description" : "Admin email",
+            "required" : true
+          }
+        ],
+        "deprecated" : false,
+        "description" : "Add admin user for this Application",
+        "responses" : {
+          "200" : {
+            "description" : "applications updated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        }
+      }
+    },
+    "/api/v2/Artifacts/{apiKey}/{branch}/{version}/{artifactName}" : {
+      "delete" : {
+        "summary" : "Delete Artifact",
+        "tags" : [
+          "Artifacts"
+        ],
+        "deprecated" : false,
+        "description" : "Delete artifact with apiKey",
+        "responses" : {
+          "400" : {
+            "description" : "Request error"
+          },
+          "200" : {
+            "description" : "Artifact deleted",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApplicationDto"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          }
+        },
+        "parameters" : [
+          {
+            "name" : "apiKey",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Api Key",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : true
+          },
+          {
+            "name" : "branch",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Branch name (ex: master,release,...)",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : true
+          },
+          {
+            "name" : "version",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Artifact version (ex:X.Y.Z)",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : true
+          },
+          {
+            "name" : "artifactName",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Artifact name (ex:prod,demo,...)",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : true
+          }
+        ]
+      },
+      "post" : {
+        "summary" : "Create Artifact",
+        "description" : "Create artifact with apiKey",
+        "tags" : [
+          "Artifacts"
+        ],
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "name" : "apiKey",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false,
+            "required" : true,
+            "description" : "Api Key"
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "branch",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "path",
+            "deprecated" : false,
+            "required" : true,
+            "description" : "Branch name (ex: master,release,...)"
+          },
+          {
+            "allowEmptyValue" : false,
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "version",
+            "deprecated" : false,
+            "required" : true,
+            "description" : "Artifact version (ex:X.Y.Z)"
+          },
+          {
+            "allowEmptyValue" : false,
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "artifactName",
+            "deprecated" : false,
+            "required" : true,
+            "description" : "Artifact name (ex:prod,demo,...)"
+          },
+          {
+            "allowEmptyValue" : false,
+            "in" : "header",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "x-mimetype",
+            "deprecated" : false,
+            "required" : true,
+            "description" : "Artifact content Type [IPA:application/octet-stream ipa] [APK:application/vnd.android.package-archive]"
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "x-filename",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "header",
+            "deprecated" : false,
+            "description" : "Artifact filename",
+            "required" : false
+          },
+          {
+            "allowEmptyValue" : false,
+            "in" : "header",
+            "name" : "x-sortidentifier",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false,
+            "required" : false,
+            "description" : "Sort identifier for identifiant, if not provided, version is used"
+          },
+          {
+            "allowEmptyValue" : false,
+            "in" : "header",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "x-metatags",
+            "deprecated" : false,
+            "description" : "Additional metatags for this Artifact",
+            "required" : false
+          }
+        ],
+        "deprecated" : false,
+        "responses" : {
+          "200" : {
+            "description" : "Artifact created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApplicationDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        },
+        "requestBody" : {
+          "required" : false,
+          "description" : "Artifact binary",
+          "content" : {
+            "application/octet-stream" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Data"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/Applications/favorites" : {
+      "get" : {
+        "deprecated" : false,
+        "description" : "Retrieve user favorites Applications",
+        "summary" : "Favorites Apps",
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "responses" : {
+          "400" : {
+            "description" : "Request error"
+          },
+          "200" : {
+            "description" : "Favorites applications",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Array<ApplicationSummaryDto>"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          }
+        },
+        "tags" : [
+          "Applications"
+        ]
+      }
+    },
+    "/api/v2/Monitoring/logs" : {
+      "get" : {
+        "description" : "Retrieve System Logs",
+        "summary" : "Logs",
+        "tags" : [
+          "Monitoring"
+        ],
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "name" : "lines",
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false,
+            "description" : "Number of last lines (default: 150)",
+            "required" : false
+          }
+        ],
+        "deprecated" : false,
+        "responses" : {
+          "200" : {
+            "description" : "All applications",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          }
+        },
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v2/Users/activation" : {
+      "get" : {
+        "description" : "Activate User",
+        "responses" : {
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "200" : {
+            "description" : "Sucess",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags" : [
+          "Users"
+        ],
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "in" : "query",
+            "name" : "activationToken",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false,
+            "description" : "Activation token",
+            "required" : true
+          }
+        ],
+        "deprecated" : false,
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "summary" : "Activation"
+      }
+    },
+    "/api/v2/Users/" : {
+      "get" : {
+        "description" : "Retrieve users Profile : need be admin",
+        "responses" : {
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "200" : {
+            "description" : "Profiles found",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Paginated<UserDto>"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          }
+        },
+        "tags" : [
+          "Users"
+        ],
+        "parameters" : [
+          {
+            "allowEmptyValue" : false,
+            "in" : "query",
+            "name" : "per",
+            "schema" : {
+              "type" : "string"
+            },
+            "deprecated" : false,
+            "description" : "Number of results per page : default 50",
+            "required" : false
+          },
+          {
+            "allowEmptyValue" : false,
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "page",
+            "deprecated" : false,
+            "description" : "Page number required : default 0",
+            "required" : false
+          },
+          {
+            "allowEmptyValue" : false,
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "orderby",
+            "deprecated" : false,
+            "description" : "Order results : descending[Default] , ascending",
+            "required" : false
+          },
+          {
+            "allowEmptyValue" : false,
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "name" : "searchby",
+            "deprecated" : false,
+            "description" : "Search into email",
+            "required" : false
+          },
+          {
+            "allowEmptyValue" : false,
+            "name" : "sortby",
+            "schema" : {
+              "type" : "string"
+            },
+            "in" : "query",
+            "deprecated" : false,
+            "required" : false,
+            "description" : "Possible sort fields: created[default] lastlogin, email"
+          }
+        ],
+        "summary" : "All USers",
+        "security" : [
+          {
+            "auth_jwt" : [
+              
+            ]
+          }
+        ],
+        "deprecated" : false
+      }
+    },
+    "/api/v2/Artifacts/file" : {
+      "get" : {
+        "deprecated" : false,
+        "description" : "Retrieve binary file file",
+        "summary" : "Artifact binary file file",
+        "parameters" : [
+          {
+            "name" : "token",
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "token ",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : false
+          }
+        ],
+        "responses" : {
+          "400" : {
+            "description" : "Request error"
+          },
+          "200" : {
+            "description" : "OTA binary file",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Data"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "401" : {
+            "description" : "Authentication error Error"
+          }
+        },
+        "tags" : [
+          "Artifacts"
+        ]
+      }
+    },
+    "/api/v2/Applications/{uuid}/icon" : {
+      "get" : {
+        "summary" : "Application icon",
+        "description" : "Retrieve Application icon",
+        "deprecated" : false,
+        "tags" : [
+          "Applications"
+        ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "400" : {
+            "description" : "Request error"
+          },
+          "200" : {
+            "description" : "applications updated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Data"
+                }
+              }
+            }
+          }
+        },
+        "parameters" : [
+          {
+            "name" : "uuid",
+            "in" : "path",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "Application uuid",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : true
+          }
+        ]
+      }
+    },
+    "/api/v2/Artifacts/install" : {
+      "get" : {
+        "deprecated" : false,
+        "description" : "Artifact Install Page",
+        "parameters" : [
+          {
+            "name" : "token",
+            "in" : "query",
+            "schema" : {
+              "type" : "string"
+            },
+            "description" : "token ",
+            "deprecated" : false,
+            "allowEmptyValue" : false,
+            "required" : false
+          }
+        ],
+        "summary" : "Install Page",
+        "responses" : {
+          "400" : {
+            "description" : "Request error"
+          },
+          "500" : {
+            "description" : "Internal Error"
+          },
+          "200" : {
+            "description" : "Install Page",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/String"
+                }
+              }
+            }
+          }
+        },
+        "tags" : [
+          "Artifacts"
+        ]
+      }
+    }
+  },
+  "components" : {
+    "securitySchemes" : {
+      "auth_jwt" : {
+        "description" : "You can get token from *login* action from *Users* controller.",
+        "type" : "http",
+        "bearerFormat" : "jwt",
+        "in" : "header",
+        "scheme" : "bearer"
+      }
+    },
+    "schemas" : {
+      "Paginated<UserDto>" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "example" : "[App.UserDto(email: \"email@test.com\", name: \"John Doe\", isActivated: nil, isSystemAdmin: nil, favoritesApplicationsUUID: [], administeredApplications: [], createdAt: nil, lastLogin: nil, message: nil)]",
+            "type" : "string"
+          },
+          "page" : {
+            "type" : "string",
+            "example" : "PageInfo(position: Pagination.Position(current: 0, next: nil, previous: nil, max: 0), data: Pagination.PageData(per: 20, total: 1))"
+          }
+        },
+        "required" : [
+          "page",
+          "data"
+        ]
+      },
+      "MetricsSummaryDto" : {
+        "type" : "object",
+        "properties" : {
+          "ApplicationsCount" : {
+            "type" : "integer",
+            "example" : "1",
+            "format" : "int64"
+          },
+          "ArtifactsCount" : {
+            "type" : "integer",
+            "example" : "1",
+            "format" : "int64"
+          },
+          "UsersCount" : {
+            "type" : "integer",
+            "format" : "int64",
+            "example" : "1"
+          }
+        },
+        "required" : [
+          
+        ]
+      },
+      "ArtifactDto" : {
+        "type" : "object",
+        "properties" : {
+          "branch" : {
+            "example" : "master",
+            "type" : "string"
+          },
+          "sortIdentifier" : {
+            "example" : "nil",
+            "type" : "string"
+          },
+          "createdDate" : {
+            "example" : "2020-03-27 09:43:44 +0000",
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "version" : {
+            "example" : "X.Y.Z",
+            "type" : "string"
+          },
+          "size" : {
+            "example" : "nil",
+            "type" : "string"
+          },
+          "contentType" : {
+            "example" : "nil",
+            "type" : "string"
+          },
+          "uuid" : {
+            "example" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "example" : "prod",
+            "type" : "string"
+          },
+          "metaDataTags" : {
+            "example" : "nil",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "uuid",
+          "branch",
+          "name",
+          "version",
+          "createdDate"
+        ]
+      },
+      "ApplicationCreateDto" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "example" : "",
+            "type" : "string"
+          },
+          "name" : {
+            "example" : "Awesome App",
+            "type" : "string"
+          },
+          "enableMaxVersionCheck" : {
+            "example" : "false",
+            "type" : "boolean"
+          },
+          "platform" : {
+            "example" : "ios",
+            "type" : "string"
+          },
+          "base64IconData" : {
+            "example" : "nil",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "name",
+          "platform",
+          "description"
+        ]
+      },
+      "ApplicationUpdateDto" : {
+        "type" : "object",
+        "properties" : {
+          "maxVersionCheckEnabled" : {
+            "example" : "nil",
+            "type" : "string"
+          },
+          "description" : {
+            "example" : "",
+            "type" : "string"
+          },
+          "name" : {
+            "example" : "Awesome App",
+            "type" : "string"
+          },
+          "base64IconData" : {
+            "example" : "nil",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          
+        ]
+      },
+      "Paginated<ArtifactDto>" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "example" : "[App.ArtifactDto(uuid: \"uuid\", branch: \"master\", name: \"prod\", contentType: nil, size: nil, version: \"X.Y.Z\", sortIdentifier: nil, metaDataTags: nil, createdDate: 2020-03-27 09:43:44 +0000)]",
+            "type" : "string"
+          },
+          "page" : {
+            "example" : "PageInfo(position: Pagination.Position(current: 0, next: nil, previous: nil, max: 0), data: Pagination.PageData(per: 20, total: 1))",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "page",
+          "data"
+        ]
+      },
+      "LoginRespDto" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "example" : "john@doe.com",
+            "type" : "string"
+          },
+          "name" : {
+            "example" : "John Doe",
+            "type" : "string"
+          },
+          "refreshToken" : {
+            "example" : "1223434",
+            "type" : "string"
+          },
+          "token" : {
+            "example" : "554dsr45f8sdf5",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "email",
+          "name",
+          "token"
+        ]
+      },
+      "LoginReqDto" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "example" : "email@test.com",
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string",
+            "example" : "1234"
+          }
+        },
+        "required" : [
+          "email",
+          "password"
+        ]
+      },
+      "MessageDto" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "example" : "message",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "message"
+        ]
+      },
+      "ForgotPasswordDto" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "example" : "email@test.com",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "email"
+        ]
+      },
+      "ApplicationSummaryDto" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "example" : "",
+            "type" : "string"
+          },
+          "name" : {
+            "example" : "Awesome App",
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "example" : "2020-03-27 09:43:43 +0000",
+            "type" : "string"
+          },
+          "iconUrl" : {
+            "example" : "nil",
+            "type" : "string"
+          },
+          "uuid" : {
+            "example" : "dsfdsfdsf",
+            "type" : "string"
+          },
+          "platform" : {
+            "example" : "ios",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "name",
+          "platform",
+          "description",
+          "uuid",
+          "createdAt"
+        ]
+      },
+      "RegisterDto" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "example" : "email@test.com"
+          },
+          "name" : {
+            "type" : "string",
+            "example" : "John Doe"
+          },
+          "password" : {
+            "type" : "string",
+            "example" : "password"
+          }
+        },
+        "required" : [
+          "email",
+          "name",
+          "password"
+        ]
+      },
+      "UserDto" : {
+        "type" : "object",
+        "properties" : {
+          "isSystemAdmin" : {
+            "example" : "nil",
+            "type" : "string"
+          },
+          "favoritesApplicationsUUID" : {
+            "example" : "[]",
+            "type" : "string"
+          },
+          "createdAt" : {
+            "example" : "nil",
+            "type" : "string"
+          },
+          "message" : {
+            "example" : "nil",
+            "type" : "string"
+          },
+          "administeredApplications" : {
+            "example" : "[]",
+            "type" : "string"
+          },
+          "lastLogin" : {
+            "example" : "nil",
+            "type" : "string"
+          },
+          "isActivated" : {
+            "example" : "nil",
+            "type" : "string"
+          },
+          "email" : {
+            "example" : "email@test.com",
+            "type" : "string"
+          },
+          "name" : {
+            "example" : "John Doe",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "email",
+          "name",
+          "favoritesApplicationsUUID",
+          "administeredApplications"
+        ]
+      },
+      "RefreshTokenDto" : {
+        "type" : "object",
+        "properties" : {
+          "refreshToken" : {
+            "type" : "string",
+            "example" : "ZEAZRS124325EFS"
+          },
+          "email" : {
+            "type" : "string",
+            "example" : "john@doe.com"
+          }
+        },
+        "required" : [
+          "email",
+          "refreshToken"
+        ]
+      },
+      "Paginated<ArtifactGroupedDto>" : {
+        "type" : "object",
+        "properties" : {
+          "page" : {
+            "example" : "PageInfo(position: Pagination.Position(current: 0, next: nil, previous: nil, max: 0), data: Pagination.PageData(per: 20, total: 1))",
+            "type" : "string"
+          },
+          "data" : {
+            "type" : "string",
+            "example" : "[App.ArtifactGroupedDto(sortIdentifier: \"X.Y.Z\", branch: \"Master\", createdDate: 2020-03-27 09:43:44 +0000, version: \"X.Y.Z\", artifacts: [App.ArtifactDto(uuid: \"uuid\", branch: \"master\", name: \"prod\", contentType: nil, size: nil, version: \"X.Y.Z\", sortIdentifier: nil, metaDataTags: nil, createdDate: 2020-03-27 09:43:44 +0000)])]"
+          }
+        },
+        "required" : [
+          "page",
+          "data"
+        ]
+      },
+      "UpdateUserDto" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "example" : "John Doe",
+            "type" : "string"
+          },
+          "favoritesApplicationsUUID" : {
+            "example" : "[\"XXX_XX__X_X_X\"]",
+            "type" : "string"
+          },
+          "currentPassword" : {
+            "example" : "pwd",
+            "type" : "string"
+          },
+          "password" : {
+            "example" : "NeW PaSsw0rD",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          
+        ]
+      },
+      "Paginated<ApplicationSummaryDto>" : {
+        "type" : "object",
+        "properties" : {
+          "page" : {
+            "example" : "PageInfo(position: Pagination.Position(current: 0, next: nil, previous: nil, max: 0), data: Pagination.PageData(per: 20, total: 1))",
+            "type" : "string"
+          },
+          "data" : {
+            "type" : "string",
+            "example" : "[App.ApplicationSummaryDto(name: \"Awesome App\", platform: App.Platform.ios, description: \"\", uuid: \"dsfdsfdsf\", iconUrl: nil, createdAt: 2020-03-27 09:43:43 +0000)]"
+          }
+        },
+        "required" : [
+          "page",
+          "data"
+        ]
+      },
+      "MaxVersionArtifactDto" : {
+        "type" : "object",
+        "properties" : {
+          "branch" : {
+            "example" : "master",
+            "type" : "string"
+          },
+          "version" : {
+            "example" : "X.Y.Z",
+            "type" : "string"
+          },
+          "name" : {
+            "example" : "prod",
+            "type" : "string"
+          },
+          "info" : {
+            "example" : "DownloadInfoDto(directLinkUrl: \"http://mdtHost/XXXXX/artifactFile\", installUrl: \"http://mdtHost/XXXXX/installArtifact\", installPageUrl: \"http://mdtHost/XXXXX/installPage\", validity: 3)",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "branch",
+          "name",
+          "version",
+          "info"
+        ]
+      },
+      "UpdateUserFullDto" : {
+        "type" : "object",
+        "properties" : {
+          "isSystemAdmin" : {
+            "example" : "false",
+            "type" : "boolean"
+          },
+          "favoritesApplicationsUUID" : {
+            "example" : "[\"XXX_XX__X_X_X\"]",
+            "type" : "string"
+          },
+          "name" : {
+            "example" : "John Doe",
+            "type" : "string"
+          },
+          "password" : {
+            "example" : "NeW PaSsw0rD",
+            "type" : "string"
+          },
+          "isActivated" : {
+            "example" : "nil",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          
+        ]
+      },
+      "DownloadInfoDto" : {
+        "type" : "object",
+        "properties" : {
+          "validity" : {
+            "example" : "3",
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "installPageUrl" : {
+            "example" : "http://mdtHost/XXXXX/installPage",
+            "type" : "string"
+          },
+          "directLinkUrl" : {
+            "example" : "http://mdtHost/XXXXX/artifactFile",
+            "type" : "string"
+          },
+          "installUrl" : {
+            "example" : "http://mdtHost/XXXXX/installArtifact",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "directLinkUrl",
+          "installUrl",
+          "installPageUrl",
+          "validity"
+        ]
+      },
+      "ApplicationDto" : {
+        "type" : "object",
+        "properties" : {
+          "availableBranches" : {
+            "example" : "[\"release\", \"develop\", \"master\"]",
+            "type" : "string"
+          },
+          "description" : {
+            "example" : "",
+            "type" : "string"
+          },
+          "createdDate" : {
+            "format" : "date-time",
+            "example" : "2020-03-27 09:43:43 +0000",
+            "type" : "string"
+          },
+          "maxVersionSecretKey" : {
+            "example" : "ùmlùlmjlsdlf",
+            "type" : "string"
+          },
+          "apiKey" : {
+            "example" : "SQDQSDCQD",
+            "type" : "string"
+          },
+          "hasPermanentLinks" : {
+            "example" : "nil",
+            "type" : "string"
+          },
+          "uuid" : {
+            "example" : "dsfdsfdsf",
+            "type" : "string"
+          },
+          "adminUsers" : {
+            "example" : "[]",
+            "type" : "string"
+          },
+          "iconUrl" : {
+            "example" : "nil",
+            "type" : "string"
+          },
+          "name" : {
+            "example" : "Awesome App",
+            "type" : "string"
+          },
+          "platform" : {
+            "example" : "ios",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "name",
+          "platform",
+          "description",
+          "uuid",
+          "adminUsers",
+          "availableBranches",
+          "createdDate"
+        ]
+      }
+    }
+  },
+  "info" : {
+    "version" : "3.0.0",
+    "title" : "Mobile Distribution Tool",
+    "description" : "Open API reference of Mobile Distribution Tool."
+  },
+  "tags" : [
+    {
+      "description" : "Status",
+      "name" : ""
+    },
+    {
+      "name" : "Applications",
+      "description" : "Controller for Aplications"
+    },
+    {
+      "description" : "Controller for users",
+      "name" : "Users"
+    },
+    {
+      "name" : "Artifacts",
+      "description" : "Controller for Artifacts provisionning"
+    },
+    {
+      "description" : "Controller for Monitoring",
+      "name" : "Monitoring"
+    }
+  ]
+}
