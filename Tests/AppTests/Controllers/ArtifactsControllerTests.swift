@@ -363,6 +363,11 @@ final class ArtifactsContollerTests: BaseAppTests {
         //print(ipaFile.http.headers)
       //  print(ipaFile.content)
     }
+/*
+    func testDownloadFile() throws {
+        let ipaFile = try app.clientSyncTest(.GET, "<File URL>" ,isAbsoluteUrl:true)
+        print( ipaFile.http.headers)
+    }*/
     
     func testDownloadAndroidDownloadFile() throws {
         let fileData = try type(of:self).fileData(name: "testdroid-sample-app", ext: "apk")
@@ -466,4 +471,29 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
         XCTAssertTrue(ipaFile.http.contentType == ipaContentType)
         XCTAssertEqual(ipaFile.http.body.count,fileData.count)
     }
+
+    func testDownloadiOSDownloadFile() throws {
+            let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
+            let dwInfo = try ArtifactsContollerTests.donwloadInfo(apiKey: iOSApiKey!, fileData: fileData,into:app!,with:token)
+            print(dwInfo.directLinkUrl)
+            let file = try app.clientSyncTest(.GET, dwInfo.directLinkUrl,isAbsoluteUrl:true)
+
+            XCTAssertTrue(file.http.contentType == ipaContentType)
+            XCTAssertEqual(file.http.headers.firstValue(name: .contentLength),"\(fileData.count)")
+            XCTAssertEqual(file.http.body.count,fileData.count)
+
+        }
+
+
+        func testDownloadAndroidDownloadFile() throws {
+            let fileData = try ArtifactsContollerTests.fileData(name: "testdroid-sample-app", ext: "apk")
+            let dwInfo = try ArtifactsContollerTests.donwloadInfo(apiKey: androidApiKey!, fileData: fileData,contentType:apkContentType,into:app!,with:token)
+            print(dwInfo.directLinkUrl)
+            XCTAssertEqual(dwInfo.installUrl,dwInfo.directLinkUrl)
+            let file = try app.clientSyncTest(.GET, dwInfo.installUrl,isAbsoluteUrl:true)
+
+            XCTAssertTrue(file.http.contentType == apkContentType)
+            XCTAssertEqual( file.http.headers.firstValue(name: .contentLength),"\(fileData.count)")
+            XCTAssertEqual(file.http.body.count,fileData.count)
+        }
 }
