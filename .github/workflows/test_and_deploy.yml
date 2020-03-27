@@ -8,7 +8,6 @@ on:
 
 jobs:
   macos:
-
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
@@ -39,6 +38,7 @@ jobs:
     - uses: actions/checkout@v2
     - run: apt-get update && apt-get install -y libssl-dev zlib1g-dev unzip aapt
     - run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery --sanitize=thread
+
   linux_bionic:
     services:
       mongodb:
@@ -53,3 +53,32 @@ jobs:
     - run: apt-get update && apt-get install -y libssl-dev zlib1g-dev unzip aapt
     - run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery --sanitize=thread
       
+  deploy_fat:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [macos, linux, linux_bionic]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish to Docker Hub
+        uses: elgohr/Publish-Docker-Github-Action@2.14
+        with: 
+          name: rgroult2/mobdisttool-core:latest
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          dockerfile: Dockerfile
+  
+  deploy_bionic:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [macos, linux, linux_bionic]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish to Docker Hub
+        uses: elgohr/Publish-Docker-Github-Action@2.14
+        with: 
+          name: rgroult2/mobdisttool-core:bionic-latest
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          dockerfile: DockerfileMultiStage
+  
+
