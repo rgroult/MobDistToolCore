@@ -134,6 +134,7 @@ extension UsersController:APIBuilderControllerProtocol {
         _ = apiBuilder.add([APIObject(object: RegisterDto( email: "email@test.com", name: "John Doe", password: "password"))])
         _ = apiBuilder.add([APIObject(object: ForgotPasswordDto( email: "email@test.com"))])
         _ = apiBuilder.add([APIObject(object: Paginated.sample(obj: UserDto.sample()))])
+        _ = apiBuilder.add([APIObject(object: Paginated.sample(obj: MessageDto.sample()))])
     }
 }
 
