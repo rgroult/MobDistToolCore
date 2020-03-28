@@ -7,6 +7,14 @@
 
 import Vapor
 
+extension LogLevel:CaseIterable{
+    public static var allCases:[LogLevel] = [.verbose,.debug,.info, .warning,.error,.fatal]
+    
+    var index:Int {
+        return LogLevel.allCases.firstIndex(where: { "\($0)" == "\(self)" } ) ?? 0
+    }
+}
+
 public class MdtFileLogger: Logger {
     static var shared:MdtFileLogger!
     
@@ -82,7 +90,15 @@ public class MdtFileLogger: Logger {
     
     public func log(_ string: String, at level: LogLevel, file: String, function: String, line: UInt, column: UInt) {
        // let fileName = level.description.lowercased() + ".log"
-        var output = "[ \(level.description) ] \(string) (\(file):\(line))"
+       
+        //display file and line only for debug and verbose
+        var output:String
+        let debugIndex = LogLevel.debug.index
+        if level.index <= debugIndex {
+             output = "[ \(level.description) ] \(string) (\(file):\(line))"
+        }else {
+             output = "[ \(level.description) ] \(string)"
+        }
         if includeTimestamps {
             output = "\(Date() ) " + output
         }
