@@ -111,9 +111,10 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     
     // Register middleware
     var middlewares = MiddlewareConfig() // Create _empty_ middleware config
-    if !env.isRelease {
+    middlewares.use(RouteLoggingMiddleware.self) // logging requests
+    /*if !env.isRelease {
          middlewares.use(RouteLoggingMiddleware.self) // logging requests
-    }
+    }*/
     middlewares.use(FileMiddleware.self) // Serves files from `Public/` directory
     
     
