@@ -315,7 +315,18 @@ final class ArtifactsController:BaseController  {
                     //TO DO
                     case .asUrI(let url):
                         if url.scheme == "file"{ //local files
-                            return try req.streamFile(at: url.path)
+                            return try req.fileio().read(file: url.path).map{ data in
+                                let response = req.response()
+
+                                response.http =  HTTPResponse()
+                                response.http.body = data.convertToHTTPBody()
+                                let contentType = MediaType.parse(artifact.contentType?.data(using: .utf8) ?? Data()) ?? MediaType.binary
+                                response.http.contentType = contentType
+                                response.http.headers.add(name: "Content-Disposition", value: "attachment; filename=\(artifact.filename ?? "file")")
+                                return response
+                            }
+
+                           /* return try req.streamFile(at: url.path)
                                 .map { response in
                                     let contentType = MediaType.parse(artifact.contentType?.data(using: .utf8) ?? Data()) ?? MediaType.binary
                                     response.http.contentType = contentType
@@ -324,7 +335,7 @@ final class ArtifactsController:BaseController  {
                                          response.http.headers.add(name: .contentLength, value: "\(contentSize)")
                                     }*/
                                     return response
-                            }
+                            }*/
                         }else {
                             //redirect to it
                             response = req.redirect(to: url.absoluteString)
