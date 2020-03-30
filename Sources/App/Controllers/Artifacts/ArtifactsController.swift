@@ -315,27 +315,30 @@ final class ArtifactsController:BaseController  {
                     //TO DO
                     case .asUrI(let url):
                         if url.scheme == "file"{ //local files
-                            return try req.fileio().read(file: url.path).map{ data in
-                                let response = req.response()
+//                            return try req.fileio().read(file: url.path).map{ data in
+//                                let response = req.response()
+//
+//                                response.http =  HTTPResponse()
+//                                response.http.body = data.convertToHTTPBody()
+//                                let contentType = MediaType.parse(artifact.contentType?.data(using: .utf8) ?? Data()) ?? MediaType.binary
+//                                response.http.contentType = contentType
+//                                response.http.headers.add(name: "Content-Disposition", value: "attachment; filename=\(artifact.filename ?? "file")")
+//                                return response
+//                            }
 
-                                response.http =  HTTPResponse()
-                                response.http.body = data.convertToHTTPBody()
-                                let contentType = MediaType.parse(artifact.contentType?.data(using: .utf8) ?? Data()) ?? MediaType.binary
-                                response.http.contentType = contentType
-                                response.http.headers.add(name: "Content-Disposition", value: "attachment; filename=\(artifact.filename ?? "file")")
-                                return response
-                            }
-
-                           /* return try req.streamFile(at: url.path)
+                           return try req.streamFile(at: url.path)
                                 .map { response in
                                     let contentType = MediaType.parse(artifact.contentType?.data(using: .utf8) ?? Data()) ?? MediaType.binary
                                     response.http.contentType = contentType
-                                    response.http.headers.add(name: "Content-Disposition", value: "attachment; filename=\(artifact.filename ?? "file")")
-                               /*     if let contentSize =  artifact.size {
-                                         response.http.headers.add(name: .contentLength, value: "\(contentSize)")
-                                    }*/
+                                    // remove transfer encoding header and replace to "real" content length
+                                    // to be able to have progresss download OTA
+                                    response.http.headers.remove(name: .transferEncoding)
+                                    response.http.headers.replaceOrAdd(name: "Content-Disposition", value: "attachment; filename=\(artifact.filename ?? "file")")
+                                    if let contentSize =  artifact.size {
+                                         response.http.headers.replaceOrAdd(name: .contentLength, value: "\(contentSize)")
+                                    }
                                     return response
-                            }*/
+                            }
                         }else {
                             //redirect to it
                             response = req.redirect(to: url.absoluteString)
