@@ -42,6 +42,8 @@ public struct MdtConfiguration: Codable {
     var initialAdminPassword:String
     
     var logDirectory:String? //for production mode : use ./logs if not provided
+
+    var enableCompression:Bool
     
     static func loadConfig(from filePath:String? = nil, from env:inout Environment) throws -> MdtConfiguration{
         let configFilePath:String
@@ -118,7 +120,7 @@ public struct MdtConfiguration: Codable {
 
 extension MdtConfiguration {
     private static var empty:MdtConfiguration {
-        return MdtConfiguration(serverListeningPort: 0, serverExternalUrl: URL(string: "http://host.com")!, mongoServerUrl: URL(string: "mongodb://host")!,basePathPrefix:"/api",  jwtSecretToken: "", loginResponseDelay: 0, storageMode: .testing, storageConfiguration: [String:String](), registrationWhiteDomains: [String](), automaticRegistration: true, smtpConfiguration:[String:String](), minimumPasswordStrength: 0, initialAdminEmail: "", initialAdminPassword: "", logDirectory:"")
+        return MdtConfiguration(serverListeningPort: 0, serverExternalUrl: URL(string: "http://host.com")!, mongoServerUrl: URL(string: "mongodb://host")!,basePathPrefix:"/api",  jwtSecretToken: "", loginResponseDelay: 0, storageMode: .testing, storageConfiguration: [String:String](), registrationWhiteDomains: [String](), automaticRegistration: true, smtpConfiguration:[String:String](), minimumPasswordStrength: 0, initialAdminEmail: "", initialAdminPassword: "", logDirectory:"",enableCompression: false)
     }
     
     private func convert<T>(from value:String, into:T) throws -> Any {

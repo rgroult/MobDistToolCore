@@ -4,5 +4,6 @@
     "loginResponseDelay":1000,
     "automaticRegistration":false,
     "minimumPasswordStrength":4,
-    "jwtSecretToken":"DONT_FORGET_TO_CHANGE_IT"
+    "jwtSecretToken":"DONT_FORGET_TO_CHANGE_IT",
+    "enableCompression":false
 }

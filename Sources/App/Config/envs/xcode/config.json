@@ -11,6 +11,7 @@
     "initialAdminEmail":"admin@localhost.com",
     "initialAdminPassword":"password",
     "smtpConfiguration" : {"smtpServer":"gmail","smtpLogin":"toto","smtpPassword":"password","smtpSender":"toto","fakeMode":"true"},
-    "storageConfiguration" : {"RootDirectory":"/tmp/mdt"}
+    "storageConfiguration" : {"RootDirectory":"/tmp/mdt"},
+    "enableCompression":false
 }
 

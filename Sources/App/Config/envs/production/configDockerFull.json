@@ -8,6 +8,7 @@
     "automaticRegistration":true,
     "minimumPasswordStrength":0,
     "initialAdminEmail":"admin@localhost.com",
-    "initialAdminPassword":"password"
+    "initialAdminPassword":"password",
+    "enableCompression":false
 }
 

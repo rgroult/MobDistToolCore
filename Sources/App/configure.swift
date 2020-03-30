@@ -137,6 +137,6 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     myServerConfig.port = configuration.serverListeningPort
     myServerConfig.hostname = "0.0.0.0"
     myServerConfig.maxBodySize = 2_000_000_000
-    myServerConfig.supportCompression = true
+    myServerConfig.supportCompression = configuration.enableCompression
     services.register(myServerConfig)
 }
