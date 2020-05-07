@@ -29,6 +29,10 @@ final class Artifact: Model,QueryableModel {
     var createdAt:Date
     
     //var adminUsers: [Data]
+
+    func description() -> String{
+        return "branch:\(branch),version:\(version),name:\(name),uuid:\(uuid),size:\(size ?? -1),filename:\(filename ?? "[]")"
+    }
     
     init(app:MDTApplication,name:String,version:String,branch:String){
         self.application = Reference(to: app)

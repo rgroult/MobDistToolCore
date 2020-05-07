@@ -30,10 +30,10 @@ final class ArtifactsController:BaseController  {
     }
     
     private func createArtifactWithInfo(_ req: Request,apiKey:String,branch:String,version:String,artifactName:String) throws -> Future<ArtifactDto> {
-        let headerFilename = req.http.headers[customHeadersName.filename.rawValue].last
-        let sortIdentifier = req.http.headers[customHeadersName.sortIdentifier.rawValue].last
-        let metaTagsHeader = req.http.headers[customHeadersName.metaTags.rawValue].last
-        guard req.http.headers["content-type"].last == BINARY_CONTENT_TYPE else { throw ArtifactError.invalidContentType}
+        let headerFilename = req.http.headers.firstValue(name: HTTPHeaderName(customHeadersName.filename.rawValue))
+        let sortIdentifier = req.http.headers.firstValue(name: HTTPHeaderName(customHeadersName.sortIdentifier.rawValue))
+        let metaTagsHeader = req.http.headers.firstValue(name: HTTPHeaderName(customHeadersName.metaTags.rawValue))
+        guard req.http.headers.firstValue(name: .contentType) == BINARY_CONTENT_TYPE else { throw Abort(.unsupportedMediaType)}
         let mimeType = req.http.headers[customHeadersName.mimeType.rawValue].last
         let metaTags:[String : String]?
         if let metaTagsHeader = metaTagsHeader {
