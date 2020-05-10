@@ -31,7 +31,7 @@ final class ArtifactsController:BaseController  {
     
     private func createArtifactWithInfo(_ req: Request,apiKey:String,branch:String,version:String,artifactName:String) throws -> Future<ArtifactDto> {
         let headerFilename = req.http.headers.firstValue(name: HTTPHeaderName(customHeadersName.filename.rawValue))
-        let sortIdentifier = req.http.headers.firstValue(name: HTTPHeaderName(customHeadersName.sortIdentifier.rawValue))
+        var sortIdentifier = req.http.headers.firstValue(name: HTTPHeaderName(customHeadersName.sortIdentifier.rawValue))
         let metaTagsHeader = req.http.headers.firstValue(name: HTTPHeaderName(customHeadersName.metaTags.rawValue))
         guard req.http.headers.firstValue(name: .contentType) == BINARY_CONTENT_TYPE else { throw Abort(.unsupportedMediaType)}
         let mimeType = req.http.headers[customHeadersName.mimeType.rawValue].last
@@ -40,6 +40,9 @@ final class ArtifactsController:BaseController  {
             metaTags = try? JSONDecoder().decode([String : String].self,from: metaTagsHeader.convertToData())
         }else {
             metaTags = nil
+        }
+        if sortIdentifier?.trimmingCharacters(in: .whitespaces).isEmpty == true {
+            sortIdentifier = nil
         }
         let filename:String
         if let lastPath = headerFilename?.split(separator:"/").last {
