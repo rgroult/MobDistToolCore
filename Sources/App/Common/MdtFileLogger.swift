@@ -23,6 +23,7 @@ public class MdtFileLogger: Logger {
     var fileQueue = DispatchQueue.init(label: "MdtFileLogger", qos: .utility)
     var logFileHandle:Foundation.FileHandle?
     var logFileUrl:URL?
+    let dateFormatter = DateFormatter()
     lazy var filename:String = {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "YYYY_MM_dd_HH_mm"
@@ -35,7 +36,7 @@ public class MdtFileLogger: Logger {
     }
     
     func initialize(){
-        
+        dateFormatter.dateFormat = "YYYY-MM-dd HH:mm:ss"
     }
     
     required init(logDirectory:String? = nil , includeTimestamps: Bool = false) throws{
@@ -99,15 +100,16 @@ public class MdtFileLogger: Logger {
         }else {
              output = "[ \(level.description) ] \(string)"
         }
-        if includeTimestamps {
-            output = "\(Date() ) " + output
-        }
         saveToFile(output)
     }
     
     func saveToFile(_ string: String) {
         fileQueue.async {[weak self] in
-            let output = string + "\n"
+            var output = string + "\n"
+            if let dateFormatter = self?.dateFormatter, self?.includeTimestamps  == true {
+                output = "\(dateFormatter.string(from:Date())) " + output
+            }
+
             if let data = output.data(using: .utf8) {
                 self?.logFileHandle?.write(data)
             }
