@@ -35,7 +35,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     }
     
     try MdtFileLogger.initialize(logDirectory: configuration.logDirectory, includeTimestamps: true)
-    
+    MdtFileLogger.shared.logLevel = configuration.logLevelAsLevel
     services.register(Logger.self) { container throws -> MdtFileLogger in
         return MdtFileLogger.shared
     }

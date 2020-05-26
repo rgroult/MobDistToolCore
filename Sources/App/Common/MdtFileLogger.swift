@@ -17,7 +17,8 @@ extension LogLevel:CaseIterable{
 
 public class MdtFileLogger: Logger {
     static var shared:MdtFileLogger!
-    
+
+    var logLevel = LogLevel.debug
     let includeTimestamps: Bool
     let fileManager = FileManager.default
     var fileQueue = DispatchQueue.init(label: "MdtFileLogger", qos: .utility)
@@ -91,6 +92,7 @@ public class MdtFileLogger: Logger {
     
     public func log(_ string: String, at level: LogLevel, file: String, function: String, line: UInt, column: UInt) {
        // let fileName = level.description.lowercased() + ".log"
+        guard level.index >= logLevel.index else { return }
        
         //display file and line only for debug and verbose
         var output:String

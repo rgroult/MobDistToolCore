@@ -9,6 +9,7 @@
     "minimumPasswordStrength":0,
     "initialAdminEmail":"admin@localhost.com",
     "initialAdminPassword":"password",
-    "enableCompression":false
+    "enableCompression":false,
+    "logLevel":"info"
 }
 
