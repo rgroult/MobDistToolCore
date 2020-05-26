@@ -213,10 +213,10 @@ Sample
 ```
 From deploy input file:
 	- version:
-curl -Ls http://<myserver>/api/in/v1/artifacts/{apiKey}/deploy | python - ADD|DELETE fromFile sample.json
+curl -Ls http://<myserver>/<config.pathPrefix>/v2/Artifacts/{apiKey}/deploy | python - ADD|DELETE fromFile sample.json
 
 	- latest:
-curl -Ls http://<myserver>/api/in/v1/artifacts/{apiKey}/deploy | python - ADD|DELETE --latest fromFile sample.json
+curl -Ls http://<myserver>/<config.pathPrefix>/v2/Artifacts/{apiKey}/deploy | python - ADD|DELETE --latest fromFile sample.json
 
 cat sample.json
 [{
@@ -235,10 +235,10 @@ Note: "file" path is relative from deployement file (sample.json in example)
 
 From parameters:
 	- version:
-curl -Ls http://<myserver>/api/in/v1/artifacts/{apiKey}/deploy | python - ADD|DELETE fullParameters -version X.Y.Z -branch master -name prod -file app.apk|.ipa
+curl -Ls http://<myserver>/<config.pathPrefix>/v2/Artifacts/{apiKey}/deploy | python - ADD|DELETE fullParameters -version X.Y.Z -branch master -name prod -file app.apk|.ipa
 
 	- latest:
-curl -Ls http://<myserver>/api/in/v1/artifacts/{apiKey}/deploy | python - ADD|DELETE --latest fullParameters -name prod -file app.apk|.ipa
+curl -Ls http://<myserver>/<config.pathPrefix>/v2/Artifacts/{apiKey}/deploy | python - ADD|DELETE --latest fullParameters -name prod -file app.apk|.ipa
 
 
 ```
