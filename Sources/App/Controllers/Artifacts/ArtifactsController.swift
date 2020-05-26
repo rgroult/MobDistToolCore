@@ -92,16 +92,20 @@ final class ArtifactsController:BaseController  {
     
     private func deleteArtifactWithInfo(_ req: Request,apiKey:String,branch:String,version:String,artifactName:String) throws -> Future<MessageDto> {
         let context = try req.context()
-        
+
+        let trackingContext = ActivityContext()
+
         return try findApplication(apiKey: apiKey, into: context)
             .flatMap({ app throws -> Future<Artifact?> in
                 guard let app = app else { throw ApplicationError.notFound }
+                trackingContext.application = app
                 return try findArtifact(app: app, branch: branch, version: version, name: artifactName, into: context)})
+                   // .map{(app, $0)}})
             .flatMap({ artifact  throws -> Future<Artifact> in
                 guard let artifact = artifact else { throw ArtifactError.notFound }
                 return App.deleteArtifact(by: artifact, into: context).map{artifact}})
-            .do({[weak self]  artifact in self?.track(event: .DeleteArtifact(artifact: artifact), for: req)})
-            .catch({[weak self]  error in self?.track(event: .DeleteArtifact(artifact: nil, failedError: error), for: req)})
+            .do({[weak self]  artifact in self?.track(event: .DeleteArtifact(context:trackingContext, artifact: artifact), for: req)})
+            .catch({[weak self]  error in self?.track(event: .DeleteArtifact(context:trackingContext, artifact: nil, failedError: error), for: req)})
             .map {_ in return  MessageDto(message: "Artifact Deleted")}
     }
     
@@ -140,17 +144,20 @@ final class ArtifactsController:BaseController  {
         let config = try req.make(MdtConfiguration.self)
         let artifactId = try req.parameters.next(String.self)
         let context = try req.context()
+        let trackingContext = ActivityContext()
         return try retrieveUser(from:req)
             .flatMap{user in
                 guard let user = user else { throw Abort(.unauthorized)}
+                trackingContext.user = user
                 return try findArtifact(byUUID: artifactId, into: context)
                     .flatMap({[unowned self] artifact in
                         guard let artifact = artifact else { throw ArtifactError.notFound }
                         return artifact.application.resolve(in: context)
                             .flatMap{application in
+                                trackingContext.application = application
                                 return try self.generateDownloadInfo(user: user, artifactID: artifact._id.hexString, application:application, config: config, into: context)
                         }
-                        .do({[weak self] dto in self?.track(event: .DownloadArtifact(artifact:artifact,user:user), for: req)})
+                        .do({[weak self] dto in self?.track(event: .DownloadArtifact(context:trackingContext, artifact:artifact), for: req)})
                     })
         }
     }
