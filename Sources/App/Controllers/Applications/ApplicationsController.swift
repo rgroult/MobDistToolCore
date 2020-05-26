@@ -414,23 +414,26 @@ final class ApplicationsController:BaseController {
         let ts = try req.query.get(TimeInterval.self, at: "ts")
         let tsStr = try req.query.get(String.self, at: "ts")
         let hash = try req.query.get(String.self, at: "hash")
+
+        let trackingContext = ActivityContext()
         
         guard branch != lastVersionBranchName else {
             let error = VaporError(identifier: "invalidArgument", reason: "branch value is incorrect")
-            track(event: .MaxVersion(app:nil,appUuid:appId,failedError:error), for: req)
+            track(event: .MaxVersion(context:trackingContext,appUuid:appId,failedError:error), for: req)
             throw  error }
         
         let currentDelay = abs(Date().timeIntervalSince1970 - ts)
         
         if currentDelay > maxVersionAvailbaleDelay {
             let error = ApplicationError.expirationTimestamp(delay: Int(currentDelay))
-            track(event: .MaxVersion(app:nil,appUuid:appId,failedError:error), for: req)
+            track(event: .MaxVersion(context:trackingContext,appUuid:appId,failedError:error), for: req)
             throw error
         }
         let context = try req.context()
         return try App.findApplication(uuid: appId, into: context)
             .flatMap{ app  in
                 guard let app = app, let secretKey  = app.maxVersionSecretKey else { throw ApplicationError.disabledFeature}
+                trackingContext.application = app
                 //compute Hash
                 let stringToHash = "ts=\(tsStr)&branch=\(branch)&hash=\(secretKey)"
                 let generatedHash = stringToHash.md5()
@@ -446,8 +449,8 @@ final class ApplicationsController:BaseController {
                         }
                         
                 }
-        }.do({[weak self]  dto in self?.track(event: .MaxVersion(app: nil, appUuid: appId, failedError: nil), for: req)})
-        .catch({[weak self]  error in self?.track(event: .MaxVersion(app: nil, appUuid: appId, failedError: error), for: req)})
+        }.do({[weak self]  dto in self?.track(event: .MaxVersion(context:trackingContext, appUuid: appId, failedError: nil), for: req)})
+        .catch({[weak self]  error in self?.track(event: .MaxVersion(context:trackingContext, appUuid: appId, failedError: error), for: req)})
     }
     
     private func findApplicationInfo(from req: Request, needAdmin:Bool) throws -> Future<(user:User,app:MDTApplication)>{

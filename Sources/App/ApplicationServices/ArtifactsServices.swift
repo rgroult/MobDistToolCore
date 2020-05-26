@@ -203,6 +203,9 @@ func storeArtifactData(data:Data,filename:String,contentType:String?, artifact:A
                     let storageInfo = StorageInfo(applicationName: app.name, platform: app.platform, version: artifact.version, uploadFilename: filename, uploadContentType: contentType)
                     return try storage.store(file: file, with: storageInfo, into: context.eventLoop)
                         .map({ storageUrl in
+                            //delete temporary file
+                            file.closeFile()
+                            try? FileManager.default.removeItem(at: temporaryFileUrl)
                             //update artifact
                             artifact.storageInfos = storageUrl
                             artifact.filename = filename

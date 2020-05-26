@@ -44,6 +44,12 @@ public struct MdtConfiguration: Codable {
     var logDirectory:String? //for production mode : use ./logs if not provided
 
     var enableCompression:Bool
+
+    var logLevel:String?
+
+    var logLevelAsLevel:LogLevel {
+        return LogLevel(stringLiteral: logLevel ?? "info")
+    }
     
     static func loadConfig(from filePath:String? = nil, from env:inout Environment) throws -> MdtConfiguration{
         let configFilePath:String

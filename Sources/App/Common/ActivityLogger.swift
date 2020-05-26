@@ -7,6 +7,27 @@
 
 import Foundation
 
+class ActivityContext {
+    var user:User?
+    var application:MDTApplication?
+    func description() -> String {
+        var result = ""
+        if let user = user {
+            result += "User:\(user.email)"
+        }
+        if let app = application {
+            if !result.isEmpty { result += ", "}
+            result += "Application:(\(app.platform))\(app.name)"
+        }
+
+         if !result.isEmpty {
+            result = "[\(result)] "
+        }
+
+        return result
+    }
+}
+
 enum ActivityEvent {
     case Register(email:String,isSuccess:Bool, failedError:Error? = nil)
     case Activation(email:String,isSuccess:Bool, failedError:Error? = nil)
@@ -19,11 +40,11 @@ enum ActivityEvent {
     case CreateApp(app:MDTApplication, user:User)
     case DeleteApp(app:MDTApplication, user:User)
     case UpdateApp(app:MDTApplication, user:User)
-    case MaxVersion(app:MDTApplication?, appUuid:String?, failedError:Error? = nil)
+    case MaxVersion(context:ActivityContext, appUuid:String?, failedError:Error? = nil)
     
     case UploadArtifact(artifact:Artifact? , failedError:Error? = nil)
-    case DeleteArtifact(artifact:Artifact? , failedError:Error? = nil)
-    case DownloadArtifact(artifact:Artifact,user:User?, failedError:Error? = nil)
+    case DeleteArtifact(context:ActivityContext, artifact:Artifact? , failedError:Error? = nil)
+    case DownloadArtifact(context:ActivityContext, artifact:Artifact, failedError:Error? = nil)
     
     //case MaxVersion
     private func formatErrorMessage(_ failedError:Error?) -> String{
@@ -68,14 +89,14 @@ enum ActivityEvent {
             return "DeleteApp - User:\(user.email), name:\(app.name), platorm:\(app.platform), uuid:\(app.uuid)"
         case .UpdateApp(let app, let user):
             return "UpdateApp - User:\(user.email), name:\(app.name), platorm:\(app.platform), uuid:\(app.uuid)"
-        case .MaxVersion(let app, let appUuid, let failedError):
-            return "MaxVersion " + formatMessage(value: "ApplicationName:\(String(describing: app?.name)), platorm:\(String(describing: app?.platform)), uuid:\(app?.uuid ?? appUuid ?? "")",failedError: failedError)
+        case .MaxVersion(let context, let appUuid, let failedError):
+            return "MaxVersion " + context.description() + formatMessage(value: "uuid:\(appUuid ?? "")",failedError: failedError)
         case .UploadArtifact(let artifact, let failedError):
             return "UploadArtifact " + formatMessage(value: "Artifact:\(artifact?.description() ?? "" )",failedError: failedError)
-        case .DeleteArtifact(let artifact, let failedError):
-            return "DeleteArtifact " + formatMessage(value: "Artifact:\(artifact?.description() ?? "" )",failedError: failedError)
-        case .DownloadArtifact(let artifact, let user, let failedError):
-            return "DeleteArtifact " + formatMessage(value: "User:\(user?.email ?? "noUser"), Artifact:\(artifact.description())",failedError: failedError)
+        case .DeleteArtifact(let context, let artifact, let failedError):
+            return "DeleteArtifact " + context.description() + formatMessage(value: "Artifact:\(artifact?.description() ?? "" )",failedError: failedError)
+        case .DownloadArtifact(let context,let artifact, let failedError):
+            return "DownloadArtifact " + context.description() + formatMessage(value: "Artifact:\(artifact.description())",failedError: failedError)
         }
     }
 }

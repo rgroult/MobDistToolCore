@@ -188,6 +188,17 @@ final class ArtifactsContollerTests: BaseAppTests {
         XCTAssertEqual(metadata?["CFBundleIdentifier"],"com.petri.calculator.calculator")
         XCTAssertEqual(artifact.sortIdentifier,artifact.version)
     }
+
+    func testCreateIpaArtifactWithEmptySortIdentifier() throws{
+        XCTAssertNotNil(iOSApiKey)
+
+        let fileData = try type(of:self).fileData(name: "calculator", ext: "ipa")
+        let artifact = try type(of:self).uploadArtifactSuccess(contentFile: fileData, apiKey: iOSApiKey!, branch: "master", version: "1.2.3", name: "prod", contentType:ipaContentType,sortIdentifier: "", inside: app)
+        let metadata = artifact.metaDataTags
+        XCTAssertEqual(metadata?["CFBundleShortVersionString"],"1.0")
+        XCTAssertEqual(metadata?["CFBundleIdentifier"],"com.petri.calculator.calculator")
+        XCTAssertEqual(artifact.sortIdentifier,artifact.version)
+    }
     
     func testCreateArtifactBigFile() throws{
         let bigSize:UInt64 = 1024*1024*300 //300 M

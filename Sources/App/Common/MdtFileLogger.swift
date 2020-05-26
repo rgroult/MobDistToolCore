@@ -17,12 +17,14 @@ extension LogLevel:CaseIterable{
 
 public class MdtFileLogger: Logger {
     static var shared:MdtFileLogger!
-    
+
+    var logLevel = LogLevel.debug
     let includeTimestamps: Bool
     let fileManager = FileManager.default
     var fileQueue = DispatchQueue.init(label: "MdtFileLogger", qos: .utility)
     var logFileHandle:Foundation.FileHandle?
     var logFileUrl:URL?
+    let dateFormatter = DateFormatter()
     lazy var filename:String = {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "YYYY_MM_dd_HH_mm"
@@ -35,7 +37,7 @@ public class MdtFileLogger: Logger {
     }
     
     func initialize(){
-        
+        dateFormatter.dateFormat = "YYYY-MM-dd HH:mm:ss"
     }
     
     required init(logDirectory:String? = nil , includeTimestamps: Bool = false) throws{
@@ -90,6 +92,7 @@ public class MdtFileLogger: Logger {
     
     public func log(_ string: String, at level: LogLevel, file: String, function: String, line: UInt, column: UInt) {
        // let fileName = level.description.lowercased() + ".log"
+        guard level.index >= logLevel.index else { return }
        
         //display file and line only for debug and verbose
         var output:String
@@ -99,15 +102,16 @@ public class MdtFileLogger: Logger {
         }else {
              output = "[ \(level.description) ] \(string)"
         }
-        if includeTimestamps {
-            output = "\(Date() ) " + output
-        }
         saveToFile(output)
     }
     
     func saveToFile(_ string: String) {
         fileQueue.async {[weak self] in
-            let output = string + "\n"
+            var output = string + "\n"
+            if let dateFormatter = self?.dateFormatter, self?.includeTimestamps  == true {
+                output = "\(dateFormatter.string(from:Date())) " + output
+            }
+
             if let data = output.data(using: .utf8) {
                 self?.logFileHandle?.write(data)
             }

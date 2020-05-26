@@ -31,7 +31,13 @@ final class Artifact: Model,QueryableModel {
     //var adminUsers: [Data]
 
     func description() -> String{
-        return "branch:\(branch),version:\(version),name:\(name),uuid:\(uuid),size:\(size ?? -1),filename:\(filename ?? "[]")"
+        let branchInfo:String
+        if branch == lastVersionBranchName && version == lastVersionName {
+            branchInfo = "[\(lastVersionName)]"
+        }else {
+            branchInfo = "branch:\(branch),version:\(version)"
+        }
+        return branchInfo + ",name:\(name),uuid:\(uuid),size:\(size ?? -1),filename:\(filename ?? "[]")"
     }
     
     init(app:MDTApplication,name:String,version:String,branch:String){
