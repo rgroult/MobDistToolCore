@@ -170,6 +170,15 @@ func deleteArtifact(by artifact:Artifact,storage:StorageServiceProtocol,into con
             }
     }
 }
+
+func deleteAllArtifacts(app:MDTApplication,storage:StorageServiceProtocol,into context:Meow.Context) -> Future<Void>{
+    let query = Query.valEquals(field: "application", val: app._id)
+
+    return context.find(Artifact.self,where: query).sequentialForEach { artifact -> EventLoopFuture<Void> in
+        return deleteArtifact(by: artifact, storage: storage, into: context)
+    }
+}
+
 /*
 func createArtifact(app:MDTApplication,name:String,version:String,branch:String,sortIdentifier:String?,tags:[String:String]?,into context:Meow.Context)throws -> Future<Artifact>{
     let createdArtifact = Artifact(app: app, name: name, version: version, branch: branch)

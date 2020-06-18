@@ -295,8 +295,12 @@ final class ApplicationsController:BaseController {
         return try findApplicationInfo(from:req, needAdmin: true)
             .flatMap({ info  in
                 let context = try req.context()
-                return App.deleteApplication(by: info.app, into: context).map {
-                    return MessageDto(message: "Application Deleted")
+                let storage = try req.make(StorageServiceProtocol.self)
+                return App.deleteAllArtifacts(app: info.app, storage: storage, into: context)
+                    .flatMap{
+                        return App.deleteApplication(by: info.app, into: context).map {
+                            return MessageDto(message: "Application Deleted")
+                        }
                 }
                 .do({ [weak self] dto in self?.track(event: .DeleteApp(app: info.app, user: info.user), for: req)})
             })

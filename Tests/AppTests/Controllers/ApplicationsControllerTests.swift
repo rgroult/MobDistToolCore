@@ -284,6 +284,44 @@ final class ApplicationsControllerTests: BaseAppTests {
         XCTAssertEqual(deleteApp.http.status.code , 200)
         
     }
+
+
+    func testDeleteApplicationWithArtifacts() throws {
+        try testCreateMultiple()
+        //count all artifacts
+        XCTAssertEqual(try context.count(MDTApplication.self).wait(), 2)
+        XCTAssertEqual(try context.count(Artifact.self).wait(), 0)
+
+        //login
+        var token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
+
+        let appAndroidFound = try findApp(token: token, name: appDtoAndroid.name)
+        //check detail
+        var appDetail = try returnAppDetail(uuid: appAndroidFound!.uuid, token: token)
+
+        let branches = ["master","dev","release"]
+        try uploadArtifact(branches: branches , numberPerBranches: 5, apiKey: appDetail.apiKey!,mediaType:apkContentType)
+        //number of artifact
+        XCTAssertEqual(try context.count(Artifact.self).wait(), 15)
+
+
+        token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
+        let appiOSFound = try findApp(token: token, name: appDtoiOS.name)
+        appDetail = try returnAppDetail(uuid: appiOSFound!.uuid, token: token)
+        try uploadArtifact(branches: branches , numberPerBranches: 4, apiKey: appDetail.apiKey!,mediaType:ipaContentType)
+        //number of artifact
+        XCTAssertEqual(try context.count(Artifact.self).wait(), 27)
+
+        token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
+        //delete App
+        let deleteApp = try app.clientSyncTest(.DELETE, "/v2/Applications/\(appAndroidFound!.uuid)",token:token)
+        XCTAssertEqual(deleteApp.http.status.code , 200)
+
+        //count all artifacts
+        XCTAssertEqual(try context.count(MDTApplication.self).wait(), 1)
+        XCTAssertEqual(try context.count(Artifact.self).wait(), 12)
+    }
+
     func testDeleteApplicationKO() throws {
         try testCreateMultiple()
         //login
@@ -583,16 +621,21 @@ final class ApplicationsControllerTests: BaseAppTests {
        // app/{appId}/versions?pageIndex=1&limitPerPage=30&branch=master'
     }
     
-    func uploadArtifact(branches:[String],names:[String] = ["prod"], numberPerBranches:Int,apiKey:String) throws {
+    func uploadArtifact(branches:[String],names:[String] = ["prod"], numberPerBranches:Int,apiKey:String, mediaType:MediaType = ipaContentType) throws {
         let formatter = NumberFormatter()
         formatter.minimumIntegerDigits = 3
         
         for branch in branches {
             for idx in 0..<numberPerBranches {
-                let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
+                let fileData:Data
+                if mediaType == ipaContentType {
+                   fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
+                }else {
+                    fileData = try ArtifactsContollerTests.fileData(name: "testdroid-sample-app", ext: "apk")
+                }
                 let version = formatter.string(from: NSNumber(value: idx))
                 for name in names {
-                     _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: apiKey, branch: branch, version: "1.2.\(version!)", name: name, contentType:ipaContentType, inside: app)
+                     _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: apiKey, branch: branch, version: "1.2.\(version!)", name: name, contentType:mediaType, inside: app)
                    // Thread.sleep(forTimeInterval: 0.3)
                 }
                
