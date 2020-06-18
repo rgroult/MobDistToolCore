@@ -106,7 +106,8 @@ final class ArtifactsController:BaseController  {
                    // .map{(app, $0)}})
             .flatMap({ artifact  throws -> Future<Artifact> in
                 guard let artifact = artifact else { throw ArtifactError.notFound }
-                return App.deleteArtifact(by: artifact, into: context).map{artifact}})
+                let storage = try req.make(StorageServiceProtocol.self)
+                return App.deleteArtifact(by: artifact, storage: storage, into: context).map{artifact}})
             .do({[weak self]  artifact in self?.track(event: .DeleteArtifact(context:trackingContext, artifact: artifact), for: req)})
             .catch({[weak self]  error in self?.track(event: .DeleteArtifact(context:trackingContext, artifact: nil, failedError: error), for: req)})
             .map {_ in return  MessageDto(message: "Artifact Deleted")}

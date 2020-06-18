@@ -455,6 +455,22 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
             print("Error \(error)")
         }
     }
+
+    func testDeleteArtifactData() throws {
+        let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
+        let version = "XX.XX.XX"
+        let _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: iOSApiKey!, branch: "master", version: version, name: "prod", contentType:ipaContentType, inside: app!)
+        //check storage dir
+        let mdtConfig = try app.make(MdtConfiguration.self)
+        let storagePath:String = "\(mdtConfig.storageConfiguration!["RootDirectory"]!)/ios/\(appDtoiOS.name)/\(version)" //!
+        var files = try FileManager.default.contentsOfDirectory(atPath:storagePath)
+        XCTAssertEqual(files.count, 1)
+        //delete artifact
+        _ = try ArtifactsContollerTests.deleteArtifactSucess(apiKey: iOSApiKey!, branch: "master", version: version, name: "prod", inside: app)
+        files = try FileManager.default.contentsOfDirectory(atPath:storagePath)
+        XCTAssertEqual(files.count,0)
+        print(files)
+    }
     
     func testDownloadiOSManifest() throws {
         let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
