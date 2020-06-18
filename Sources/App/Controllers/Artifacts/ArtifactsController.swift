@@ -51,9 +51,12 @@ final class ArtifactsController:BaseController  {
             filename = "artifact"
         }
         let context = try req.context()
+        let trackingContext = ActivityContext()
+
         return try findApplication(apiKey: apiKey, into: context)
             .flatMap({ app -> Future<Artifact>  in
                 guard let app = app else { throw ApplicationError.notFound }
+                trackingContext.application = app
                 //test contentType
                 switch app.platform {
                 case .android:
@@ -73,8 +76,8 @@ final class ArtifactsController:BaseController  {
                                 return try storeArtifactData(data: data, filename: filename, contentType: mimeType, artifact: artifact, storage: storage, into: context)
                             })
                     })
-                    .do({[weak self]  artifact in self?.track(event: .UploadArtifact(artifact: artifact), for: req)})
-                    .catch({[weak self]  error in self?.track(event: .UploadArtifact(artifact: nil, failedError: error), for: req)})
+                    .do({[weak self]  artifact in self?.track(event: .UploadArtifact(context:trackingContext, artifact: artifact), for: req)})
+                    .catch({[weak self]  error in self?.track(event: .UploadArtifact(context:trackingContext, artifact: nil, failedError: error), for: req)})
             })
             .flatMap{try saveArtifact(artifact: $0, into: context)}
             .map{ArtifactDto(from: $0)}
@@ -103,7 +106,8 @@ final class ArtifactsController:BaseController  {
                    // .map{(app, $0)}})
             .flatMap({ artifact  throws -> Future<Artifact> in
                 guard let artifact = artifact else { throw ArtifactError.notFound }
-                return App.deleteArtifact(by: artifact, into: context).map{artifact}})
+                let storage = try req.make(StorageServiceProtocol.self)
+                return App.deleteArtifact(by: artifact, storage: storage, into: context).map{artifact}})
             .do({[weak self]  artifact in self?.track(event: .DeleteArtifact(context:trackingContext, artifact: artifact), for: req)})
             .catch({[weak self]  error in self?.track(event: .DeleteArtifact(context:trackingContext, artifact: nil, failedError: error), for: req)})
             .map {_ in return  MessageDto(message: "Artifact Deleted")}

@@ -158,8 +158,17 @@ func isArtifactAlreadyExist(app:MDTApplication,branch:String,version:String,name
         .map{$0 != nil }
 }
 
-func deleteArtifact(by artifact:Artifact,into context:Meow.Context) -> Future<Void>{
+func deleteArtifact(by artifact:Artifact,storage:StorageServiceProtocol,into context:Meow.Context) -> Future<Void>{
+    let storageUrl = artifact.storageInfos
     return context.delete(artifact)
+        //delete store
+        .flatMap { _ in
+            if let storageUrl = storageUrl {
+                return try storage.deleteStoredFileStorageId(storedIn: storageUrl, into: context.eventLoop)
+            }else {
+                return context.eventLoop.newSucceededFuture(result: ())
+            }
+    }
 }
 /*
 func createArtifact(app:MDTApplication,name:String,version:String,branch:String,sortIdentifier:String?,tags:[String:String]?,into context:Meow.Context)throws -> Future<Artifact>{

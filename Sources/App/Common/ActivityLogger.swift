@@ -42,7 +42,7 @@ enum ActivityEvent {
     case UpdateApp(app:MDTApplication, user:User)
     case MaxVersion(context:ActivityContext, appUuid:String?, failedError:Error? = nil)
     
-    case UploadArtifact(artifact:Artifact? , failedError:Error? = nil)
+    case UploadArtifact(context:ActivityContext, artifact:Artifact? , failedError:Error? = nil)
     case DeleteArtifact(context:ActivityContext, artifact:Artifact? , failedError:Error? = nil)
     case DownloadArtifact(context:ActivityContext, artifact:Artifact, failedError:Error? = nil)
     
@@ -91,8 +91,8 @@ enum ActivityEvent {
             return "UpdateApp - User:\(user.email), name:\(app.name), platorm:\(app.platform), uuid:\(app.uuid)"
         case .MaxVersion(let context, let appUuid, let failedError):
             return "MaxVersion " + context.description() + formatMessage(value: "uuid:\(appUuid ?? "")",failedError: failedError)
-        case .UploadArtifact(let artifact, let failedError):
-            return "UploadArtifact " + formatMessage(value: "Artifact:\(artifact?.description() ?? "" )",failedError: failedError)
+        case .UploadArtifact(let context, let artifact, let failedError):
+            return "UploadArtifact " + context.description() + formatMessage(value: "Artifact:\(artifact?.description() ?? "" )",failedError: failedError)
         case .DeleteArtifact(let context, let artifact, let failedError):
             return "DeleteArtifact " + context.description() + formatMessage(value: "Artifact:\(artifact?.description() ?? "" )",failedError: failedError)
         case .DownloadArtifact(let context,let artifact, let failedError):
