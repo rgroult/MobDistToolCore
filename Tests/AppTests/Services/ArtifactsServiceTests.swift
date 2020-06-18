@@ -59,4 +59,30 @@ final class ArtifactsServiceTests: BaseAppTests {
             }
         }
     }
+
+    func testDeleteArtifactForApplication() throws {
+        //count all artifacts
+        XCTAssertEqual(try context.count(MDTApplication.self).wait(), 0)
+        XCTAssertEqual(try context.count(Artifact.self).wait(), 0)
+
+
+        let app = try createApplication(name: "testApp", platform: Platform.android, description: "testApp", adminUser: normalUser, into: context).wait()
+        let app2 = try createApplication(name: "testApp2", platform: Platform.ios, description: "testApp", adminUser: normalUser, into: context).wait()
+
+        try addArtifact(branches: ["master","test"], numberPerBranches: 10, app: app)
+        try addArtifact(branches: ["master","test"], numberPerBranches: 10, app: app2)
+
+        //count all artifacts
+        XCTAssertEqual(try context.count(MDTApplication.self).wait(), 2)
+        XCTAssertEqual(try context.count(Artifact.self).wait(), 80)
+
+        //delete one App
+        try deleteAllArtifacts(app: app2, storage: TestingStorageService(), into: context).wait()
+        try deleteApplication(by: app2, into: context).wait()
+
+
+        //count all artifacts
+        XCTAssertEqual(try context.count(MDTApplication.self).wait(), 1)
+        XCTAssertEqual(try context.count(Artifact.self).wait(), 40)
+    }
 }
