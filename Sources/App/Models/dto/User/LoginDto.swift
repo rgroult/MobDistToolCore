@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import MeowVapor
+import Vapor
 
 public struct LoginReqDto: Codable {
     var email:String

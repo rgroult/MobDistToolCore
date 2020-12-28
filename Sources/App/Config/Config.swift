@@ -48,7 +48,7 @@ public struct MdtConfiguration: Codable {
     var logLevel:String?
 
     var logLevelAsLevel:LogLevel {
-        return LogLevel(stringLiteral: logLevel ?? "info")
+        return LogLevel(logLevel ?? "info") ?? .info
     }
     
     static func loadConfig(from filePath:String? = nil, from env:inout Environment) throws -> MdtConfiguration{
@@ -57,13 +57,18 @@ public struct MdtConfiguration: Codable {
             configFilePath = filePath
             // configFileContent = try String(contentsOfFile: filePath)
         }else {
-            let directory = DirectoryConfig.detect()
+           /* #if Xcode
+            let directory = DirectoryConfiguration(workingDirectory: ".")
+            #else
+            let directory = DirectoryConfiguration.detect()
+            #endif*/
+            let directory = DirectoryConfiguration.detect()
             if env == .production {
-                configFilePath = "\(directory.workDir)/config/config.json"
+                configFilePath = "\(directory.workingDirectory)/config/config.json"
                 // configFileContent = try  String(contentsOfFile: "\(directory.workDir)/config/config.json")
             }else {
                 //use default file for current env
-                configFilePath = "\(directory.workDir)/Sources/App/Config/envs/\(env.name)/config.json"
+                configFilePath = "\(directory.workingDirectory)/Sources/App/Config/envs/\(env.name)/config.json"
                 //configFileContent = try  String(contentsOfFile: "\(directory.workDir)/Sources/App/Config/envs/\(env.name)/config.json")
             }
         }
@@ -141,9 +146,9 @@ extension MdtConfiguration {
             /*  case is URL:
              result = URL(string: value) as? T*/
         case is [String]:
-            result = try JSONDecoder().decode([String].self, from: value.convertToData()) as? T
+            result = try JSONDecoder().decode([String].self, from: value.data(using: .utf8) ?? Data()) as? T
         case is [String:String]:
-            result = try JSONDecoder().decode([String:String].self, from: value.convertToData()) as? T
+            result = try JSONDecoder().decode([String:String].self, from: value.data(using: .utf8) ?? Data()) as? T
         case is StorageManager:
             guard let storage = (StorageManager(rawValue: value) as? StorageManager)?.rawValue else { throw "Unable to convert \(value) into \(into.self)"}
             result = storage
@@ -161,11 +166,30 @@ extension MdtConfiguration {
 //
 //    func register(_ services: inout Services) throws {}
 //}
-
+/*
 extension MdtConfiguration : ServiceType {
     public static func makeService(for container: Container) throws -> MdtConfiguration {
         throw "Unable to make empty service"
     }
     
     
+}*/
+
+struct MdtConfigurationKey: StorageKey {
+    typealias Value = MdtConfiguration
+}
+
+extension Application {
+    func appConfiguration() throws -> MdtConfiguration {
+        guard let config = mdtConfiguration else { throw Abort(.internalServerError) }
+        return config
+    }
+    var mdtConfiguration: MdtConfiguration? {
+        get {
+            return self.storage[MdtConfigurationKey.self]
+        }
+        set {
+            self.storage[MdtConfigurationKey.self] = newValue
+        }
+    }
 }

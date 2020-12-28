@@ -6,10 +6,10 @@
 //
 
 import Vapor
-import MeowVapor
+import Meow
 import MongoKitten
 
-final class TokenInfo: Model {
+final class TokenInfo: Model/*,ReadableModel */{
     var _id = ObjectId()
     var uuid:String
     var expirationDate:Date

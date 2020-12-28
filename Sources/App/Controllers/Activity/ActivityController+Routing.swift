@@ -24,10 +24,10 @@ extension ActivityController {
         }
     }
     
-    func configure(with router: Router, and protectedRouter:Router){
-        let protectedActivityRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
-        protectedActivityRouter.get(Verb.trackingActivity.uri, use : self.activity)
-        protectedActivityRouter.get(Verb.summary.uri, use : self.summary)
-        protectedActivityRouter.get(Verb.logsActivity.uri, use : self.logs)
+    func configure(with router: RoutesBuilder, and protectedRouter:RoutesBuilder){
+        let protectedActivityRouter = protectedRouter.grouped("\(controllerVersion)","\(pathPrefix)")
+        protectedActivityRouter.get([.constant(Verb.trackingActivity.uri)], use : self.activity)
+        protectedActivityRouter.get([.constant(Verb.summary.uri)], use : self.summary)
+        protectedActivityRouter.get([.constant(Verb.logsActivity.uri)], use : self.logs)
     }
 }

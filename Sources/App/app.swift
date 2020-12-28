@@ -1,6 +1,7 @@
 import Vapor
 
 /// Creates an instance of `Application`. This is called from `main.swift` in the run target.
+/*
 public func app(_ env: Environment) throws -> Application {
     var config = Config.default()
     var env = env
@@ -10,3 +11,4 @@ public func app(_ env: Environment) throws -> Application {
     try boot(app)
     return app
 }
+*/

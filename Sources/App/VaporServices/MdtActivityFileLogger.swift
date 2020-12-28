@@ -11,7 +11,7 @@ import Vapor
 
 public final class MdtActivityFileLogger: MdtFileLogger {
     
-    static var sharedActivity:MdtActivityFileLogger!
+   // static var sharedActivity:MdtActivityFileLogger!
     /*
     required convenience init(logDirectory:String? = nil , includeTimestamps: Bool = false) throws{
         try super.init(logDirectory: logDirectory, includeTimestamps: includeTimestamps)
@@ -31,11 +31,11 @@ public final class MdtActivityFileLogger: MdtFileLogger {
             return "MDT_Activity_\(dateFormatter.string(from:Date())).activity"
         }()
     }
-    
+    /*
     override class func initialize(logDirectory:String? = nil , includeTimestamps: Bool = false) throws{
         sharedActivity = try MdtActivityFileLogger(logDirectory: logDirectory, includeTimestamps: includeTimestamps)
         //
-    }
+    }*/
 }
 
 extension  MdtActivityFileLogger: ActivityLogger {
@@ -46,3 +46,29 @@ extension  MdtActivityFileLogger: ActivityLogger {
            // TODO
        }
 }
+
+struct MdtActivityFileLoggerKey: StorageKey {
+    typealias Value = MdtActivityFileLogger
+}
+
+extension Application {
+    var activityLogger: MdtActivityFileLogger? {
+        get {
+            self.storage[MdtActivityFileLoggerKey.self]
+        }
+        set {
+            self.storage[MdtActivityFileLoggerKey.self] = newValue
+        }
+    }
+    
+    func appActivityLogger() throws -> MdtActivityFileLogger {
+        guard let service = activityLogger else { throw Abort(.internalServerError) }
+        return service
+    }
+}
+/*
+extension Request {
+    var activityLogger: MdtActivityFileLogger? {
+        return application.activityLogger
+    }
+}*/

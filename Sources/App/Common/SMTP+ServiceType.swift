@@ -7,10 +7,11 @@
 
 import SwiftSMTP
 import Vapor
-
+/*
 extension SMTP: ServiceType {
     
     public static func makeService(for container: Container) throws -> SMTP {
         throw "Unable to make empty service"
     }
 }
+*/

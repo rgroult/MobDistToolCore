@@ -6,7 +6,8 @@
 //
 
 import Vapor
-import MeowVapor
+import MongoKitten
+import Meow
 import JWTAuth
 
 final class User: Model {
