@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import Random
+import CryptoKit
 
 func random(_ n: Int) -> String
 {

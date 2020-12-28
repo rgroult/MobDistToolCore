@@ -8,7 +8,7 @@
 import Vapor
 import Vapor
 import Swiftgger
-import Meow
+//import Meow
 
 let IPA_CONTENT_TYPE = "application/octet-stream ipa"
 let BINARY_CONTENT_TYPE = "application/octet-stream"

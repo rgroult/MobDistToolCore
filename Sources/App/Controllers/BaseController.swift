@@ -34,24 +34,25 @@ class BaseController {
         }
     }
     
-    func retrieveUser(from req:Request) throws -> Future<User?>  {
+    func retrieveUser(from req:Request) throws -> EventLoopFuture<User?>  {
         let jwt = try req.authenticated(JWTTokenPayload.self)
         guard let email = jwt?.email else { throw Abort(.notFound)}
-        let context = try req.context()
+        let context = try req.meow
+        //let context = try req.context()
         return context.findOne(User.self, where: Query.valEquals(field: "email", val: email))
     }
     
-    func retrieveMandatoryUser(from req:Request) throws -> Future<User> {
+    func retrieveMandatoryUser(from req:Request) throws -> EventLoopFuture<User> {
         return try retrieveUser(from: req)
-        .map{ user in
+        .flatMapThrowing{ user in
             guard let user = user else { throw Abort(.unauthorized)}
             return user
         }
     }
     
-    func retrieveMandatoryAdminUser(from req:Request) throws -> Future<User> {
+    func retrieveMandatoryAdminUser(from req:Request) throws -> EventLoopFuture<User> {
         return try retrieveMandatoryUser(from: req)
-            .map{ user in
+            .flatMapThrowing{ user in
                 guard user.isSystemAdmin else { throw UserError.userNotAdministrator }
                 return user
         }

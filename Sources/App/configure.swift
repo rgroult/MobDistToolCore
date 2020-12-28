@@ -1,6 +1,7 @@
 //import FluentSQLite
 import Vapor
-import MeowVapor
+import MongoKitten
+import Meow
 import JWTAuth
 import JWT
 
@@ -22,12 +23,13 @@ struct MDT_Signers:JWTSignerRepository {
 }
 
 /// Called before your application initializes.
-public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
+public func configure(_ app: Application) throws {
+//public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
     //load config
     let configuration:MdtConfiguration
     do {
         print("Loading Config")
-        configuration = try MdtConfiguration.loadConfig(from: nil, from: &env)
+        configuration = try MdtConfiguration.loadConfig(from: nil, from: app.environment)
         print("config: \(configuration)")
     }catch {
         print("Unable to read configuration: \(error)")
@@ -133,10 +135,14 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
     services.register(middlewares)
    
     //custom config
-    var myServerConfig = NIOServerConfig.default()
-    myServerConfig.port = configuration.serverListeningPort
-    myServerConfig.hostname = "0.0.0.0"
-    myServerConfig.maxBodySize = 2_000_000_000
-    myServerConfig.supportCompression = configuration.enableCompression
-    services.register(myServerConfig)
+    app.http.server.configuration.port = configuration.serverListeningPort
+    app.http.server.configuration.hostname = "0.0.0.0"
+    app.routes.defaultMaxBodySize = 2_000_000_000
+    app.http.server.configuration.responseCompression = .enabled
+    //var myServerConfig = NIOServerConfig.default()
+    //myServerConfig.port = configuration.serverListeningPort
+    //myServerConfig.hostname = "0.0.0.0"
+   // myServerConfig.maxBodySize = 2_000_000_000
+   // myServerConfig.supportCompression = configuration.enableCompression
+   // services.register(myServerConfig)
 }

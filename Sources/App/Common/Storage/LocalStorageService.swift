@@ -71,7 +71,7 @@ final class LocalStorageService: StorageServiceProtocol {
        
         //absolutePathName.appendPathComponent(random(5))
         
-        let result = eventLoop.newPromise(of: StorageAccessUrl.self)
+        let result = eventLoop.makePromise(of: StorageAccessUrl.self)
         let fileManager = FileManager.default
         //create directory if needed
         try fileManager.createDirectory(at: absolutePathName, withIntermediateDirectories: true, attributes: nil)
@@ -95,10 +95,10 @@ final class LocalStorageService: StorageServiceProtocol {
                 outputFile.synchronizeFile()
                 outputFile.closeFile()
                 //generate storageAccessUrl
-                result.succeed(result: resultStoreUrl)
+                result.succeed(resultStoreUrl)
             }
             catch{
-                result.fail(error: StorageError.storeError(from: error))
+                result.fail(StorageError.storeError(from: error))
             }
         }
         
@@ -116,7 +116,7 @@ final class LocalStorageService: StorageServiceProtocol {
         
         //guard let escapingPath = filePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else { throw StorageError.badFormat }
         //guard let url = URL(string:  "file://\(escapingPath)") else { throw StorageError.internalError }
-        return eventLoop.newSucceededFuture(result:StoredResult.asUrI(url:filePathUrl))
+        return eventLoop.makeSucceededFuture(StoredResult.asUrI(url:filePathUrl))
         
         //guard let filenameUrl = URL(string:  try extractStorageId(storageInfo: storedIn)) else { throw StorageError.badFormat }
        /* guard FileManager.default.fileExists(atPath: filenameUrl.path) else { throw StorageError.notFound }
@@ -131,7 +131,7 @@ final class LocalStorageService: StorageServiceProtocol {
         }*/
     }
     
-    func deleteStoredFileStorageId(storedIn:StorageAccessUrl, into eventLoop:EventLoop) throws-> Future<Void>{
+    func deleteStoredFileStorageId(storedIn:StorageAccessUrl, into eventLoop:EventLoop) throws-> EventLoopFuture<Void>{
         //guard let filename = URL(fileURLWithPath:  try extractStorageId(storageInfo: storedIn)) else { throw StorageError.badFormat }
         let relativeFilePath = try extractStorageId(storageInfo: storedIn)
         let filename = URL(fileURLWithPath: rootStoragePath).appendingPathComponent(relativeFilePath)
@@ -142,7 +142,7 @@ final class LocalStorageService: StorageServiceProtocol {
         }
         do {
             try FileManager.default.removeItem(at: filename)
-            return eventLoop.newSucceededFuture(result: ())
+            return eventLoop.makeSucceededFuture(())
         }catch {
             throw StorageError.deleteError(from: error)
         }

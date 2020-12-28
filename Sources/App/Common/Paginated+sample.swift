@@ -5,7 +5,7 @@
 //  Created by Remi Groult on 20/10/2019.
 //
 
-import Pagination
+import Vapor
 
 extension Paginated {
     static func sample(obj:M)-> Paginated {

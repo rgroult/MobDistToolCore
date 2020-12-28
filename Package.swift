@@ -7,6 +7,7 @@ let package = Package(
     dependencies: [
         // 💧 A server-side Swift web framework.
         .package(url: "https://github.com/vapor/vapor.git", .upToNextMajor(from: "4.8.0")),
+        //.package(url: "https://github.com/vapor/fluent.git", .upToNextMajor(from: "4.0.0")),
 
         // fix: https://forums.swift.org/t/logging-module-name-clash-in-vapor-3/25466
         //.package(url: "https://github.com/IBM-Swift/LoggerAPI.git", .upToNextMinor(from: "1.8.0")),
@@ -17,7 +18,7 @@ let package = Package(
         //.package(url: "https://github.com/vapor/fluent-sqlite.git", from: "3.3.0"),
         
         // 🔏 JSON Web Token signing and verification (HMAC, RSA).
-        //.package(url: "https://github.com/vapor/jwt.git", from: "3.0.0"),
+        .package(url: "https://github.com/vapor/jwt.git", from: "4.0.0"),
         
         // 🔏 JSON Web Token Middleware.
         .package(name:"JWTAuth", url: "https://github.com/asensei/vapor-auth-jwt", .upToNextMajor(from: "2.0.0")),
@@ -25,6 +26,7 @@ let package = Package(
         // 👤 Authentication and Authorization framework for Fluent.
         //.package(url: "https://github.com/vapor/auth.git", from: "2.0.0"),
     
+        
         //🐈 MongoKitten
         //.package(url: "https://github.com/OpenKitten/MeowVapor.git", from: "2.0.0"),
         .package(url: "https://github.com/OpenKitten/MongoKitten.git", from: "6.0.0"),
@@ -47,6 +49,9 @@ let package = Package(
     targets: [
         .target(name: "App", dependencies: ["SwiftSMTP","JWTAuth",
                                             .product(name: "Vapor", package: "vapor"),
+                                           // .product(name: "Fluent", package: "fluent"),
+                                            .product(name: "JWT", package: "jwt"),
+                                            .product(name: "Meow", package: "MongoKitten"),
                                             "MongoKitten","Swiftgger","CryptoSwift","zxcvbn"]),
         .target(name: "Run", dependencies: ["App"]),
         .testTarget(name: "AppTests", dependencies: ["App"])

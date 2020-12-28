@@ -6,13 +6,13 @@
 //
 
 import Vapor
-import MeowVapor
+//import MeowVapor
 import BSON
 import Swiftgger
-import JWT
+//import JWT
 import JWTAuth
 import SwiftSMTP
-import Pagination
+//import Pagination
 import zxcvbn
 
 enum RegistrationError : Error {

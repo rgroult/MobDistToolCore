@@ -18,7 +18,7 @@ final class TestingStorageService: StorageServiceProtocol {
     }
     
     func store(file: Foundation.FileHandle, with info: StorageInfo, into eventLoop: EventLoop) throws -> EventLoopFuture<StorageAccessUrl> {
-        return eventLoop.newSucceededFuture(result: "\(storageIdentifier)://\(info.platform)")
+        return eventLoop.makeSucceededFuture("\(storageIdentifier)://\(info.platform)")
     }
     
     func getStoredFile(storedIn: StorageAccessUrl, into eventLoop: EventLoop) throws -> EventLoopFuture<StoredResult> {
@@ -31,11 +31,11 @@ final class TestingStorageService: StorageServiceProtocol {
         default:
             throw  StorageError.notFound
         }
-        return eventLoop.newSucceededFuture(result: StoredResult.asUrI(url:resultUrl ))
+        return eventLoop.makeSucceededFuture(StoredResult.asUrI(url:resultUrl ))
     }
     
     func deleteStoredFileStorageId(storedIn: StorageAccessUrl, into eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
-        return eventLoop.newSucceededFuture(result: ())
+        return eventLoop.makeSucceededFuture(())
     }
     
 }

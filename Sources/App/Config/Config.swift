@@ -51,7 +51,7 @@ public struct MdtConfiguration: Codable {
         return LogLevel(stringLiteral: logLevel ?? "info")
     }
     
-    static func loadConfig(from filePath:String? = nil, from env:inout Environment) throws -> MdtConfiguration{
+    static func loadConfig(from filePath:String? = nil, from env:Environment) throws -> MdtConfiguration{
         let configFilePath:String
         if let filePath = filePath {
             configFilePath = filePath

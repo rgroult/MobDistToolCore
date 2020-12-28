@@ -5,9 +5,9 @@
 //  Created by Rémi Groult on 15/10/2019.
 //
 
-import Meow
+import MongoKitten
 import Vapor
-import Pagination
+//import FluentKit
 
 let MappedCursorDefaultPageSize:UInt = 50
 
@@ -26,13 +26,13 @@ enum PaginationSort:String {
 
 extension MappedCursor  where Element:Content {
     
-    func paginate(for req:Request, sortFields:[String:String],defaultSort:String,countQuery:Future<Int>) -> Future<Paginated<Element>>{
+    func paginate(for req:Request, sortFields:[String:String],defaultSort:String,countQuery:EventLoopFuture<Int>) -> EventLoopFuture<Paginated<Element>>{
         return countQuery.flatMap{ count in
             self.paginate(for: req, sortFields: sortFields,defaultSort:defaultSort, totalCount: count)
         }
     }
     
-    func paginate(for req:Request, sortFields:[String:String],defaultSort:String,findQuery:Query? = nil) -> Future<Paginated<Element>>{
+    func paginate(for req:Request, sortFields:[String:String],defaultSort:String,findQuery:Query? = nil) -> EventLoopFuture<Paginated<Element>>{
         //extract "page" and "per" parameters
         
         //page info
@@ -67,7 +67,7 @@ extension MappedCursor  where Element:Content {
         }
     }
     
-    private func paginate(for req:Request, sortFields:[String:String],defaultSort:String,totalCount:Int) -> Future<Paginated<Element>>{
+    private func paginate(for req:Request, sortFields:[String:String],defaultSort:String,totalCount:Int) -> EventLoopFuture<Paginated<Element>>{
         //extract "page" and "per" parameters
         
         //page info
@@ -99,7 +99,7 @@ extension MappedCursor  where Element:Content {
             .getPageResult(position,pageData)
     }
     
-    func getPageResult(_ position:Position,_ pageData:PageData) -> Future<Paginated<Element>>{
+    func getPageResult(_ position:Position,_ pageData:PageData) -> EventLoopFuture<Paginated<Element>>{
         return getAllResults().map({ arrayOfResult in
             let pageInfo = PageInfo(position: position, data: pageData)
             return Paginated (page: pageInfo, data: arrayOfResult)

@@ -1,8 +1,8 @@
 import Vapor
 import Swiftgger
-import Authentication
+//import Authentication
 import JWTAuth
-import JWT
+//import JWT
 
 /// Register your application's routes here.
 public func routes(_ baseRouter: Router, authenticateMiddleware:Middleware,config:MdtConfiguration) throws {

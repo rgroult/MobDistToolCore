@@ -26,7 +26,7 @@ enum ApplicationError: Error,Equatable {
     case expiredLink
 }
 
-extension ApplicationError:Debuggable {
+extension ApplicationError:DebuggableError {
     var reason: String {
         switch self {
         case .alreadyExist:
@@ -61,42 +61,43 @@ extension ApplicationError:Debuggable {
     }
 }
 
-func findApplications(platform:Platform? = nil ,into context:Meow.Context,additionalQuery:Query?) throws -> (Query?,MappedCursor<FindCursor, MDTApplication>){
-    let query:Query
-    let anotherQuery = additionalQuery ?? Query()
+func findApplications(platform:Platform? = nil ,into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?) throws -> (MongoKittenQuery,MappedCursor<FindQueryBuilder, MDTApplication>){
+    let query:MongoKittenQuery
+    let anotherQuery = additionalQuery ?? AndQuery(conditions: [])
     if let platorm = platform {
-        query = Query.and([anotherQuery,Query.valEquals(field: "platform", val: platorm.rawValue)])
+        query =  anotherQuery && "platform" == platorm.rawValue //    Query.and([anotherQuery,Query.valEquals(field: "platform", val: platorm.rawValue)])
     }else {
         query = anotherQuery
     }
-    return (query,context.find(MDTApplication.self,where:query))
+    let collection = context.collection(for: MDTApplication.self).find(where:query)
+    return (query,context.collection(for: MDTApplication.self).find(where:query)) //   .find(MDTApplication.self,where:query))
 }
 
-func findApplications(with uuids:[String], into context:Meow.Context) throws  -> MappedCursor<FindCursor, MDTApplication>{
+func findApplications(with uuids:[String], into context:Meow.MeowDatabase) throws  -> MappedCursor<FindQueryBuilder, MDTApplication>{
     //ex : db.getCollection('feed').find({"_id" : {"$in" : [ObjectId("55880c251df42d0466919268"), ObjectId("55bf528e69b70ae79be35006")]}});
     let query: Document = ["uuid" : ["$in": uuids]]
-    return context.find(MDTApplication.self, where: Query.custom(query))
+    return context.collection(for: MDTApplication.self).find(where: query)
 }
 
 
-func findApplications(for user:User, into context:Meow.Context) throws  -> MappedCursor<FindCursor, MDTApplication>{
+func findApplications(for user:User, into context:Meow.MeowDatabase) throws  -> MappedCursor<FindQueryBuilder, MDTApplication>{
     let query: Document = ["$eq": user._id]
     return context.find(MDTApplication.self, where: Query.containsElement(field: "adminUsers", match: Query.custom(query)))
 }
 
-func findApplication(name:String,platform:Platform,into context:Meow.Context) throws -> Future<MDTApplication?> {
+func findApplication(name:String,platform:Platform,into context:Meow.MeowDatabase) throws -> EventLoopFuture<MDTApplication?> {
     return context.findOne(MDTApplication.self, where: Query.and([Query.valEquals(field: "name", val: name),Query.valEquals(field: "platform", val: platform.rawValue)]))
 }
 
-func findApplication(apiKey:String,into context:Meow.Context) throws -> Future<MDTApplication?> {
+func findApplication(apiKey:String,into context:Meow.MeowDatabase) throws -> EventLoopFuture<MDTApplication?> {
     return context.findOne(MDTApplication.self, where:Query.valEquals(field: "apiKey", val: apiKey))
 }
 
-func findApplication(uuid:String,into context:Meow.Context) throws -> Future<MDTApplication?> {
+func findApplication(uuid:String,into context:Meow.MeowDatabase) throws -> EventLoopFuture<MDTApplication?> {
     return context.findOne(MDTApplication.self, where: Query.valEquals(field: "uuid", val: uuid))
 }
 
-func createApplication(name:String,platform:Platform,description:String,adminUser:User, base64Icon:String? = nil,maxVersionCheckEnabled:Bool? = nil, into context:Meow.Context) throws -> Future<MDTApplication> {
+func createApplication(name:String,platform:Platform,description:String,adminUser:User, base64Icon:String? = nil,maxVersionCheckEnabled:Bool? = nil, into context:Meow.Context) throws -> EventLoopFuture<MDTApplication> {
     return try findApplication(name: name, platform: platform, into: context)
         .flatMap({ app  in
             guard app == nil else { throw ApplicationError.alreadyExist }
@@ -121,7 +122,7 @@ func createApplication(name:String,platform:Platform,description:String,adminUse
         })
 }
 
-func updateApplicationWithParameters(from app:MDTApplication, name:String?, description:String?, maxVersionCheckEnabled:Bool?, iconData:String?,into context:Meow.Context)  throws -> Future<MDTApplication> {
+func updateApplicationWithParameters(from app:MDTApplication, name:String?, description:String?, maxVersionCheckEnabled:Bool?, iconData:String?,into context:Meow.MeowDatabase)  throws -> EventLoopFuture<MDTApplication> {
     if let name = name {
         app.name = name
     }
@@ -183,22 +184,22 @@ func updateApplication(from app:MDTApplication, with appDto:ApplicationUpdateDto
     }
 }*/
 
-func saveApplication(app:MDTApplication,into context:Meow.Context) -> Future<MDTApplication>{
+func saveApplication(app:MDTApplication,into context:Meow.MeowDatabase) -> EventLoopFuture<MDTApplication>{
     return app.save(to: context).map{app}
 }
 
-func deleteApplication(by app:MDTApplication,into context:Meow.Context) -> Future<Void>{
+func deleteApplication(by app:MDTApplication,into context:Meow.MeowDatabase) -> EventLoopFuture<Void>{
     return context.delete(app)
 }
 
-func deleteApplication(with name:String, and platform:Platform, into context:Meow.Context) throws -> Future<Void>{
+func deleteApplication(with name:String, and platform:Platform, into context:Meow.MeowDatabase) throws -> EventLoopFuture<Void>{
     return context.deleteOne(MDTApplication.self, where: Query.and([Query.valEquals(field: "name", val: name),Query.valEquals(field: "platform", val: platform.rawValue)]))
         .map({ count -> () in
             guard count == 1 else { throw ApplicationError.notFound }
         })
 }
 
-func generatePermanentLink(with info:MDTApplication.PermanentLink, into context:Meow.Context) throws -> Future<TokenInfo> {
+func generatePermanentLink(with info:MDTApplication.PermanentLink, into context:Meow.MeowDatabase) throws -> EventLoopFuture<TokenInfo> {
     let permanentLinkInfoData = try JSONEncoder().encode(info)
     let dictValues = try JSONSerialization.jsonObject(with: permanentLinkInfoData, options: []) as! [String:String]
     let valitidyInSecs = TimeInterval(info.validity*3600*24) // in days
@@ -217,7 +218,7 @@ func retrievePermanentLink(app:MDTApplication, with info:TokenInfo, into context
     }
 }*/
 
-func retrievePermanentLinkArtifact(token:MDTApplication.TokenLink, into context:Meow.Context) throws -> Future<(MDTApplication.TokenLink,Artifact?)> {
+func retrievePermanentLinkArtifact(token:MDTApplication.TokenLink, into context:Meow.MeowDatabase) throws -> EventLoopFuture<(MDTApplication.TokenLink,Artifact?)> {
     return try findApplication(uuid: token.link.applicationUuid, into: context)
         .flatMap { app in
             guard let app = app else { throw ApplicationError.notFound }
@@ -229,7 +230,7 @@ func retrievePermanentLinkArtifact(token:MDTApplication.TokenLink, into context:
 }
 
 
-func retriveTokenInfo(tokenId:String, into context:Meow.Context) throws -> Future<MDTApplication.TokenLink> {
+func retriveTokenInfo(tokenId:String, into context:Meow.MeowDatabase) throws -> EventLoopFuture<MDTApplication.TokenLink> {
     return findInfo(with: tokenId, into: context)
         .map{ dict in
             guard let dict = dict else { throw ApplicationError.expiredLink}
@@ -238,7 +239,7 @@ func retriveTokenInfo(tokenId:String, into context:Meow.Context) throws -> Futur
         .map { MDTApplication.TokenLink(tokenId: tokenId, link: try JSONDecoder().decode(MDTApplication.PermanentLink.self, from: try JSONSerialization.data(withJSONObject: $0, options: [])))}
 }
 
-func retrievePermanentLinks(app:MDTApplication, into context:Meow.Context) throws -> Future<[(MDTApplication.TokenLink,Artifact?)]> {
+func retrievePermanentLinks(app:MDTApplication, into context:Meow.MeowDatabase) throws -> EventLoopFuture<[(MDTApplication.TokenLink,Artifact?)]> {
     return (app.permanentLinks ?? []).map { $0.resolve(in: context) }.flatten(on: context)
         .flatMap { allTokens throws in
             let validLinks = try allTokens.filter{!$0.isExpired}
@@ -250,7 +251,7 @@ func retrievePermanentLinks(app:MDTApplication, into context:Meow.Context) throw
 }
 
 
-func checkPermanentsLinks(app:MDTApplication, into context:Meow.Context) throws -> Future<MDTApplication> {
+func checkPermanentsLinks(app:MDTApplication, into context:Meow.MeowDatabase) throws -> EventLoopFuture<MDTApplication> {
     let checkLink = { (reference:Reference<TokenInfo>) -> Future<Reference<TokenInfo>?> in
         return reference.resolve(in: context)
             .map { tokenInfo in
@@ -274,7 +275,7 @@ func retrievePermanentLink(app:MDTApplication, with reference:Reference<TokenInf
 
 
 extension MDTApplication {
-    func removeAdmin(user:User, into context:Meow.Context)throws -> Future<MDTApplication>{
+    func removeAdmin(user:User, into context:Meow.MeowDatabase)throws -> EventLoopFuture<MDTApplication>{
         adminUsers.removeAll { reference -> Bool in
             return reference.reference == user._id
         }
@@ -285,7 +286,7 @@ extension MDTApplication {
         return adminUsers.contains(Reference(to: user))
     }
     
-    func addAdmin(user:User, into context:Meow.Context)throws -> Future<MDTApplication>{
+    func addAdmin(user:User, into context:Meow.MeowDatabase)throws -> EventLoopFuture<MDTApplication>{
         guard !isAlreadyAdmin(user: user) else { return context.eventLoop.newSucceededFuture(result: self)}
         adminUsers.append(Reference(to: user))
         return save(to: context).map{self}
