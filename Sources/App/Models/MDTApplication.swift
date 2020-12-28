@@ -8,7 +8,7 @@ import Vapor
 import Meow
 import MongoKitten
 
- final class MDTApplication: BaseModel,ReadableModel {
+ final class MDTApplication: Model/*,ReadableModel */{
     struct TokenLink {
         let tokenId:String
         var application:MDTApplication?
