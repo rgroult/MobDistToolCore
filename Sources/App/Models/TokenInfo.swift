@@ -9,7 +9,7 @@ import Vapor
 import Meow
 import MongoKitten
 
-final class TokenInfo: BaseModel,ReadableModel {
+final class TokenInfo: Model/*,ReadableModel */{
     var _id = ObjectId()
     var uuid:String
     var expirationDate:Date

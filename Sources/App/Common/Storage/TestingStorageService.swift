@@ -17,11 +17,11 @@ final class TestingStorageService: StorageServiceProtocol {
         return true
     }
     
-    func store(file: Foundation.FileHandle, with info: StorageInfo, into eventLoop: EventLoop) throws -> EventLoopFuture<StorageAccessUrl> {
+    func store(file: Foundation.FileHandle, with info: StorageInfo, into eventLoop: EventLoop) -> EventLoopFuture<StorageAccessUrl> {
         return eventLoop.makeSucceededFuture("\(storageIdentifier)://\(info.platform)")
     }
     
-    func getStoredFile(storedIn: StorageAccessUrl, into eventLoop: EventLoop) throws -> EventLoopFuture<StoredResult> {
+    func getStoredFile(storedIn: StorageAccessUrl, into eventLoop: EventLoop) -> EventLoopFuture<StoredResult> {
         let resultUrl:URL!
         switch storedIn {
         case "\(storageIdentifier)://\(Platform.ios)":
@@ -29,12 +29,13 @@ final class TestingStorageService: StorageServiceProtocol {
         case "\(storageIdentifier)://\(Platform.android)":
             resultUrl = URL(string:TestingStorageService.defaultApkUrl)!
         default:
-            throw  StorageError.notFound
+            return eventLoop.makeFailedFuture(StorageError.notFound)
+          //  throw  StorageError.notFound
         }
         return eventLoop.makeSucceededFuture(StoredResult.asUrI(url:resultUrl ))
     }
     
-    func deleteStoredFileStorageId(storedIn: StorageAccessUrl, into eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
+    func deleteStoredFileStorageId(storedIn: StorageAccessUrl, into eventLoop: EventLoop) -> EventLoopFuture<Void> {
         return eventLoop.makeSucceededFuture(())
     }
     

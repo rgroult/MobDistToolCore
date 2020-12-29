@@ -26,13 +26,13 @@ protocol StorageServiceProtocol/*: Service*/  {
     
     func  initializeStore(with config:[String:String]) throws-> Bool
     
-    func store(file:Foundation.FileHandle, with info:StorageInfo, into eventLoop:EventLoop) throws-> EventLoopFuture<StorageAccessUrl>
+    func store(file:Foundation.FileHandle, with info:StorageInfo, into eventLoop:EventLoop)-> EventLoopFuture<StorageAccessUrl>
     
-    func getStoredFile(storedIn:StorageAccessUrl, into eventLoop:EventLoop) throws-> EventLoopFuture<StoredResult>
+    func getStoredFile(storedIn:StorageAccessUrl, into eventLoop:EventLoop)-> EventLoopFuture<StoredResult>
     
     func extractStorageId(storageInfo:String) throws-> String
     
-    func deleteStoredFileStorageId(storedIn:StorageAccessUrl, into eventLoop:EventLoop) throws-> EventLoopFuture<Void>
+    func deleteStoredFileStorageId(storedIn:StorageAccessUrl, into eventLoop:EventLoop) -> EventLoopFuture<Void>
 }
 
 extension StorageServiceProtocol {

@@ -118,20 +118,39 @@ db.getCollection("MDTArtifact").aggregate([
 ]);
  */
 
-func findAndSortArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,into context:Meow.MeowDatabase) throws -> (MappedCursor<AggregateCursor<Document>,ArtifactGrouped>,EventLoopFuture<Int>) {
-    var cursor = context.manager.collection(for: Artifact.self).aggregate()
-        .match("application" == app._id)
+func findAndSortArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,into context:Meow.MeowDatabase) throws -> (MappedCursor<AggregateBuilderPipeline,ArtifactGrouped>,EventLoopFuture<Int>) {
+    var aggregateStages = [AggregateBuilderStage]()
+    aggregateStages.append(.match("application" == app._id))
+    
+    //var cursor = context.manager.collection(for: Artifact.self).aggregate()
+     //   .match("application" == app._id)
         
     if let branch = selectedBranch {
-        cursor = cursor.match("branch" == branch)
+        //cursor = cursor.match("branch" == branch)
+        aggregateStages.append(.match("branch" == branch))
     }
     
     if let excludedBranch = excludedBranch {
-        cursor = cursor.match("branch" != excludedBranch)
+        aggregateStages.append(.match("branch" != excludedBranch))
+        //cursor = cursor.match("branch" != excludedBranch)
     }
     
+    
+    //aggregateStages.append(.grou)
+    
     let idPrimitive = Document(dictionaryLiteral:("sortIdentifier" , "$sortIdentifier"), ("branch" , "$branch"))
-    cursor = cursor.group(id: idPrimitive , fields: ["date" : .max("$createdAt"),"version" : .first("$version"),"artifacts" : .push("$$ROOT")])
+    let groupStage:Document = [ "$group" : [
+                                            "_id" : idPrimitive ,
+                                            "date" : ["$max" : "$createdAt"],
+                                            "version" : ["$first" : "$version"],
+                                            "artifacts" : ["$push" : "$$ROOT"]
+                                            ]
+                                ]
+                                            
+    aggregateStages.append(.init(document: groupStage))
+    let cursor = context.collection(for: Artifact.self).raw.aggregate(aggregateStages)
+        
+   // cursor = cursor.group(id: idPrimitive , fields: ["date" : .max("$createdAt"),"version" : .first("$version"),"artifacts" : .push("$$ROOT")])
     return (cursor.decode(ArtifactGrouped.self),cursor.count())
 }
 
@@ -166,10 +185,9 @@ func searchMaxArtifact(app:MDTApplication,branch:String,artifactName:String,into
         Query.valEquals(field: "branch", val: branch),
         Query.valEquals(field: "name", val: artifactName)])*/
     let query = "application" == app._id && "branch" == branch && "name" == artifactName
-   // let sortQuery = SortOrder(
-    //    AndQuery
     
-    return context.find(Artifact.self, where: query).sort(Sort([("sortIdentifier", SortOrder.descending)])).getFirstResult()
+    return context.collection(for: Artifact.self).raw.find(query).sort(Sort([("sortIdentifier", SortOrder.descending)])).firstResult().decode(Artifact.self)
+        //.find(where: query).sort(Sort([("sortIdentifier", SortOrder.descending)])).getFirstResult()
    // retun context.collection(for: Artifact.self).find(where: query)
 }
 
@@ -186,9 +204,9 @@ func deleteArtifact(by artifact:Artifact,storage:StorageServiceProtocol,into con
         //delete store
         .flatMap { _ in
             if let storageUrl = storageUrl {
-                return try storage.deleteStoredFileStorageId(storedIn: storageUrl, into: context.eventLoop)
+                return storage.deleteStoredFileStorageId(storedIn: storageUrl, into: context.eventLoop)
             }else {
-                return context.eventLoop.newSucceededFuture(result: ())
+                return context.eventLoop.makeSucceededFuture(())
             }
     }
 }
@@ -222,7 +240,7 @@ func createArtifact(app:MDTApplication,name:String,version:String,branch:String,
 
 func retrieveArtifactData(artifact:Artifact,storage:StorageServiceProtocol,into context:Meow.MeowDatabase) throws -> EventLoopFuture<StoredResult> {
     guard let storageUrl = artifact.storageInfos else {throw ArtifactError.storageError}
-    return try storage.getStoredFile(storedIn: storageUrl, into: context.eventLoop)
+    return storage.getStoredFile(storedIn: storageUrl, into: context.eventLoop)
 }
 
 func storeArtifactData(data:Data,filename:String,contentType:String?, artifact:Artifact, storage:StorageServiceProtocol,into context:Meow.MeowDatabase) throws -> EventLoopFuture<Artifact>{
@@ -238,10 +256,10 @@ func storeArtifactData(data:Data,filename:String,contentType:String?, artifact:A
     
     return artifact.application.resolve(in: context)
         .flatMap({ app  in
-            return try extractFileMetaData(filePath: temporaryFile,applicationType: app.platform,into: context)
+            return extractFileMetaData(filePath: temporaryFile,applicationType: app.platform,into: context)
                 .flatMap({metadata in
                     let storageInfo = StorageInfo(applicationName: app.name, platform: app.platform, version: artifact.version, uploadFilename: filename, uploadContentType: contentType)
-                    return try storage.store(file: file, with: storageInfo, into: context.eventLoop)
+                    return storage.store(file: file, with: storageInfo, into: context.eventLoop)
                         .map({ storageUrl in
                             //delete temporary file
                             file.closeFile()
@@ -262,16 +280,16 @@ func saveArtifact(artifact:Artifact,into context:Meow.MeowDatabase) throws -> Ev
     return artifact.save(in: context).map{_ in artifact}
 }
 
-func extractFileMetaData(filePath:String,applicationType:Platform,into context:Meow.MeowDatabase)throws -> EventLoopFuture<[String:String]> {
+func extractFileMetaData(filePath:String,applicationType:Platform,into context:Meow.MeowDatabase) -> EventLoopFuture<[String:String]> {
     switch applicationType {
     case .ios:
-        return try extractIpaMetaData(IpaFilePath:filePath,into: context)
+        return extractIpaMetaData(IpaFilePath:filePath,into: context)
     case .android:
-        return try extractApkMetaData(ApkFilePath:filePath,into: context)
+        return extractApkMetaData(ApkFilePath:filePath,into: context)
     }
 }
 
-private func  extractIpaMetaData(IpaFilePath:String,into context:Meow.MeowDatabase)throws -> EventLoopFuture<[String:String]>{
+private func  extractIpaMetaData(IpaFilePath:String,into context:Meow.MeowDatabase) -> EventLoopFuture<[String:String]>{
     //IPA : unzip -p pathIPA *.app/Info.plist
     let iosPlistKeysToExtract = ["CFBundleIdentifier","CFBundleVersion","MinimumOSVersion","CFBundleShortVersionString"]
     let task = Process()
@@ -296,11 +314,12 @@ private func  extractIpaMetaData(IpaFilePath:String,into context:Meow.MeowDataba
         }
         return context.eventLoop.makeSucceededFuture( metaData)
     }catch {
-        throw ArtifactError.invalidContent
+        return context.eventLoop.makeFailedFuture(ArtifactError.invalidContent)
+        //throw ArtifactError.invalidContent
     }
 }
 
-private func  extractApkMetaData(ApkFilePath:String,into context:Meow.MeowDatabase)throws -> EventLoopFuture<[String:String]>{
+private func  extractApkMetaData(ApkFilePath:String,into context:Meow.MeowDatabase) -> EventLoopFuture<[String:String]>{
     let task = Process()
     #if os(Linux)
     task.launchPath = "/usr/bin/aapt"
@@ -361,7 +380,8 @@ private func  extractApkMetaData(ApkFilePath:String,into context:Meow.MeowDataba
         return context.eventLoop.makeSucceededFuture(metaDataResult)
         
     }catch {
-        throw ArtifactError.invalidContent
+        return context.eventLoop.makeFailedFuture(ArtifactError.invalidContent)
+      //  throw ArtifactError.invalidContent
     }
 }
 private func apkExtractHexVersion(from stringValue:String) -> String? {
