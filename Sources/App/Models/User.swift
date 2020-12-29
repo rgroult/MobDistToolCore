@@ -10,7 +10,7 @@ import MongoKitten
 import Meow
 import JWTAuth
 
-final class User: BaseModel,ReadableModel {
+final class User: Model {
     static let collectionName = "MDTUser"
     var _id = ObjectId()
     var email:String
