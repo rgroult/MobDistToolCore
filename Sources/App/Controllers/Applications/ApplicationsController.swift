@@ -9,7 +9,7 @@ import Foundation
 import Vapor
 //import Routing
 import Swiftgger
-//import Meow
+import Meow
 //import Pagination
 
 final class ApplicationsController:BaseController {
@@ -30,37 +30,28 @@ final class ApplicationsController:BaseController {
         super.init(version: "v2", pathPrefix: "Applications", apiBuilder: apiBuilder)
     }
     
-    func createApplication(_ req: Request) throws -> Future<ApplicationDto> {
-        let context = try req.context()
+    func createApplication(_ req: Request) throws -> EventLoopFuture<ApplicationDto> {
+        let context = req.meow
         let serverUrl = externalUrl
         return try retrieveUser(from:req)
-            .flatMap{user -> Future<ApplicationDto> in
-                guard let user = user else { throw Abort(.unauthorized)}
-                return try req.content.decode(ApplicationCreateDto.self)
-                    .flatMap{  appDto -> Future<ApplicationDto> in
-                        return try App.createApplication(name: appDto.name, platform: appDto.platform, description: appDto.description, adminUser: user,base64Icon:appDto.base64IconData,maxVersionCheckEnabled:appDto.enableMaxVersionCheck, into: context)
+            .flatMap{user -> EventLoopFuture<ApplicationDto> in
+                do {
+                    guard let user = user else { throw Abort(.unauthorized)}
+                    let appDto = try req.content.decode(ApplicationCreateDto.self)
+                    return try App.createApplication(name: appDto.name, platform: appDto.platform, description: appDto.description, adminUser: user,base64Icon:appDto.base64IconData,maxVersionCheckEnabled:appDto.enableMaxVersionCheck, into: context)
                         .flatMap{app in
                             ApplicationDto.create(from: app, content: .full, in : context)
-                            .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
-                            .do({ [weak self] dto in self?.track(event: .CreateApp(app: app, user: user), for: req)})
-                        }
-                        
-                            /*
-                        .flatMap({ app -> Future<ApplicationDto>  in
-                            App.updateApplication(from: app, maxVersionCheckEnabled: nil, iconData: nil)
-                            return saveApplication(app: app, into: context)
-                                .flatMap{ ApplicationDto.create(from: $0, content: .full, in : context)}
                                 .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
                                 .do({ [weak self] dto in self?.track(event: .CreateApp(app: app, user: user), for: req)})
-                            /*  .map {[weak self] dto in
-                             self?.track(event: .CreateApp(app: app, user: user), for: req)
-                             return dto}*/
-                        })*/
+                        }
                 }
-        }
+                catch {
+                    return req.eventLoop.makeFailedFuture(error)
+                }
+            }
     }
     
-    func updateApplication(_ req: Request) throws -> Future<ApplicationDto> {
+    func updateApplication(_ req: Request) throws -> EventLoopFuture<ApplicationDto> {
         let appUuid = try req.parameters.next(String.self)
         let context = try req.context()
         let serverUrl = externalUrl
@@ -89,7 +80,7 @@ final class ApplicationsController:BaseController {
         }
     }
     
-    func iconApplication(_ req: Request) throws -> Future<ImageDto> {
+    func iconApplication(_ req: Request) throws -> EventLoopFuture<ImageDto> {
         let appUuid = try req.parameters.next(String.self)
         let context = try req.context()
         return try findApplication(uuid: appUuid, into: context)
@@ -108,7 +99,7 @@ final class ApplicationsController:BaseController {
         }
     }
     
-    func applications(_ req: Request) throws -> Future<Paginated<ApplicationSummaryDto>> {
+    func applications(_ req: Request) throws -> EventLoopFuture<Paginated<ApplicationSummaryDto>> {
         let platformFilter:Platform?
         if let queryPlaform = try? req.query.get(String.self, at: "platform") {
             if let platform = Platform(rawValue: queryPlaform)  {
@@ -149,7 +140,7 @@ final class ApplicationsController:BaseController {
         }
     }
     
-    private func retrieveUserAndApp(_ req: Request, appUuid:String,needToBeAdmin:Bool) throws -> Future<(User,MDTApplication)> {
+    private func retrieveUserAndApp(_ req: Request, appUuid:String,needToBeAdmin:Bool) throws -> EventLoopFuture<(User,MDTApplication)> {
         let context = try req.context()
         return try retrieveUser(from:req)
             .flatMap{user in
@@ -171,7 +162,7 @@ final class ApplicationsController:BaseController {
     }
     
     //GET /<uuid>/link
-    func applicationPermanentLinks(_ req: Request) throws -> Future<[PermanentLinkDto]> {
+    func applicationPermanentLinks(_ req: Request) throws -> EventLoopFuture<[PermanentLinkDto]> {
         let appUuid = try req.parameters.next(String.self)
         
         return try retrieveUserAndApp(req, appUuid: appUuid, needToBeAdmin: true)
@@ -191,7 +182,7 @@ final class ApplicationsController:BaseController {
     }
     
     //POST /<uuid>/link
-    func createApplicationPermanentLink(_ req: Request) throws -> Future<PermanentLinkDto> {
+    func createApplicationPermanentLink(_ req: Request) throws -> EventLoopFuture<PermanentLinkDto> {
         let appUuid = try req.parameters.next(String.self)
         
         return try retrieveUserAndApp(req, appUuid: appUuid, needToBeAdmin: true)
@@ -218,7 +209,7 @@ final class ApplicationsController:BaseController {
     }
     
     //DELETE /<uuid>/link
-    func deleteApplicationPermanentLink(_ req: Request) throws -> Future<MessageDto> {
+    func deleteApplicationPermanentLink(_ req: Request) throws -> EventLoopFuture<MessageDto> {
         throw "not implemented"
     }
     
@@ -228,7 +219,7 @@ final class ApplicationsController:BaseController {
         case page
     }
     //GET /permanentLink?token=dsf&install=direct|page
-    func installPermanentLink(_ req: Request) throws -> Future<Response> {
+    func installPermanentLink(_ req: Request) throws -> EventLoopFuture<Response> {
         let reqToken = try req.query.get(String.self, at: "token")
         let installType = try req.query.get(InstallType.self, at: "install")
         let context = try req.context()
@@ -268,7 +259,7 @@ final class ApplicationsController:BaseController {
         //throw "not implemented"
     }
     
-    func applicationDetail(_ req: Request) throws -> Future<ApplicationDto> {
+    func applicationDetail(_ req: Request) throws -> EventLoopFuture<ApplicationDto> {
         let appUuid = try req.parameters.next(String.self)
         let serverUrl = externalUrl
         return try retrieveUser(from:req)
@@ -291,7 +282,7 @@ final class ApplicationsController:BaseController {
     }
     
     // @ApiMethod(method: 'DELETE', path: 'app/{appId}')
-    func deleteApplication(_ req: Request) throws -> Future<MessageDto> {
+    func deleteApplication(_ req: Request) throws -> EventLoopFuture<MessageDto> {
         return try findApplicationInfo(from:req, needAdmin: true)
             .flatMap({ info  in
                 let context = try req.context()
@@ -307,7 +298,7 @@ final class ApplicationsController:BaseController {
     }
     
     //@ApiMethod(method: 'PUT', path: 'app/{appId}/adminUsers/{email}')
-    func addAdminUser(_ req: Request) throws -> Future<MessageDto> {
+    func addAdminUser(_ req: Request) throws -> EventLoopFuture<MessageDto> {
         return try findApplicationInfo(from:req, needAdmin: true)
             .flatMap({ info  in
                 let email = try req.parameters.next(String.self)
@@ -323,7 +314,7 @@ final class ApplicationsController:BaseController {
     }
     
     //@ApiMethod(method: 'DELETE', path: 'app/{appId}/adminUsers/{email}')
-    func deleteAdminUser(_ req: Request) throws -> Future<MessageDto> {
+    func deleteAdminUser(_ req: Request) throws -> EventLoopFuture<MessageDto> {
         return try findApplicationInfo(from:req, needAdmin: true)
             .flatMap({ info  in
                 let email = try req.parameters.next(String.self)
@@ -338,7 +329,7 @@ final class ApplicationsController:BaseController {
                     })
             })
     }
-    func getApplicationVersionsPagined(_ req: Request,uuid:String,selectedBranch:String?,isLatestBranch:Bool = false) throws -> Future<Paginated<ArtifactDto>> {
+    func getApplicationVersionsPagined(_ req: Request,uuid:String,selectedBranch:String?,isLatestBranch:Bool = false) throws -> EventLoopFuture<Paginated<ArtifactDto>> {
         let context = try req.context()
         
         return try retrieveUser(from:req)
@@ -356,7 +347,7 @@ final class ApplicationsController:BaseController {
         }
     }
     
-    func getApplicationVersionsGroupedAndPagined(_ req: Request,uuid:String,selectedBranch:String?,isLatestBranch:Bool = false) throws -> Future<Paginated<ArtifactGroupedDto>> {
+    func getApplicationVersionsGroupedAndPagined(_ req: Request,uuid:String,selectedBranch:String?,isLatestBranch:Bool = false) throws -> EventLoopFuture<Paginated<ArtifactGroupedDto>> {
         let context = try req.context()
         
         return try retrieveUser(from:req)
@@ -375,14 +366,14 @@ final class ApplicationsController:BaseController {
     }
     
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions/grouped?branch=master')
-    func getApplicationVersionsGrouped(_ req: Request) throws -> Future<Paginated<ArtifactGroupedDto>> {
+    func getApplicationVersionsGrouped(_ req: Request) throws -> EventLoopFuture<Paginated<ArtifactGroupedDto>> {
         let uuid = try req.parameters.next(String.self)
         let selectedBranch = try? req.query.get(String.self, at: "branch")
         return try getApplicationVersionsGroupedAndPagined(req, uuid: uuid, selectedBranch: selectedBranch, isLatestBranch: false)
     }
     
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions?branch=master')
-    func getApplicationVersions(_ req: Request) throws -> Future<Paginated<ArtifactDto>> {
+    func getApplicationVersions(_ req: Request) throws -> EventLoopFuture<Paginated<ArtifactDto>> {
         let uuid = try req.parameters.next(String.self)
         //parameters
         // let pageIndex = try? req.query.get(Int.self, at: "pageIndex")
@@ -393,14 +384,14 @@ final class ApplicationsController:BaseController {
     }
     
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions/last')
-    func getApplicationLastVersions(_ req: Request) throws -> Future<Paginated<ArtifactDto>> {
+    func getApplicationLastVersions(_ req: Request) throws -> EventLoopFuture<Paginated<ArtifactDto>> {
         let uuid = try req.parameters.next(String.self)
         
         return try getApplicationVersionsPagined(req, uuid: uuid, selectedBranch: lastVersionBranchName, isLatestBranch: true)
         //return try getApplicationVersionsWithParameters(req, uuid:uuid , pageIndex: nil, limitPerPage: nil, selectedBranch: lastVersionBranchName, isLatestBranch: true)
     }
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions/last/grouped')
-    func getApplicationLastVersionsGrouped(_ req: Request) throws -> Future<Paginated<ArtifactGroupedDto>> {
+    func getApplicationLastVersionsGrouped(_ req: Request) throws -> EventLoopFuture<Paginated<ArtifactGroupedDto>> {
         let uuid = try req.parameters.next(String.self)
         
         return try getApplicationVersionsGroupedAndPagined(req, uuid: uuid, selectedBranch: lastVersionBranchName, isLatestBranch: true)
@@ -409,7 +400,7 @@ final class ApplicationsController:BaseController {
     
     
     //{appUUID}/maxversion/{branch}/{name}
-    func maxVersion(_ req: Request) throws -> Future<MaxVersionArtifactDto> {
+    func maxVersion(_ req: Request) throws -> EventLoopFuture<MaxVersionArtifactDto> {
         let maxVersionAvailbaleDelay = 30.0 //30 Secs
         let appId = try req.parameters.next(String.self)
         let branch = try req.parameters.next(String.self)
@@ -457,7 +448,7 @@ final class ApplicationsController:BaseController {
         .catch({[weak self]  error in self?.track(event: .MaxVersion(context:trackingContext, appUuid: appId, failedError: error), for: req)})
     }
     
-    private func findApplicationInfo(from req: Request, needAdmin:Bool) throws -> Future<(user:User,app:MDTApplication)>{
+    private func findApplicationInfo(from req: Request, needAdmin:Bool) throws -> EventLoopFuture<(user:User,app:MDTApplication)>{
         let uuid = try req.parameters.next(String.self)
         return try retrieveUser(from:req)
             .flatMap({ user in

@@ -32,7 +32,7 @@ extension MappedCursor  where Element:Content {
         }
     }
     
-    func paginate(for req:Request, sortFields:[String:String],defaultSort:String,findQuery:Query? = nil) -> EventLoopFuture<Paginated<Element>>{
+    func paginate(for req:Request, sortFields:[String:String],defaultSort:String,findQuery:MongoKittenQuery? = nil) -> EventLoopFuture<Paginated<Element>>{
         //extract "page" and "per" parameters
         
         //page info
@@ -56,7 +56,6 @@ extension MappedCursor  where Element:Content {
         }else {
             sortBy = sortFields[defaultSort]!
         }
-        
         
         return self.collection.count(findQuery).flatMap{ count in
             let pageData = PageData(per: perPage, total: count)

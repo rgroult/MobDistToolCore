@@ -6,14 +6,14 @@
 //
 
 import Foundation
-//import JWT
-import JWTAuth
+import JWT
+//import JWTAuth
 //import Authentication
 
 let tokenExpiration:TimeInterval = 3*60 // 3 mins
 let refreshTokenExpiration:TimeInterval = 45*60 // 45mins
 
-struct JWTTokenPayload: JWTAuthenticatable, JWTPayload, Equatable {
+struct JWTTokenPayload: JWTPayload /*JWTAuthenticatable, JWTPayload, Equatable*/ {
     
     init(_ id: String = UUID().uuidString, email:String) {
         self.id = id
@@ -35,7 +35,7 @@ struct JWTTokenPayload: JWTAuthenticatable, JWTPayload, Equatable {
 }
 
 
-struct JWTRefreshTokenPayload: JWTAuthenticatable, JWTPayload, Equatable {
+struct JWTRefreshTokenPayload: JWTPayload /*JWTAuthenticatable, JWTPayload, Equatable */{
     
     init(email:String) {
         self.expireAt = ExpirationClaim(value: Date().addingTimeInterval(refreshTokenExpiration))

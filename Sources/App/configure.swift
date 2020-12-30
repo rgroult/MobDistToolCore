@@ -35,19 +35,21 @@ public func configure(_ app: Application) throws {
         print("Unable to read configuration: \(error)")
         throw error
     }
-    
+    /*
     try MdtFileLogger.initialize(logDirectory: configuration.logDirectory, includeTimestamps: true)
     MdtFileLogger.shared.logLevel = configuration.logLevelAsLevel
     services.register(Logger.self) { container throws -> MdtFileLogger in
         return MdtFileLogger.shared
-    }
+    }*/
+    app.mdtLogger = try .init(logDirectory: configuration.logDirectory, includeTimestamps: true)
     
-    try MdtActivityFileLogger.initialize(logDirectory: configuration.logDirectory, includeTimestamps: true)
+  /*  try MdtActivityFileLogger.initialize(logDirectory: configuration.logDirectory, includeTimestamps: true)
     services.register(ActivityLogger.self) { container throws -> MdtActivityFileLogger in
         return MdtActivityFileLogger.sharedActivity
-    }
+    }*/
+    app.activityLogger = try .init(logDirectory: configuration.logDirectory, includeTimestamps: true)
     
-    
+//app.grouped(<#T##path: PathComponent...##PathComponent#>)
    // config.prefer(MdtFileLogger.self, for: Logger.self)
     //logger
     switch env {
