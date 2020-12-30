@@ -161,11 +161,26 @@ extension MdtConfiguration {
 //
 //    func register(_ services: inout Services) throws {}
 //}
-
+/*
 extension MdtConfiguration : ServiceType {
     public static func makeService(for container: Container) throws -> MdtConfiguration {
         throw "Unable to make empty service"
     }
     
     
+}*/
+
+struct MdtConfigurationKey: StorageKey {
+    typealias Value = MdtConfiguration
+}
+
+extension Application {
+    var mdtConfiguration: MdtConfiguration? {
+        get {
+            self.storage[MdtConfigurationKey.self]
+        }
+        set {
+            self.storage[MdtConfigurationKey.self] = newValue
+        }
+    }
 }

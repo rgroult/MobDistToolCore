@@ -7,7 +7,7 @@
 
 import Foundation
 import Vapor
-//import Meow
+import Meow
 
 struct ApplicationDto: Codable {
     var name:String
@@ -29,12 +29,12 @@ extension ApplicationDto {
         return ApplicationDto( name: "Awesome App", platform:.ios ,description:"",uuid:"dsfdsfdsf",adminUsers:[], availableBranches:["release","develop","master"],apiKey:"SQDQSDCQD",maxVersionSecretKey:"ùmlùlmjlsdlf", iconUrl:nil,createdDate: Date())
     }
 
-    static func create(from app:MDTApplication, content:ModelVisibility, in context: Context) -> Future<ApplicationDto>{
+    static func create(from app:MDTApplication, content:ModelVisibility, in context: Meow.MeowDatabase) -> EventLoopFuture<ApplicationDto>{
         var appDto = ApplicationDto(from: app, content:content)
         
         return app.adminUsers
-            .map { $0.resolve(in: context) }.flatten(on: context)
-            .and(findDistinctsBranches(app: app, into: context).mapIfError{ _ in []})
+            .map { $0.resolve(in: context) }.flatten(on: context.eventLoop)
+            .and(findDistinctsBranches(app: app, into: context).flatMapError{ _ in context.eventLoop.makeSucceededFuture([])}) //.mapIfError{ _ in []})
            // .and((app.permanentLinks ?? []).map{ $0.resolve(in: context)}.flatten(on: context).mapIfError{ _ in []})
            // .and( (app.permanentLinks ?? []).map{ retrievePermanentLink(app: app, with: $0, into: context)}.flatten(on: context).mapIfError{ _ in []})
            // .and((app.permanentLinks ?? []).map{ $0.resolve(in: context)}.flatten(on: context).mapIfError{ _ in []})

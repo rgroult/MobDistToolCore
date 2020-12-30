@@ -47,3 +47,25 @@ extension StorageServiceProtocol {
         return "\(storageIdentifier)://\(from)"
     }
 }
+
+struct StorageServiceProtocolKey: StorageKey {
+    typealias Value = StorageServiceProtocol
+}
+
+extension Application {
+    var storageService: StorageServiceProtocol? {
+        get {
+            self.storage[StorageServiceProtocolKey.self]
+        }
+        set {
+            self.storage[StorageServiceProtocolKey.self] = newValue
+        }
+    }
+}
+
+extension Request {
+    func storageService() throws -> StorageServiceProtocol  {
+        guard let service =  application.storageService else { throw Abort(.internalServerError) }
+        return service
+    }
+}

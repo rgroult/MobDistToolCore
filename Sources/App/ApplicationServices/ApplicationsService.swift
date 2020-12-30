@@ -61,7 +61,7 @@ extension ApplicationError:DebuggableError {
     }
 }
 
-func findApplications(platform:Platform? = nil ,into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?) throws -> (MongoKittenQuery,MappedCursor<FindQueryBuilder, MDTApplication>){
+func findApplications(platform:Platform? = nil ,into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?) -> (MongoKittenQuery,MappedCursor<FindQueryBuilder, MDTApplication>){
     let query:MongoKittenQuery
     let anotherQuery = additionalQuery ?? AndQuery(conditions: [])
     if let platorm = platform {
@@ -72,7 +72,7 @@ func findApplications(platform:Platform? = nil ,into context:Meow.MeowDatabase,a
     return (query,context.collection(for: MDTApplication.self).find(where:query.makeDocument())) //   .find(MDTApplication.self,where:query))
 }
 
-func findApplications(with uuids:[String], into context:Meow.MeowDatabase) throws  -> MappedCursor<FindQueryBuilder, MDTApplication>{
+func findApplications(with uuids:[String], into context:Meow.MeowDatabase)  -> MappedCursor<FindQueryBuilder, MDTApplication>{
     //ex : db.getCollection('feed').find({"_id" : {"$in" : [ObjectId("55880c251df42d0466919268"), ObjectId("55bf528e69b70ae79be35006")]}});
     let query: Document = ["uuid" : ["$in": uuids]]
     return context.collection(for: MDTApplication.self).find(where: query)
@@ -97,7 +97,7 @@ func findApplication(apiKey:String,into context:Meow.MeowDatabase) throws -> Eve
     // return context.findOne(MDTApplication.self, where:Query.valEquals(field: "apiKey", val: apiKey))
 }
 
-func findApplication(uuid:String,into context:Meow.MeowDatabase) throws -> EventLoopFuture<MDTApplication?> {
+func findApplication(uuid:String,into context:Meow.MeowDatabase) -> EventLoopFuture<MDTApplication?> {
     return context.collection(for: MDTApplication.self).findOne(where : "uuid" == uuid)
     // return context.findOne(MDTApplication.self, where: Query.valEquals(field: "uuid", val: uuid))
 }
@@ -108,14 +108,14 @@ func createApplication(name:String,platform:Platform,description:String,adminUse
             do {
                 guard app == nil else { throw ApplicationError.alreadyExist }
                 let createdApplication = MDTApplication(name: name, platform: platform, adminUser: adminUser, description: description)
-                return try updateApplicationWithParameters(from: createdApplication, name: name, description: description, maxVersionCheckEnabled: maxVersionCheckEnabled, iconData: base64Icon, into: context)
+                return updateApplicationWithParameters(from: createdApplication, name: name, description: description, maxVersionCheckEnabled: maxVersionCheckEnabled, iconData: base64Icon, into: context)
             } catch {
                 return context.eventLoop.makeFailedFuture(error)
             }
         })
 }
 
-func updateApplicationWithParameters(from app:MDTApplication, name:String?, description:String?, maxVersionCheckEnabled:Bool?, iconData:String?,into context:Meow.MeowDatabase)  throws -> EventLoopFuture<MDTApplication> {
+func updateApplicationWithParameters(from app:MDTApplication, name:String?, description:String?, maxVersionCheckEnabled:Bool?, iconData:String?,into context:Meow.MeowDatabase)  -> EventLoopFuture<MDTApplication> {
     if let name = name {
         app.name = name
     }
@@ -218,8 +218,8 @@ func generatePermanentLink(with info:MDTApplication.PermanentLink, into context:
  }
  }*/
 
-func retrievePermanentLinkArtifact(token:MDTApplication.TokenLink, into context:Meow.MeowDatabase) throws -> EventLoopFuture<(MDTApplication.TokenLink,Artifact?)> {
-    return try findApplication(uuid: token.link.applicationUuid, into: context)
+func retrievePermanentLinkArtifact(token:MDTApplication.TokenLink, into context:Meow.MeowDatabase) -> EventLoopFuture<(MDTApplication.TokenLink,Artifact?)> {
+    return findApplication(uuid: token.link.applicationUuid, into: context)
         .flatMap { app in
             do {
                 guard let app = app else { throw ApplicationError.notFound }
@@ -236,14 +236,14 @@ func retrievePermanentLinkArtifact(token:MDTApplication.TokenLink, into context:
 
 func retriveTokenInfo(tokenId:String, into context:Meow.MeowDatabase) throws -> EventLoopFuture<MDTApplication.TokenLink> {
     return findInfo(with: tokenId, into: context)
-        .map{ dict in
+        .flatMapThrowing { dict in
             guard let dict = dict else { throw ApplicationError.expiredLink}
             return dict
         }
-        .map { MDTApplication.TokenLink(tokenId: tokenId, link: try JSONDecoder().decode(MDTApplication.PermanentLink.self, from: try JSONSerialization.data(withJSONObject: $0, options: [])))}
+        .flatMapThrowing { MDTApplication.TokenLink(tokenId: tokenId, link: try JSONDecoder().decode(MDTApplication.PermanentLink.self, from: try JSONSerialization.data(withJSONObject: $0, options: [])))}
 }
 
-func retrievePermanentLinks(app:MDTApplication, into context:Meow.MeowDatabase) throws -> EventLoopFuture<[(MDTApplication.TokenLink,Artifact?)]> {
+func retrievePermanentLinks(app:MDTApplication, into context:Meow.MeowDatabase) -> EventLoopFuture<[(MDTApplication.TokenLink,Artifact?)]> {
     return (app.permanentLinks ?? []).map { $0.resolve(in: context) }.flatten(on: context.eventLoop)
         .flatMap { allTokens  in
             do {

@@ -52,46 +52,48 @@ final class ApplicationsController:BaseController {
     }
     
     func updateApplication(_ req: Request) throws -> EventLoopFuture<ApplicationDto> {
-        let appUuid = try req.parameters.next(String.self)
-        let context = try req.context()
+       // let appUuid = try req.parameters.next(String.self)
+        guard let appUuid = req.parameters.get("uuid") else { throw Abort(.badRequest)}
+        let context = req.meow
         let serverUrl = externalUrl
-        return try retrieveUser(from:req)
-            .flatMap{user -> Future<ApplicationDto> in
-                guard let user = user else { throw Abort(.unauthorized)}
-                return try req.content.decode(ApplicationUpdateDto.self)
-                    .flatMap({ applicationUpdateDto in
-                        return try findApplication(uuid: appUuid, into: context)
+        return try retrieveMandatoryUser(from:req)
+            .flatMap{user -> EventLoopFuture<ApplicationDto> in
+               // guard let user = user else { throw Abort(.unauthorized)}
+                do {
+                let applicationUpdateDto = try req.content.decode(ApplicationUpdateDto.self)
+                   // .flatMap({ applicationUpdateDto in
+                        return findApplication(uuid: appUuid, into: context)
                             .flatMap({ app  in
-                                guard let app = app else {throw ApplicationError.notFound }
+                                guard let app = app else { return req.eventLoop.makeFailedFuture(ApplicationError.notFound)}
+                                //{throw ApplicationError.notFound }
                                 //check if user is app admin
-                                guard app.isAdmin(user: user) else { throw ApplicationError.notAnApplicationAdministrator }
-                                return try App.updateApplicationWithParameters(from: app, name: applicationUpdateDto.name, description: applicationUpdateDto.description, maxVersionCheckEnabled: applicationUpdateDto.maxVersionCheckEnabled, iconData: applicationUpdateDto.base64IconData, into: context)
+                                guard app.isAdmin(user: user) else { return req.eventLoop.makeFailedFuture(ApplicationError.notAnApplicationAdministrator)}
+                                //{ throw ApplicationError.notAnApplicationAdministrator }
+                                return App.updateApplicationWithParameters(from: app, name: applicationUpdateDto.name, description: applicationUpdateDto.description, maxVersionCheckEnabled: applicationUpdateDto.maxVersionCheckEnabled, iconData: applicationUpdateDto.base64IconData, into: context)
                                 .flatMap {ApplicationDto.create(from: $0, content: .full, in : context)}
                                 .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
                                 .do({ [weak self] dto in self?.track(event: .UpdateApp(app: app, user: user), for: req)})
-                                
-                              /*  App.updateApplication(from: app, with: applicationUpdateDto)
-                                return saveApplication(app: app, into: context)
-                                    .flatMap {ApplicationDto.create(from: $0, content: .full, in : context)}
-                                    .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
-                                    .do({ [weak self] dto in self?.track(event: .UpdateApp(app: app, user: user), for: req)})*/
                             })
-                    })
+                }
+                catch {
+                    return req.eventLoop.makeFailedFuture(error)
+                }
         }
     }
     
     func iconApplication(_ req: Request) throws -> EventLoopFuture<ImageDto> {
-        let appUuid = try req.parameters.next(String.self)
-        let context = try req.context()
-        return try findApplication(uuid: appUuid, into: context)
-            .flatMap{ app -> Future<ImageDto> in
-                guard let base64 = app?.base64IconData else { throw ApplicationError.iconNotFound }
+        guard let appUuid = req.parameters.get("uuid") else { throw Abort(.badRequest)}
+        let meow = req.meow
+        return findApplication(uuid: appUuid, into: meow)
+            .flatMap{ app -> EventLoopFuture<ImageDto> in
+                guard let base64 = app?.base64IconData else { return req.eventLoop.makeFailedFuture(ApplicationError.iconNotFound)}
+               // { throw ApplicationError.iconNotFound }
                 return ImageDto.create(for: req, base64Image: base64)
-                    .map{ image -> ImageDto in
+                    .flatMapThrowing{ image -> ImageDto in
                         guard let image = image else {
                             //invalid icon format, erase it
                             if let app = app {
-                                _ = try updateApplicationWithParameters(from: app, name: nil, description: nil, maxVersionCheckEnabled: nil, iconData: "", into: context)
+                                _ = updateApplicationWithParameters(from: app, name: nil, description: nil, maxVersionCheckEnabled: nil, iconData: "", into: meow)
                             }
                             throw ApplicationError.invalidIconFormat}
                         return image
@@ -112,9 +114,10 @@ final class ApplicationsController:BaseController {
         }
         return try retrieveMandatoryUser(from:req)
             .flatMap{[weak self]user in
-                guard let `self` = self else { throw Abort(.internalServerError)}
-                let context = try req.context()
-                let (queryUse,appFounds) = try findApplications(platform: platformFilter, into: context,additionalQuery:self.extractSearch(from: req, searchField: "name"))
+                guard let `self` = self else { return req.eventLoop.makeFailedFuture(Abort(.internalServerError))}
+                //{ throw Abort(.internalServerError)}
+                let meow = req.meow
+                let (queryUse,appFounds) =  App.findApplications(platform: platformFilter, into: meow,additionalQuery:self.extractSearch(from: req, searchField: "name"))
                 return appFounds.map(transform: {self.generateSummaryDto(from:$0)})
                 //return appFounds.map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
                     .paginate(for: req, sortFields: self.sortFields,defaultSort: "created", findQuery: queryUse)
@@ -128,25 +131,25 @@ final class ApplicationsController:BaseController {
         return ApplicationSummaryDto(from: app).setIconUrl(url: app.generateIconUrl(externalUrl: externalUrl))
     }
     
-    func applicationsFavorites(_ req: Request) throws -> Future<[ApplicationSummaryDto]> {
+    func applicationsFavorites(_ req: Request) throws -> EventLoopFuture<[ApplicationSummaryDto]> {
         let serverUrl = externalUrl
         return try retrieveMandatoryUser(from:req)
             .flatMap{user in
                 // guard let `self` = self else { throw Abort(.internalServerError)}
-                let context = try req.context()
-                return try findApplications(with: UserDto.generateFavorites(from: user.favoritesApplicationsUUID), into: context)
+                let meow = req.meow
+                return findApplications(with: UserDto.generateFavorites(from: user.favoritesApplicationsUUID), into: meow)
                     .map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
-                    .getAllResults()
+                    .allResults()
         }
     }
     
     private func retrieveUserAndApp(_ req: Request, appUuid:String,needToBeAdmin:Bool) throws -> EventLoopFuture<(User,MDTApplication)> {
-        let context = try req.context()
-        return try retrieveUser(from:req)
+        let meow = req.meow
+        return try retrieveMandatoryUser(from:req)
             .flatMap{user in
-                guard let user = user else { throw Abort(.unauthorized)}
-                return try findApplication(uuid: appUuid, into: context)
-                    .map({ app  in
+               // guard let user = user else { throw Abort(.unauthorized)}
+                return  findApplication(uuid: appUuid, into: meow)
+                    .flatMapThrowing({ app  in
                         guard let app = app else {throw ApplicationError.notFound }
                         if needToBeAdmin {
                             guard app.isAdmin(user: user) else { throw ApplicationError.notAnApplicationAdministrator }
@@ -163,13 +166,14 @@ final class ApplicationsController:BaseController {
     
     //GET /<uuid>/link
     func applicationPermanentLinks(_ req: Request) throws -> EventLoopFuture<[PermanentLinkDto]> {
-        let appUuid = try req.parameters.next(String.self)
+      //  let appUuid = try req.parameters.next(String.self)
+        guard let appUuid = req.parameters.get("uuid") else { throw Abort(.badRequest)}
         
         return try retrieveUserAndApp(req, appUuid: appUuid, needToBeAdmin: true)
             .flatMap { (user, app) in
-                let context = try req.context()
-                return try retrievePermanentLinks(app: app, into: context)
-                    .map{ permanentLinkInfoList throws -> [PermanentLinkDto] in
+                let meow = req.meow
+                return retrievePermanentLinks(app: app, into: meow)
+                    .flatMapThrowing{ permanentLinkInfoList throws -> [PermanentLinkDto] in
                         return try permanentLinkInfoList.map {[weak self] permanentLinkInfo throws in
                             guard let `self` = self else { throw Abort(.internalServerError)}
                             let  (token, artifact)  = permanentLinkInfo
@@ -178,34 +182,35 @@ final class ApplicationsController:BaseController {
                         }
                 }
         }
-        
     }
     
     //POST /<uuid>/link
     func createApplicationPermanentLink(_ req: Request) throws -> EventLoopFuture<PermanentLinkDto> {
-        let appUuid = try req.parameters.next(String.self)
+        guard let appUuid = req.parameters.get("uuid") else { throw Abort(.badRequest)}
+        let linkCreateDto = try req.content.decode(PermanentLinkCreateDto.self)
         
         return try retrieveUserAndApp(req, appUuid: appUuid, needToBeAdmin: true)
             .flatMap { (user, app) in
-                let context = try req.context()
-                return try req.content.decode(PermanentLinkCreateDto.self)
-                    .flatMap{ linkCreateDto in
-                        let link = MDTApplication.PermanentLink(applicationUuid: appUuid, branch: linkCreateDto.branch, artifactName: linkCreateDto.artifactName, validity: linkCreateDto.daysValidity)
-                        return try App.generatePermanentLink(with: link, into: context)
-                            .flatMap{ tokenInfo in
-                                let tokenLink = MDTApplication.TokenLink(tokenId: tokenInfo.uuid, application: app, link: link)
-                                //throw "not implemented"
-                                
-                                return try retrievePermanentLinkArtifact(token: tokenLink, into: context )
-                                    .map { [weak self] permanentLinkInfo throws in
-                                        guard let `self` = self else { throw Abort(.internalServerError)}
-                                        let  (token, artifact)  = permanentLinkInfo
-                                        return try self.generatePermanentLink(token: token, artifact: artifact, platform: app.platform)
+                let meow = req.meow
+                let link = MDTApplication.PermanentLink(applicationUuid: appUuid, branch: linkCreateDto.branch, artifactName: linkCreateDto.artifactName, validity: linkCreateDto.daysValidity)
+                do {
+                    return  try App.generatePermanentLink(with: link, into: meow)
+                        .flatMap{ tokenInfo in
+                            let tokenLink = MDTApplication.TokenLink(tokenId: tokenInfo.uuid, application: app, link: link)
+                            //throw "not implemented"
+                            
+                            return retrievePermanentLinkArtifact(token: tokenLink, into: meow )
+                                .flatMapThrowing { [weak self] permanentLinkInfo throws in
+                                    guard let `self` = self else { throw Abort(.internalServerError)}
+                                    let  (token, artifact)  = permanentLinkInfo
+                                    return try self.generatePermanentLink(token: token, artifact: artifact, platform: app.platform)
                                 }
                         }
-                        
                 }
-        }
+                catch {
+                    return req.eventLoop.makeFailedFuture(error)
+                }
+            }
     }
     
     //DELETE /<uuid>/link
@@ -222,16 +227,17 @@ final class ApplicationsController:BaseController {
     func installPermanentLink(_ req: Request) throws -> EventLoopFuture<Response> {
         let reqToken = try req.query.get(String.self, at: "token")
         let installType = try req.query.get(InstallType.self, at: "install")
-        let context = try req.context()
+        let meow = req.meow
         
-        return try retriveTokenInfo(tokenId: reqToken, into: context)
-            .flatMap{try retrievePermanentLinkArtifact(token: $0, into: context)}
+        return try retriveTokenInfo(tokenId: reqToken, into: meow)
+            .flatMap{retrievePermanentLinkArtifact(token: $0, into: meow)}
             .flatMap({ (tokenLink, artifact) in
+                do {
                 guard let app = tokenLink.application else { throw ApplicationError.notFound }
                 guard let artifact = artifact else { throw ArtifactError.notFound }
-                let config = try req.make(MdtConfiguration.self)
+                let config = req.application.mdtConfiguration //try req.make(MdtConfiguration.self)
                 
-                return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact.uuid, application: app, config: config, into: context)
+                return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact.uuid, application: app, config: config, into: meow)
                     .map{ dwInfo -> Response in
                         let installUrl:String
                         switch installType{
@@ -242,6 +248,10 @@ final class ApplicationsController:BaseController {
                         }
                         return req.redirect(to: installUrl)
                 }
+            }
+            catch {
+                return req.eventLoop.makeFailedFuture(error)
+            }
             })
     }
     
@@ -260,22 +270,24 @@ final class ApplicationsController:BaseController {
     }
     
     func applicationDetail(_ req: Request) throws -> EventLoopFuture<ApplicationDto> {
-        let appUuid = try req.parameters.next(String.self)
+       // let appUuid = try req.parameters.next(String.self)
+        guard let appUuid = req.parameters.get("uuid") else { throw Abort(.badRequest)}
         let serverUrl = externalUrl
-        return try retrieveUser(from:req)
+        return try retrieveMandatoryUser(from:req)
             .flatMap{user in
-                guard let user = user else { throw Abort(.unauthorized)}
-                let context = try req.context()
-                return try findApplication(uuid: appUuid, into: context)
+              //  guard let user = user else { throw Abort(.unauthorized)}
+                let meow = req.meow
+                return findApplication(uuid: appUuid, into: meow)
                     .flatMap({app in
-                        guard let app = app else { throw ApplicationError.notFound }
+                        guard let app = app else { return req.eventLoop.makeFailedFuture(ApplicationError.notFound)}
+                        //{ throw ApplicationError.notFound }
                         //  guard let `self` = self else { throw Abort(.internalServerError)}
                         
                         let isAdminForApp = app.isAdmin(user: user)
                         //find permanent links
                         // let permanentLinks:Future<[PermanentLinkDto]?> = isAdminForApp ? req.eventLoop.future(nil) : try self.applicationPermanentLinks(req, application: app)
                         
-                        return ApplicationDto.create(from: app, content:isAdminForApp ? .full : .light , in : context)
+                        return ApplicationDto.create(from: app, content:isAdminForApp ? .full : .light , in : meow)
                             .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
                         
                     })}
@@ -283,13 +295,14 @@ final class ApplicationsController:BaseController {
     
     // @ApiMethod(method: 'DELETE', path: 'app/{appId}')
     func deleteApplication(_ req: Request) throws -> EventLoopFuture<MessageDto> {
+        let storage = try req.storageService()
         return try findApplicationInfo(from:req, needAdmin: true)
             .flatMap({ info  in
-                let context = try req.context()
-                let storage = try req.make(StorageServiceProtocol.self)
-                return App.deleteAllArtifacts(app: info.app, storage: storage, into: context)
+                let meow = req.meow
+                //  try req.make(StorageServiceProtocol.self)
+                return App.deleteAllArtifacts(app: info.app, storage: storage, into: meow)
                     .flatMap{
-                        return App.deleteApplication(by: info.app, into: context).map {
+                        return App.deleteApplication(by: info.app, into: meow).map {
                             return MessageDto(message: "Application Deleted")
                         }
                 }
@@ -299,33 +312,45 @@ final class ApplicationsController:BaseController {
     
     //@ApiMethod(method: 'PUT', path: 'app/{appId}/adminUsers/{email}')
     func addAdminUser(_ req: Request) throws -> EventLoopFuture<MessageDto> {
+        guard let email = req.parameters.get("email") else { throw Abort(.badRequest)}
         return try findApplicationInfo(from:req, needAdmin: true)
             .flatMap({ info  in
-                let email = try req.parameters.next(String.self)
-                let context = try req.context()
+                //  let email = try req.parameters.next(String.self)
+                let meow = req.meow
                 //find user with email
-                return try findUser(by: email, into: context)
+                return findUser(by: email, into: meow)
                     .flatMap({user in
-                        guard let user = user else { throw ApplicationError.invalidApplicationAdministrator }
-                        return try info.app.addAdmin(user: user, into: context)
-                            .map{ _ in MessageDto(message: "Admin User Added") }
+                        do {
+                            guard let user = user else { throw ApplicationError.invalidApplicationAdministrator }
+                            return try info.app.addAdmin(user: user, into: meow)
+                                .map{ _ in MessageDto(message: "Admin User Added") }
+                        }
+                        catch {
+                            return req.eventLoop.makeFailedFuture(error)
+                        }
                     })
             })
     }
     
     //@ApiMethod(method: 'DELETE', path: 'app/{appId}/adminUsers/{email}')
     func deleteAdminUser(_ req: Request) throws -> EventLoopFuture<MessageDto> {
+        guard let email = req.parameters.get("email") else { throw Abort(.badRequest)}
         return try findApplicationInfo(from:req, needAdmin: true)
             .flatMap({ info  in
-                let email = try req.parameters.next(String.self)
-                let context = try req.context()
+                //let email = try req.parameters.next(String.self)
+                let meow = req.meow
                 //find user with email
-                return try findUser(by: email, into: context)
+                return  findUser(by: email, into: meow)
                     .flatMap({user in
-                        guard let user = user else { throw ApplicationError.invalidApplicationAdministrator }
-                        guard info.app.adminUsers.count > 1 else { throw ApplicationError.deleteLastApplicationAdministrator }
-                        return try info.app.removeAdmin(user: user, into: context)
-                            .map{ _ in MessageDto(message: "Admin User Added") }
+                        do {
+                            guard let user = user else { throw ApplicationError.invalidApplicationAdministrator }
+                            guard info.app.adminUsers.count > 1 else { throw ApplicationError.deleteLastApplicationAdministrator }
+                            return try info.app.removeAdmin(user: user, into: meow)
+                                .map{ _ in MessageDto(message: "Admin User Added") }
+                        }
+                        catch {
+                            return req.eventLoop.makeFailedFuture(error)
+                        }
                     })
             })
     }
