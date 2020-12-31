@@ -355,51 +355,59 @@ final class ApplicationsController:BaseController {
             })
     }
     func getApplicationVersionsPagined(_ req: Request,uuid:String,selectedBranch:String?,isLatestBranch:Bool = false) throws -> EventLoopFuture<Paginated<ArtifactDto>> {
-        let context = try req.context()
+        let meow = req.meow
         
-        return try retrieveUser(from:req)
+        return try retrieveMandatoryUser(from:req)
             .flatMap{ user in
-                guard let _ = user else { throw Abort(.unauthorized)}
-                return try App.findApplication(uuid: uuid, into: context)
+                return App.findApplication(uuid: uuid, into: meow)
         }
-        .flatMap{ (app:MDTApplication?) -> Future<Paginated<ArtifactDto>>  in
+        .flatMap{ (app:MDTApplication?) -> EventLoopFuture<Paginated<ArtifactDto>>  in
+            do {
             guard let app = app else { throw ApplicationError.notFound }
             let excludedBranch = isLatestBranch ? nil : lastVersionBranchName
-            let (queryUse,artifactsFound) = try findArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, into: context)
+            let (queryUse,artifactsFound) = try findArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, into: meow)
             return artifactsFound
                 .map(transform: {ArtifactDto(from: $0)})
                 .paginate(for: req, sortFields: self.artifactsSortFields,defaultSort: "created",findQuery: queryUse)
         }
+        catch {
+            return req.eventLoop.makeFailedFuture(error)
+        }
+        }
     }
     
     func getApplicationVersionsGroupedAndPagined(_ req: Request,uuid:String,selectedBranch:String?,isLatestBranch:Bool = false) throws -> EventLoopFuture<Paginated<ArtifactGroupedDto>> {
-        let context = try req.context()
+        let meow = req.meow
         
-        return try retrieveUser(from:req)
+        return try retrieveMandatoryUser(from:req)
             .flatMap{ user in
-                guard let _ = user else { throw Abort(.unauthorized)}
-                return try App.findApplication(uuid: uuid, into: context)
+                return App.findApplication(uuid: uuid, into: meow)
         }
-        .flatMap{ (app:MDTApplication?) -> Future<Paginated<ArtifactGroupedDto>>  in
+        .flatMap{ (app:MDTApplication?) -> EventLoopFuture<Paginated<ArtifactGroupedDto>>  in
+            do {
             guard let app = app else { throw ApplicationError.notFound }
             let excludedBranch = isLatestBranch ? nil : lastVersionBranchName
-            let (artifactsFound,countFuture) = try findAndSortArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, into: context)
+            let (artifactsFound,countFuture) = try findAndSortArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, into: meow)
             return artifactsFound
                 .map(transform: {ArtifactGroupedDto(from: $0)})
                 .paginate(for: req, sortFields: self.groupedArtifactsSortFields,defaultSort: "created",countQuery:countFuture)
+        }
+        catch {
+            return req.eventLoop.makeFailedFuture(error)
+        }
         }
     }
     
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions/grouped?branch=master')
     func getApplicationVersionsGrouped(_ req: Request) throws -> EventLoopFuture<Paginated<ArtifactGroupedDto>> {
-        let uuid = try req.parameters.next(String.self)
+        guard let uuid = req.parameters.get("uuid") else { throw Abort(.badRequest)}
         let selectedBranch = try? req.query.get(String.self, at: "branch")
         return try getApplicationVersionsGroupedAndPagined(req, uuid: uuid, selectedBranch: selectedBranch, isLatestBranch: false)
     }
     
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions?branch=master')
     func getApplicationVersions(_ req: Request) throws -> EventLoopFuture<Paginated<ArtifactDto>> {
-        let uuid = try req.parameters.next(String.self)
+        guard let uuid = req.parameters.get("uuid") else { throw Abort(.badRequest)}
         //parameters
         // let pageIndex = try? req.query.get(Int.self, at: "pageIndex")
         // let limitPerPage = try? req.query.get(Int.self, at: "limitPerPage")
@@ -410,14 +418,14 @@ final class ApplicationsController:BaseController {
     
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions/last')
     func getApplicationLastVersions(_ req: Request) throws -> EventLoopFuture<Paginated<ArtifactDto>> {
-        let uuid = try req.parameters.next(String.self)
+        guard let uuid = req.parameters.get("uuid") else { throw Abort(.badRequest)}
         
         return try getApplicationVersionsPagined(req, uuid: uuid, selectedBranch: lastVersionBranchName, isLatestBranch: true)
         //return try getApplicationVersionsWithParameters(req, uuid:uuid , pageIndex: nil, limitPerPage: nil, selectedBranch: lastVersionBranchName, isLatestBranch: true)
     }
     //@ApiMethod(method: 'GET', path: 'app/{appId}/versions/last/grouped')
     func getApplicationLastVersionsGrouped(_ req: Request) throws -> EventLoopFuture<Paginated<ArtifactGroupedDto>> {
-        let uuid = try req.parameters.next(String.self)
+        guard let uuid = req.parameters.get("uuid") else { throw Abort(.badRequest)}
         
         return try getApplicationVersionsGroupedAndPagined(req, uuid: uuid, selectedBranch: lastVersionBranchName, isLatestBranch: true)
         //return try getApplicationVersionsWithParameters(req, uuid:uuid , pageIndex: nil, limitPerPage: nil, selectedBranch: lastVersionBranchName, isLatestBranch: true)
@@ -427,9 +435,9 @@ final class ApplicationsController:BaseController {
     //{appUUID}/maxversion/{branch}/{name}
     func maxVersion(_ req: Request) throws -> EventLoopFuture<MaxVersionArtifactDto> {
         let maxVersionAvailbaleDelay = 30.0 //30 Secs
-        let appId = try req.parameters.next(String.self)
-        let branch = try req.parameters.next(String.self)
-        let name = try req.parameters.next(String.self)
+        guard let appId = req.parameters.get("uuid") else { throw Abort(.badRequest)}
+        guard let branch = req.parameters.get("branch") else { throw Abort(.badRequest)}
+        guard let name = req.parameters.get("name") else { throw Abort(.badRequest)}
         
         let ts = try req.query.get(TimeInterval.self, at: "ts")
         let tsStr = try req.query.get(String.self, at: "ts")
@@ -438,7 +446,7 @@ final class ApplicationsController:BaseController {
         let trackingContext = ActivityContext()
         
         guard branch != lastVersionBranchName else {
-            let error = VaporError(identifier: "invalidArgument", reason: "branch value is incorrect")
+            let error = Abort(.badRequest, reason: "branch value is incorrect", identifier: "invalidArgument")
             track(event: .MaxVersion(context:trackingContext,appUuid:appId,failedError:error), for: req)
             throw  error }
         
@@ -449,24 +457,31 @@ final class ApplicationsController:BaseController {
             track(event: .MaxVersion(context:trackingContext,appUuid:appId,failedError:error), for: req)
             throw error
         }
-        let context = try req.context()
-        return try App.findApplication(uuid: appId, into: context)
+        let meow = req.meow
+        return App.findApplication(uuid: appId, into: meow)
             .flatMap{ app  in
-                guard let app = app, let secretKey  = app.maxVersionSecretKey else { throw ApplicationError.disabledFeature}
+                guard let app = app, let secretKey  = app.maxVersionSecretKey else { return req.eventLoop.makeFailedFuture(ApplicationError.disabledFeature)}
+                //{ throw ApplicationError.disabledFeature}
                 trackingContext.application = app
                 //compute Hash
                 let stringToHash = "ts=\(tsStr)&branch=\(branch)&hash=\(secretKey)"
                 let generatedHash = stringToHash.md5()
-                guard generatedHash == hash else { throw ApplicationError.invalidSignature}
-                return searchMaxArtifact(app: app, branch: branch, artifactName: name, into: context)
+                guard generatedHash == hash else { return req.eventLoop.makeFailedFuture(ApplicationError.invalidSignature)}
+                //{ throw ApplicationError.invalidSignature}
+                return searchMaxArtifact(app: app, branch: branch, artifactName: name, into: meow)
                     .flatMap {[weak self] artifact in
+                        do {
                         guard let `self` = self else { throw ApplicationError.unknownPlatform }
                         guard let artifact = artifact else {throw ArtifactError.notFound }
-                        let config = try req.make(MdtConfiguration.self)
-                        return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact._id.hexString, application: app, config: config, into: context)
+                            let config =  req.application.mdtConfiguration // try req.make(MdtConfiguration.self)
+                        return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact._id.hexString, application: app, config: config, into: meow)
                             .map { dwInfo in
                                 return MaxVersionArtifactDto(branch: branch, name: name, version: artifact.version, info: dwInfo)
                         }
+                    }
+                    catch {
+                        return req.eventLoop.makeFailedFuture(error)
+                    }
                         
                 }
         }.do({[weak self]  dto in self?.track(event: .MaxVersion(context:trackingContext, appUuid: appId, failedError: nil), for: req)})
@@ -474,18 +489,22 @@ final class ApplicationsController:BaseController {
     }
     
     private func findApplicationInfo(from req: Request, needAdmin:Bool) throws -> EventLoopFuture<(user:User,app:MDTApplication)>{
-        let uuid = try req.parameters.next(String.self)
-        return try retrieveUser(from:req)
+        guard let uuid = req.parameters.get("uuid") else { throw Abort(.badRequest)}
+        return try retrieveMandatoryUser(from:req)
             .flatMap({ user in
-                guard let user = user else { throw Abort(.unauthorized)}
-                let context = try req.context()
-                return try App.findApplication(uuid: uuid, into: context)
+                let meow = req.meow
+                return App.findApplication(uuid: uuid, into: meow)
                     .map({ app in
+                        do {
                         guard let app = app else { throw ApplicationError.notFound }
                         if needAdmin {
                             guard app.isAdmin(user: user)  else { throw Abort(ApplicationError.notAnApplicationAdministrator)}
                         }
                         return (user,app)
+                    }
+                    catch {
+                        return req.eventLoop.makeFailedFuture(error)
+                    }
                     })
             })
     }
