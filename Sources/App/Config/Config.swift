@@ -175,9 +175,13 @@ struct MdtConfigurationKey: StorageKey {
 }
 
 extension Application {
+    func appConfiguration() throws -> MdtConfiguration {
+        guard let config = mdtConfiguration else { throw Abort(.internalServerError) }
+        return config
+    }
     var mdtConfiguration: MdtConfiguration? {
         get {
-            self.storage[MdtConfigurationKey.self]
+            return self.storage[MdtConfigurationKey.self]
         }
         set {
             self.storage[MdtConfigurationKey.self] = newValue

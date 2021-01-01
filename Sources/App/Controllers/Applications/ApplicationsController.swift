@@ -494,17 +494,12 @@ final class ApplicationsController:BaseController {
             .flatMap({ user in
                 let meow = req.meow
                 return App.findApplication(uuid: uuid, into: meow)
-                    .map({ app in
-                        do {
+                    .flatMapThrowing({ app in
                         guard let app = app else { throw ApplicationError.notFound }
                         if needAdmin {
-                            guard app.isAdmin(user: user)  else { throw Abort(ApplicationError.notAnApplicationAdministrator)}
+                            guard app.isAdmin(user: user)  else { throw ApplicationError.notAnApplicationAdministrator}
                         }
                         return (user,app)
-                    }
-                    catch {
-                        return req.eventLoop.makeFailedFuture(error)
-                    }
                     })
             })
     }

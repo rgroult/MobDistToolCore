@@ -38,17 +38,17 @@ extension ArtifactError:DebuggableError {
     }
 }
 
-func findArtifact(byUUID:String,into context:Meow.MeowDatabase) throws -> EventLoopFuture<Artifact?> {
+func findArtifact(byUUID:String,into context:Meow.MeowDatabase) -> EventLoopFuture<Artifact?> {
     //return context.findOne(Artifact.self, where: Query.valEquals(field: "uuid", val: byUUID))
     return  context.collection(for: Artifact.self).findOne(where: "uuid" == byUUID)
 }
 
-func findArtifact(byID:String,into context:Meow.MeowDatabase) throws -> EventLoopFuture<Artifact?> {
+func findArtifact(byID:String,into context:Meow.MeowDatabase) -> EventLoopFuture<Artifact?> {
   //  return context.findOne(Artifact.self, where: Query.valEquals(field: "_id", val: try ObjectId(byID)))
     return  context.collection(for: Artifact.self).findOne(where: "_id" == (try ObjectId.make(from: byID)))
 }
 
-func findArtifact(app:MDTApplication,branch:String,version:String,name:String,into context:Meow.MeowDatabase) throws -> EventLoopFuture<Artifact?>{
+func findArtifact(app:MDTApplication,branch:String,version:String,name:String,into context:Meow.MeowDatabase) -> EventLoopFuture<Artifact?>{
    // let userQuery: Document = ["$eq": app._id]
   /*  let query = Query.and([//Query.custom(userQuery),
                             Query.valEquals(field: "application", val: app._id),
@@ -192,8 +192,8 @@ func searchMaxArtifact(app:MDTApplication,branch:String,artifactName:String,into
 }
 
 
-func isArtifactAlreadyExist(app:MDTApplication,branch:String,version:String,name:String,into context:Meow.MeowDatabase) throws -> EventLoopFuture<Bool>{
-    return try findArtifact(app: app, branch: branch, version: version, name: name, into: context)
+func isArtifactAlreadyExist(app:MDTApplication,branch:String,version:String,name:String,into context:Meow.MeowDatabase) -> EventLoopFuture<Bool>{
+    return findArtifact(app: app, branch: branch, version: version, name: name, into: context)
         .map{$0 != nil }
 }
 
@@ -276,7 +276,7 @@ func storeArtifactData(data:Data,filename:String,contentType:String?, artifact:A
         })
 }
 
-func saveArtifact(artifact:Artifact,into context:Meow.MeowDatabase) throws -> EventLoopFuture<Artifact>{
+func saveArtifact(artifact:Artifact,into context:Meow.MeowDatabase) -> EventLoopFuture<Artifact>{
     return artifact.save(in: context).map{_ in artifact}
 }
 
