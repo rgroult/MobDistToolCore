@@ -292,8 +292,9 @@ final class ArtifactsController:BaseController  {
                         let metaData = artifact.retrieveMetaData()
                         guard let bundleID = metaData?["CFBundleIdentifier"], let bundleVersion = metaData?["CFBundleVersion"] else { throw  Abort(.serviceUnavailable, reason: "Artifact infos not found for ID") }
                         let manifest = ArtifactsController.generateiOsManifest(absoluteIpaUrl: downloadUrl, bundleIdentifier: bundleID, bundleVersion: bundleVersion, ApplicationName: name, ApplicationIconUrl: iconUrl)
-                        return HTML("")
-                        return req.response(manifest, as: .xml)
+                        let response = Response( body: .init(string: manifest))
+                        response.headers.contentType = .xml
+                        return response
                 }
         }
     }
@@ -302,44 +303,50 @@ final class ArtifactsController:BaseController  {
     func installArtifactPage(_ req: Request) throws -> EventLoopFuture<Response> {
         let reqToken = try? req.query.get(String.self, at: "token")
         guard let token = reqToken else { throw  Abort(.badRequest, reason: "Token not found") }
-        let context = try req.context()
-        let config = try req.make(MdtConfiguration.self)
+        let meow = req.meow
+        let config = try req.application.appConfiguration()//  try req.make(MdtConfiguration.self)
         
-        return findInfo(with: token, into: context)
-            .flatMap{ info -> Future<Artifact?> in
-                guard let info = info, let id = info[ArtifactTokenKeys.artifactId.rawValue] else { throw  Abort(.badRequest, reason: "Token not found or expired") }
-                return try findArtifact(byID: id, into: context)
+        return findInfo(with: token, into: meow)
+            .flatMap{ info -> EventLoopFuture<Artifact?> in
+                guard let info = info, let id = info[ArtifactTokenKeys.artifactId.rawValue] else { return req.eventLoop.makeFailedFuture (Abort(.badRequest, reason: "Token not found or expired")) }
+                return findArtifact(byID: id, into: meow)
         }
         .flatMap{ artifact in
-            guard let artifact = artifact else { throw  Abort(.serviceUnavailable, reason: "Token content Invalid") }
-            return artifact.application.resolve(in: context)
+            guard let artifact = artifact else { return req.eventLoop.makeFailedFuture (  Abort(.serviceUnavailable, reason: "Token content Invalid")) }
+            return artifact.application.resolve(in: meow)
                 .map({ app in
                     let installUrl = self.generateDirectInstallUrl(serverExternalUrl: config.serverUrl.absoluteString, token: token, platform: app.platform)
-                    return req.response(generateInstallPage(for: artifact, into: app,installUrl: installUrl), as:.html)
+                    let response = Response(body:.init(string: generateInstallPage(for: artifact, into: app,installUrl: installUrl)))
+                    response.headers.contentType = .html
+                    return response
+                    //req.response(generateInstallPage(for: artifact, into: app,installUrl: installUrl), as:.html)
                 })
         }
     }
     
     //GET /file?token='
-    func downloadArtifactFile(_ req: Request) throws -> Future<Response> {
+    func downloadArtifactFile(_ req: Request) throws -> EventLoopFuture<Response> {
         let reqToken = try? req.query.get(String.self, at: "token")
         guard let token = reqToken else { throw  Abort(.badRequest, reason: "Token not found") }
-        let context = try req.context()
-        let storage = try req.make(StorageServiceProtocol.self)
+        let meow = req.meow
+        let storage = try req.storageService()// req.make(StorageServiceProtocol.self)
         
-        return findInfo(with: token, into: context)
-            .flatMap{ info -> Future<Artifact?> in
-                guard let info = info, let id = info[ArtifactTokenKeys.artifactId.rawValue] else { throw  Abort(.badRequest, reason: "Token not found or expired") }
-                return try findArtifact(byID: id, into: context)
+        return findInfo(with: token, into: meow)
+            .flatMap{ info -> EventLoopFuture<Artifact?> in
+                guard let info = info, let id = info[ArtifactTokenKeys.artifactId.rawValue] else { return req.eventLoop.makeFailedFuture( Abort(.badRequest, reason: "Token not found or expired")) }
+                return findArtifact(byID: id, into: meow)
                 // throw "not implemented"
         }
         .flatMap{ artifact in
-            guard let artifact = artifact else { throw  Abort(.serviceUnavailable, reason: "Artifact not found for ID") }
-            return try retrieveArtifactData(artifact: artifact, storage: storage, into: context)
-                //return req.response("not implemented", as: .xml)
+            guard let artifact = artifact else { return req.eventLoop.makeFailedFuture(Abort(.serviceUnavailable, reason: "Artifact not found for ID")) }
+            let artifactData:EventLoopFuture<StoredResult>
+            do {
+                artifactData = try retrieveArtifactData(artifact: artifact, storage: storage, into: meow)
+            }catch {
+                return req.eventLoop.makeFailedFuture(error)
+            }
+            return artifactData
                 .flatMap{ storeResult  in
-                    /*  guard let mediaType = MediaType.parse(artifact.contentType ?? "") else { throw  Abort(.internalServerError, reason: "invalid Artifact mime Type") }
-                     response.http.contentType = mediaType*/
                     let response:Response
                     switch storeResult {
                     case .asFile(let file):
@@ -348,18 +355,7 @@ final class ArtifactsController:BaseController  {
                     //TO DO
                     case .asUrI(let url):
                         if url.scheme == "file"{ //local files
-//                            return try req.fileio().read(file: url.path).map{ data in
-//                                let response = req.response()
-//
-//                                response.http =  HTTPResponse()
-//                                response.http.body = data.convertToHTTPBody()
-//                                let contentType = MediaType.parse(artifact.contentType?.data(using: .utf8) ?? Data()) ?? MediaType.binary
-//                                response.http.contentType = contentType
-//                                response.http.headers.add(name: "Content-Disposition", value: "attachment; filename=\(artifact.filename ?? "file")")
-//                                return response
-//                            }
-
-                           return try req.streamFile(at: url.path)
+                           return req.fileio.streamFile(at: url.path)
                                 .map { response in
                                     let contentType = MediaType.parse(artifact.contentType?.data(using: .utf8) ?? Data()) ?? MediaType.binary
                                     response.http.contentType = contentType
@@ -378,11 +374,6 @@ final class ArtifactsController:BaseController  {
                         }
                     }
                     return req.eventLoop.newSucceededFuture(result: response)
-                    //let response = req.response()
-                    
-                    //response.http.body =
-                    //   return req.response("not implemented", as: .xml)
-                    //throw "not implemented"
             }
         }
         
