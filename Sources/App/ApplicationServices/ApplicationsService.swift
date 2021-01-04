@@ -79,7 +79,7 @@ func findApplications(with uuids:[String], into context:Meow.MeowDatabase)  -> M
 }
 
 
-func findApplications(for user:User, into context:Meow.MeowDatabase) throws  -> MappedCursor<FindQueryBuilder, MDTApplication>{
+func findApplications(for user:User, into context:Meow.MeowDatabase)  -> MappedCursor<FindQueryBuilder, MDTApplication>{
     //let query: Document = ["$eq": user._id]
     //find( { "adminUsers": { $elemMatch: { "$eq": user._id} } } )
     let query:Document = ["adminUsers" : ["$elemMatch" : ["$eq": user._id]]]

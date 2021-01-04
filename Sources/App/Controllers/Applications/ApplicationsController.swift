@@ -113,7 +113,7 @@ final class ApplicationsController:BaseController {
             platformFilter = nil
         }
         return try retrieveMandatoryUser(from:req)
-            .flatMap{[weak self]user in
+            .flatMap{[weak self]user -> EventLoopFuture<Paginated<ApplicationSummaryDto>> in
                 guard let `self` = self else { return req.eventLoop.makeFailedFuture(Abort(.internalServerError))}
                 //{ throw Abort(.internalServerError)}
                 let meow = req.meow

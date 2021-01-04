@@ -44,7 +44,7 @@ extension UserError: DebuggableError {
     }
 }
 
-func allUsers(into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?) throws -> MappedCursor<FindQueryBuilder, User>{
+func allUsers(into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?) -> MappedCursor<FindQueryBuilder, User>{
     return context.collection(for: User.self).find(where: additionalQuery?.makeDocument() ?? [])
 }
 
@@ -162,13 +162,13 @@ func deleteUser(withEmail email:String, into context:Meow.MeowDatabase) throws -
         })
 }
 
-func delete(user:User, into context:Meow.MeowDatabase) throws -> EventLoopFuture<Void>{
+func delete(user:User, into context:Meow.MeowDatabase) -> EventLoopFuture<Void>{
     return context.collection(for: User.self).deleteOne(where: "_id" == user._id)
         .map{ _ in return }
     //return context.delete(user)
 }
 
-func resetUser(user:User,newPassword:String,into context:Meow.MeowDatabase) throws -> EventLoopFuture<User>{
+func resetUser(user:User,newPassword:String,into context:Meow.MeowDatabase) -> EventLoopFuture<User>{
     user.password = generateHashedPassword(plain: newPassword,salt: user.salt)
     //generate activation token
     user.activationToken = UUID().uuidString

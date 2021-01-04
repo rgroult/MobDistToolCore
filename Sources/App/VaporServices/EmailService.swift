@@ -65,32 +65,37 @@ final class EmailService {
     }
     
     
-    func send(email:Mail, into container:Container)throws -> Future<Void> {
+    func send(email:Mail, into eventLoop:EventLoop) -> EventLoopFuture<Void> {
         if fakeMode {
-            return container.eventLoop.newSucceededFuture(result: ())
+            return eventLoop.makeSucceededFuture(())
         }
         let smtp = self.smtp
-        let result = container.eventLoop.newPromise(of: Void.self)
+        let result = eventLoop.makePromise(of: Void.self)
         emailQueue.async {
             smtp.send(email, completion: { error in
                 if let error = error {
-                    result.fail(error: error)
+                    result.fail(error)
                 }else {
-                    result.succeed()
+                    result.succeed(())
                 }
             })
         }
         return result.futureResult
     }
     
-    func sendValidationEmail(for createdUser:User, into container:Container) throws -> Future<Void> {
+    func sendValidationEmail(for createdUser:User, into eventLoop:EventLoop) -> EventLoopFuture<Void> {
        /* guard let activationToken = createdUser.activationToken else { throw "Activation Token not found on createdUser"}
         guard var activationLink = URLComponents(url: externalUrl.appendingPathComponent(confirmationPath), resolvingAgainstBaseURL: false) else { throw "Unable to generate activation Url"}
         
         activationLink.queryItems = [URLQueryItem(name: "token", value: activationToken)]
         guard let absoluteActivationUrl = activationLink.url?.absoluteString else { throw "Unable to generate activation absolute Url"}
         */
-        let html = try generateMailContent(with: generateAbsoluteActivationUrl(for: createdUser))
+        let html:String
+        do {
+           html = try generateMailContent(with: generateAbsoluteActivationUrl(for: createdUser))
+        }catch {
+            return eventLoop.makeFailedFuture(error)
+        }
         let htmlContent = Attachment(htmlContent: html)
         let userMail = Mail.User(email: createdUser.email)
         
@@ -101,7 +106,7 @@ final class EmailService {
             attachments:[htmlContent]
         )
         
-        return try send(email: mail, into: container)
+        return send(email: mail, into: eventLoop)
     }
     
     private func generateAbsoluteActivationUrl(for user:User) throws ->String {
@@ -132,7 +137,7 @@ final class EmailService {
         """
     }
     
-    func sendResetEmail(for user:User,newPassword:String, into container:Container) throws -> Future<Void> {
+    func sendResetEmail(for user:User,newPassword:String, into eventLoop:EventLoop)  -> EventLoopFuture<Void> {
         let html = try generateResetPasswordMailContent(with: generateAbsoluteActivationUrl(for: user),newPassword:newPassword)
         let htmlContent = Attachment(htmlContent: html)
         let userMail = Mail.User(email: user.email)
@@ -144,7 +149,7 @@ final class EmailService {
             attachments:[htmlContent]
         )
         
-        return try send(email: mail, into: container)
+        return send(email: mail, into: eventLoop)
     }
     
     private func generateResetPasswordMailContent(with absoluteActivationUrl:String,newPassword:String) -> String {
@@ -167,9 +172,28 @@ final class EmailService {
         """
     }
 }
-
+/*
 extension EmailService : ServiceType {
     static func makeService(for container: Container) throws -> EmailService {
         throw "Unable to make empty service"
+    }
+}*/
+
+struct EmailServiceKey: StorageKey {
+    typealias Value = EmailService
+}
+
+extension Application {
+    var emailService: EmailService? {
+        get {
+            self.storage[EmailServiceKey.self]
+        }
+        set {
+            self.storage[EmailServiceKey.self] = newValue
+        }
+    }
+    func appEmailService() throws -> EmailService {
+        guard let service = emailService else { throw Abort(.internalServerError) }
+        return service
     }
 }
