@@ -89,7 +89,7 @@ extension ArtifactsController {
         //protected
         //GET {artifact uuid}/download
         let protectedArtifactRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
-        protectedArtifactRouter.get("",String.parameter,PathComponent.constant("download"), use:self.downloadInfo)
+        protectedArtifactRouter.get([.parameter("uuid"),.constant("download")], use:self.downloadInfo)
     }
 }
 

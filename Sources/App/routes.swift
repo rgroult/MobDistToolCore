@@ -5,9 +5,9 @@ import JWTAuth
 //import JWT
 
 /// Register your application's routes here.
-public func routes(_ baseRouter: Router, authenticateMiddleware:Middleware,config:MdtConfiguration) throws {
+public func routes(_ baseRouter: RoutesBuilder, authenticateMiddleware:Middleware,config:MdtConfiguration) throws {
     
-    let router = baseRouter.grouped(BaseController.basePathPrefix)
+    let router = baseRouter.grouped("\(BaseController.basePathPrefix)")
     
     // Create builder.
     let openAPIBuilder = OpenAPIBuilder(

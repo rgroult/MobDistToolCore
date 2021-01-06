@@ -8,7 +8,7 @@ import JWT
 let signerIdentifier = "mdt_jwt_signer"
 
 // Use this to avoid SEGFAULT on heavy load on HMAC : create new JWRTSigner every time, no reuse
-struct MDT_Signers:JWTSignerRepository {
+/*struct MDT_Signers:JWTSignerRepository {
     let key:String
     
     public func signer() -> JWTSigner {
@@ -20,7 +20,7 @@ struct MDT_Signers:JWTSignerRepository {
     static func makeService(for container: Container) throws -> Self {
         throw "Unable to make empty service"
     }
-}
+}*/
 
 /// Called before your application initializes.
 public func configure(_ app: Application) throws {
@@ -35,6 +35,7 @@ public func configure(_ app: Application) throws {
         print("Unable to read configuration: \(error)")
         throw error
     }
+    app.mdtConfiguration = configuration
     /*
     try MdtFileLogger.initialize(logDirectory: configuration.logDirectory, includeTimestamps: true)
     MdtFileLogger.shared.logLevel = configuration.logLevelAsLevel
@@ -57,19 +58,21 @@ public func configure(_ app: Application) throws {
     default: config.prefer(PrintLogger.self, for: Logger.self)
     }
     
-    services.register(configuration)
+    //services.register(configuration)
     
     //email if needed
     if !configuration.automaticRegistration {
         guard let smtpConfig = configuration.smtpConfiguration else { throw "Smtp configuration needed if automaticRegistration is disabled" }
         let emailService = try EmailService(with: smtpConfig, externalServerUrl: configuration.serverUrl)
-        services.register(emailService)
+        //services.register(emailService)
+        app.emailService = emailService
     }
     
     //Meow
-    let meow = try MeowProvider(uri: configuration.mongoServerUrl.absoluteString,lazy: true)
-    try services.register(meow)
-    
+    try app.initializeMongoDB(connectionString: configuration.mongoServerUrl.absoluteString)
+  //  let meow = try MeowProvider(uri: configuration.mongoServerUrl.absoluteString,lazy: true)
+   // try services.register(meow)
+  /*
     // register Authentication provider
     let jwtProvider = JWTAuthProvider()
    // try! services.register(AuthenticationProvider())
@@ -84,6 +87,10 @@ public func configure(_ app: Application) throws {
     let mdtSigners = MDT_Signers(key: configuration.jwtSecretToken)
     services.register(mdtSigners)
     let authenticationMiddleware = JWTAuthenticationMiddleware(JWTTokenPayload.self,signers:mdtSigners)
+    */
+    app.jwt.signers.use(.hs256(key: configuration.jwtSecretToken))
+    //// Create a route group that requires the TestUser JWT.
+    //let secure = app.grouped(TestUser.authenticator(), TestUser.guardMiddleware())
     
     //Storage
     let storageProtocol:StorageServiceProtocol
@@ -92,20 +99,23 @@ public func configure(_ app: Application) throws {
         //need to register instance of concrete class, not interface
         let storage = LocalStorageService()
         storageProtocol = storage
-        services.register(storage, as: StorageServiceProtocol.self)
+        app.storageService = storage
+        //services.register(storage, as: StorageServiceProtocol.self)
         
     case .testing:
         //need to register instance of concrete class, not interface
         let storage = TestingStorageService()
         storageProtocol = storage
-        services.register(storage, as: StorageServiceProtocol.self)
+        app.storageService = storage
+        //services.register(storage, as: StorageServiceProtocol.self)
     }
         //initialization
     if !(try storageProtocol.initializeStore(with: configuration.storageConfiguration ?? [:])) {
         throw "Unable to initialize storage"
     }
     // Register routes to the router
-    let router = EngineRouter.default()
+    //let router = EngineRouter.default()
+    let router = app.routes
     //basePath
     BaseController.basePathPrefix = configuration.pathPrefix
     //let baseRouter = router.grouped(configuration.basePathPrefix)

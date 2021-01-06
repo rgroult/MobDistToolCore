@@ -137,7 +137,7 @@ final class EmailService {
         """
     }
     
-    func sendResetEmail(for user:User,newPassword:String, into eventLoop:EventLoop)  -> EventLoopFuture<Void> {
+    func sendResetEmail(for user:User,newPassword:String, into eventLoop:EventLoop) throws -> EventLoopFuture<Void> {
         let html = try generateResetPasswordMailContent(with: generateAbsoluteActivationUrl(for: user),newPassword:newPassword)
         let htmlContent = Attachment(htmlContent: html)
         let userMail = Mail.User(email: user.email)

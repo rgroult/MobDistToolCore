@@ -141,7 +141,7 @@ func updateApplicationWithParameters(from app:MDTApplication, name:String?, desc
     let savedClosure = { return app.save(in: context).map{ _ in app }}
     if let base64Icon = base64Icon {
         return ImageDto.create(within: context.eventLoop, base64Image: base64Icon)
-            .map{icon in
+            .flatMapThrowing{icon in
                 guard let _ = icon  else { throw ApplicationError.invalidIconFormat }
                 app.base64IconData = base64Icon
             }

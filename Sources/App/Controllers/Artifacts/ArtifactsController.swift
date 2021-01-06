@@ -351,43 +351,46 @@ final class ArtifactsController:BaseController  {
                     switch storeResult {
                     case .asFile(let file):
                         ()
-                        response = req.response("not implemented", as: .xml)
+                        response = Response( body: .init(string: "not implemented"))
+                        response.headers.contentType = .xml
                     //TO DO
                     case .asUrI(let url):
                         if url.scheme == "file"{ //local files
-                           return req.fileio.streamFile(at: url.path)
-                                .map { response in
-                                    let contentType = MediaType.parse(artifact.contentType?.data(using: .utf8) ?? Data()) ?? MediaType.binary
-                                    response.http.contentType = contentType
+                            response = req.fileio.streamFile(at: url.path)
+                          //      .map { response in
+                            response.headers.replaceOrAdd(name: .contentType, value: artifact.contentType ?? HTTPMediaType.binary.serialize())
+                                    //response.http.contentType = contentType
                                     // remove transfer encoding header and replace to "real" content length
                                     // to be able to have progresss download OTA
-                                    response.http.headers.remove(name: .transferEncoding)
-                                    response.http.headers.replaceOrAdd(name: "Content-Disposition", value: "attachment; filename=\(artifact.filename ?? "file")")
+                                    response.headers.remove(name: .transferEncoding)
+                                    response.headers.replaceOrAdd(name: "Content-Disposition", value: "attachment; filename=\(artifact.filename ?? "file")")
                                     if let contentSize =  artifact.size {
-                                         response.http.headers.replaceOrAdd(name: .contentLength, value: "\(contentSize)")
+                                         response.headers.replaceOrAdd(name: .contentLength, value: "\(contentSize)")
                                     }
-                                    return response
-                            }
+                                   // return response
+                           // }
                         }else {
                             //redirect to it
                             response = req.redirect(to: url.absoluteString)
                         }
                     }
-                    return req.eventLoop.newSucceededFuture(result: response)
+                    return req.eventLoop.makeSucceededFuture(response)
             }
         }
         
     }
     
-    func deploy(_ req: Request) throws -> Future<Response> {
-        let apiKey = try req.parameters.next(String.self)
-        let context = try req.context()
-        let config = try req.make(MdtConfiguration.self)
-        return try findApplication(apiKey: apiKey, into: context).map{app in
+    func deploy(_ req: Request) throws -> EventLoopFuture<Response> {
+        guard let apiKey = req.parameters.get("apiKey") else { throw Abort(.badRequest)}
+        let meow = req.meow
+        let config = try req.application.appConfiguration()
+        return try findApplication(apiKey: apiKey, into: meow).flatMapThrowing{app in
             guard let _ = app else { throw ApplicationError.notFound }
             let baseUrl = config.serverUrl.appendingPathComponent(config.pathPrefix)
             let scriptCode = pythonDeployScript(apiKey: apiKey, exernalServerHost: baseUrl.absoluteString)
-            return req.response(scriptCode,as: MediaType(type: "application", subType: "x-python-code"))
+            let response = Response(body:.init(string: scriptCode))
+            response.headers.contentType = HTTPMediaType(type: "application", subType: "x-python-code")
+            return response
         }
     }
 }

@@ -113,8 +113,13 @@ final class UsersController:BaseController {
                             .flatMap({ user in
                                 let message = MessageDto(message:"Your account has been temporarily desactivated, a email with new password and activation link was sent")
                                 //sent reset email
-                                
-                                return emailService.sendResetEmail(for: user, newPassword: newPassword, into: req.eventLoop)
+                                let sendEmailFuture:EventLoopFuture<Void>
+                                do {
+                                    sendEmailFuture = try emailService.sendResetEmail(for: user, newPassword: newPassword, into: req.eventLoop)
+                                }catch {
+                                    return req.eventLoop.makeFailedFuture(error)
+                                }
+                                return sendEmailFuture
                                     .map { message}
                                     .do({ [weak self] dto in self?.track(event: .ForgotPassword(email: user.email), for: req)})
                             })
@@ -213,12 +218,10 @@ final class UsersController:BaseController {
             .flatMap({_ -> EventLoopFuture<Paginated<UserDto>> in
                // guard let `self` = self else { throw Abort(.internalServerError)}
                 let meow = req.meow
-                let test = allUsers(into: meow, additionalQuery: searchQuery)
-                let cursor/*:MappedCursor<MappedCursor<FindQueryBuilder, User>,UserDto>*/ = allUsers(into: meow, additionalQuery:searchQuery )
-                    
-                    //.map{UserDto.create(from: $0, content: .full)}
+                let cursor:MappedCursor<MappedCursor<FindQueryBuilder, User>,UserDto> = allUsers(into: meow, additionalQuery:searchQuery )
+                   .map{UserDto.create(from: $0, content: .full)}
                 
-                let result/*:EventLoopFuture<Paginated<UserDto>>*/ = cursor.paginate(for: req, sortFields: self.sortFields,defaultSort: "email", findQuery: searchQuery)
+                let result:EventLoopFuture<Paginated<UserDto>> = cursor.paginate(for: req, sortFields: self.sortFields,defaultSort: "email", findQuery: searchQuery)
                 return result
             })
     }

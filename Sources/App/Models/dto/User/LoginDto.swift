@@ -6,7 +6,7 @@
 //
 
 import Foundation
-//import MeowVapor
+import Vapor
 
 public struct LoginReqDto: Codable {
     var email:String
@@ -21,7 +21,7 @@ public struct LoginRespDto: Codable {
 }
 
 /// Allows `Todo` to be encoded to and decoded from HTTP messages.
-//extension LoginRespDto: Content { }
+extension LoginRespDto: Content { }
 
 public struct RefreshTokenDto: Codable {
     var email:String

@@ -235,9 +235,9 @@ final class ApplicationsController:BaseController {
                 do {
                 guard let app = tokenLink.application else { throw ApplicationError.notFound }
                 guard let artifact = artifact else { throw ArtifactError.notFound }
-                let config = req.application.mdtConfiguration //try req.make(MdtConfiguration.self)
+                let config = try req.application.appConfiguration() //try req.make(MdtConfiguration.self)
                 
-                return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact.uuid, application: app, config: config, into: meow)
+                return self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact.uuid, application: app, config: config, into: meow)
                     .map{ dwInfo -> Response in
                         let installUrl:String
                         switch installType{
@@ -473,8 +473,8 @@ final class ApplicationsController:BaseController {
                         do {
                         guard let `self` = self else { throw ApplicationError.unknownPlatform }
                         guard let artifact = artifact else {throw ArtifactError.notFound }
-                            let config =  req.application.mdtConfiguration // try req.make(MdtConfiguration.self)
-                        return try self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact._id.hexString, application: app, config: config, into: meow)
+                            let config = try req.application.appConfiguration() // try req.make(MdtConfiguration.self)
+                        return self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact._id.hexString, application: app, config: config, into: meow)
                             .map { dwInfo in
                                 return MaxVersionArtifactDto(branch: branch, name: name, version: artifact.version, info: dwInfo)
                         }

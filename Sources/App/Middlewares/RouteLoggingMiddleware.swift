@@ -8,7 +8,7 @@
 import Vapor
 
 final class RouteLoggingMiddleware: Middleware {
-    func respond(to request: Request, chainingTo next: Responder) throws -> Future<Response> {
+    func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
         let logger = try request.make(Logger.self)
         
         let method = request.http.method
@@ -37,9 +37,9 @@ final class RouteLoggingMiddleware: Middleware {
         }
     }
 }
-
+/*
 extension RouteLoggingMiddleware: ServiceType {
     public static func makeService(for worker: Container) throws -> RouteLoggingMiddleware{
         return .init()
     }
-}
+}*/

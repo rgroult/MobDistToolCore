@@ -43,9 +43,16 @@ func findArtifact(byUUID:String,into context:Meow.MeowDatabase) -> EventLoopFutu
     return  context.collection(for: Artifact.self).findOne(where: "uuid" == byUUID)
 }
 
-func findArtifact(byID:String,into context:Meow.MeowDatabase) -> EventLoopFuture<Artifact?> {
+func findArtifact(byID:String,into meow:Meow.MeowDatabase) -> EventLoopFuture<Artifact?> {
+    let objectID:ObjectId
+    do {
+        objectID = try ObjectId.make(from: byID)
+        return  meow.collection(for: Artifact.self).findOne(where: "_id" == objectID)
+    }catch {
+        return meow.eventLoop.makeFailedFuture(error)
+    }
   //  return context.findOne(Artifact.self, where: Query.valEquals(field: "_id", val: try ObjectId(byID)))
-    return  context.collection(for: Artifact.self).findOne(where: "_id" == (try ObjectId.make(from: byID)))
+    
 }
 
 func findArtifact(app:MDTApplication,branch:String,version:String,name:String,into context:Meow.MeowDatabase) -> EventLoopFuture<Artifact?>{

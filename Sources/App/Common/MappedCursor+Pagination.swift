@@ -7,6 +7,7 @@
 
 import MongoKitten
 import Vapor
+import Meow
 //import FluentKit
 
 let MappedCursorDefaultPageSize:UInt = 50
@@ -24,7 +25,7 @@ enum PaginationSort:String {
     }
 }
 
-extension MappedCursor  where Element:Content {
+extension MappedCursor  where Element:Content, Element:Model {
     
     func paginate(for req:Request, sortFields:[String:String],defaultSort:String,countQuery:EventLoopFuture<Int>) -> EventLoopFuture<Paginated<Element>>{
         return countQuery.flatMap{ count in
@@ -57,12 +58,19 @@ extension MappedCursor  where Element:Content {
             sortBy = sortFields[defaultSort]!
         }
         
-        return self.collection.count(findQuery).flatMap{ count in
-            let pageData = PageData(per: perPage, total: count)
-            let maxPosition = max(0, Int(ceil(-1.0 + Double(count) / Double(perPage))))
-            let position = Position(current: Int(page), max: maxPosition /* Int(ceil(Double(count) / Double(perPage)) - 1) *//* start indice is 0 */)
-            return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)
+        let collection = req.meow.collection(for: Element.self)
+        let query = findQuery?.makeDocument() ?? []
+        
+        return collection.count(where: query).flatMap{ totalCount in
+            let pageData = PageData(per: perPage, total: totalCount)
+            let maxPosition = max(0, Int(ceil(-1.0 + Double(totalCount) / Double(perPage))))
+            let position = Position(current: Int(page), max: maxPosition)
+            return collection.raw.find(query).sort(sortOrder.convert(field: sortBy))
+                .skip(skipItems).limit(perPage)
                 .getPageResult(position,pageData)
+            //return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)
+              //  .getPageResult(position,pageData)
+            // return context.collection(for: Artifact.self).raw.find(query).sort(Sort([("sortIdentifier", SortOrder.descending)])).firstResult().decode(Artifact.self)
         }
     }
     
@@ -94,14 +102,33 @@ extension MappedCursor  where Element:Content {
         let pageData = PageData(per: perPage, total: totalCount)
         let maxPosition = max(0, Int(ceil(-1.0 + Double(totalCount) / Double(perPage))))
         let position = Position(current: page, max: maxPosition /* Int(ceil(Double(count) / Double(perPage)) - 1) *//* start indice is 0 */)
-        return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)
+       // return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)
+         //   .getPageResult(position,pageData)
+        
+        let collection = req.meow.collection(for: Element.self)
+        let query:Document = []
+        return collection.raw.find(query).sort(sortOrder.convert(field: sortBy))
+            .skip(skipItems).limit(perPage)
             .getPageResult(position,pageData)
     }
-    
+    /*
     func getPageResult(_ position:Position,_ pageData:PageData) -> EventLoopFuture<Paginated<Element>>{
-        return getAllResults().map({ arrayOfResult in
+        return allResults().map({ arrayOfResult in
             let pageInfo = PageInfo(position: position, data: pageData)
             return Paginated (page: pageInfo, data: arrayOfResult)
+        })
+    }*/
+}
+extension FindQueryBuilder {
+    func getPageResult<Element:Content>(_ position:Position,_ pageData:PageData) -> EventLoopFuture<Paginated<Element>>{
+        return allResults().flatMapThrowing({ arrayOfResult in
+            let decoder = BSONDecoder()
+            let elts = try arrayOfResult.map { document in
+                return try decoder.decode(Element.self, from: document)
+            }
+                
+            let pageInfo = PageInfo(position: position, data: pageData)
+            return Paginated (page: pageInfo, data: elts)
         })
     }
 }

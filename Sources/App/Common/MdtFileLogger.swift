@@ -7,15 +7,17 @@
 
 import Vapor
 
-extension LogLevel:CaseIterable{
-    public static var allCases:[LogLevel] = [.verbose,.debug,.info, .warning,.error,.fatal]
+public typealias LogLevel = Logging.Logger.Level
+
+extension LogLevel{
+   // public static var allCases:[LogLevel] = [.verbose,.debug,.info, .warning,.error,.fatal]
     
     var index:Int {
         return LogLevel.allCases.firstIndex(where: { "\($0)" == "\(self)" } ) ?? 0
     }
 }
 
-public class MdtFileLogger: Logger {
+public class MdtFileLogger/*: Logger */{
     static var shared:MdtFileLogger!
 
     var logLevel = LogLevel.debug
@@ -118,8 +120,8 @@ public class MdtFileLogger: Logger {
         }
     }
     
-    func loadTailLines(nbreOfLines:Int, inside eventLoop:EventLoop) -> Future<String>{
-        let result = eventLoop.newPromise(of: String.self)
+    func loadTailLines(nbreOfLines:Int, inside eventLoop:EventLoop) -> EventLoopFuture<String>{
+        let result = eventLoop.makePromise(of: String.self)
         fileQueue.async {[weak self] in
             do {
                // guard let fd = self?.logFileHandle?.fileDescriptor else { throw "Unable to open File" }
@@ -135,16 +137,16 @@ public class MdtFileLogger: Logger {
                 let data = readHandle.readDataToEndOfFile()
                 guard let stringValue =  String(data: data, encoding: .utf8) else { throw "Invalid file content" }
                 //stringValue = stringValue.components(separatedBy: .newlines).joined(separator: "\n ")
-                result.succeed(result: stringValue)
+                result.succeed(stringValue)
                 readHandle.closeFile()
             }catch {
-                result.fail(error: error)
+                result.fail(error)
             }
         }
         return  result.futureResult
     }
 }
-
+/*
 extension MdtFileLogger: ServiceType {
     
     public static var serviceSupports: [Any.Type] {
@@ -155,4 +157,4 @@ extension MdtFileLogger: ServiceType {
         throw "Unable to make empty service"
     }
     
-}
+}*/
