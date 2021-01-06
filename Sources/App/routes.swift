@@ -39,7 +39,7 @@ public func routes(_ baseRouter: RoutesBuilder, authenticateMiddleware:Middlewar
     ))
     
     
-    let protected = router.grouped(authenticateMiddleware,JWTTokenPayload.guardAuthMiddleware())
+    let protected = router.grouped(authenticateMiddleware,JWTTokenPayload.guardMiddleware())
     
     let appsController = ApplicationsController(apiBuilder: openAPIBuilder,externalUrl: config.serverUrl)
     appsController.configure(with: router, and: protected)

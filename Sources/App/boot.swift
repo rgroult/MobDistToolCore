@@ -5,7 +5,7 @@ import Vapor
 public func boot(_ app: Application) throws {
     // Your code here
    // let context:Meow.Context = try app.make()
-    let config = app.appConfiguration() //try app.make(MdtConfiguration.self)
+    let config = try app.appConfiguration() //try app.make(MdtConfiguration.self)
     let logger:Logger = try app.make()
     try app.make(Future<Meow.Context>.self)
         .whenSuccess{ context in

@@ -7,13 +7,14 @@
 
 import Foundation
 import JWT
+import Vapor
 //import JWTAuth
 //import Authentication
 
 let tokenExpiration:TimeInterval = 3*60 // 3 mins
 let refreshTokenExpiration:TimeInterval = 45*60 // 45mins
 
-struct JWTTokenPayload: JWTPayload /*JWTAuthenticatable, JWTPayload, Equatable*/ {
+struct JWTTokenPayload: JWTPayload ,Authenticatable/*, JWTPayload, Equatable*/ {
     
     init(_ id: String = UUID().uuidString, email:String) {
         self.id = id

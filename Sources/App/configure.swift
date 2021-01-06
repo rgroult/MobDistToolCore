@@ -53,10 +53,10 @@ public func configure(_ app: Application) throws {
 //app.grouped(<#T##path: PathComponent...##PathComponent#>)
    // config.prefer(MdtFileLogger.self, for: Logger.self)
     //logger
-    switch env {
+  /*  switch env {
     case .production: config.prefer(MdtFileLogger.self, for: Logger.self)
     default: config.prefer(PrintLogger.self, for: Logger.self)
-    }
+    }*/
     
     //services.register(configuration)
     
@@ -119,32 +119,37 @@ public func configure(_ app: Application) throws {
     //basePath
     BaseController.basePathPrefix = configuration.pathPrefix
     //let baseRouter = router.grouped(configuration.basePathPrefix)
-    try routes(router,authenticateMiddleware: authenticationMiddleware,config:configuration)
-    services.register(router, as: Router.self)
-    services.register(RouteLoggingMiddleware.self)
+    try routes(router,authenticateMiddleware: JWTTokenPayload.authenticator(),config:configuration)
+   
+    app.middleware.use(RouteLoggingMiddleware())
+    app.middleware.use(FileMiddleware(publicDirectory: "Public"))
+    //services.register(router, as: Router.self)
+    //services.register(RouteLoggingMiddleware.self)
     
     // Register middleware
+    /*
     var middlewares = MiddlewareConfig() // Create _empty_ middleware config
     middlewares.use(RouteLoggingMiddleware.self) // logging requests
     /*if !env.isRelease {
          middlewares.use(RouteLoggingMiddleware.self) // logging requests
     }*/
     middlewares.use(FileMiddleware.self) // Serves files from `Public/` directory
-    
+    */
     
     //CORS
     let corsConfiguration = CORSMiddleware.Configuration(
         allowedOrigin: .all,
         allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
         allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, .userAgent, .accessControlAllowOrigin,
-                         HTTPHeaderName("x-mimetype"),HTTPHeaderName("x-sortidentifier"),HTTPHeaderName("x-metatags"),HTTPHeaderName("x-filename")]
+                         HTTPHeaders.Name("x-mimetype"),HTTPHeaders.Name("x-sortidentifier"),HTTPHeaders.Name("x-metatags"),HTTPHeaders.Name("x-filename")]
     )
     let corsMiddleware = CORSMiddleware(configuration: corsConfiguration)
-    middlewares.use(corsMiddleware)
+    app.middleware.use(corsMiddleware)
+    //middlewares.use(corsMiddleware)
     
-    middlewares.use(ErrorMiddleware.self) // Catches errors and converts to HTTP response
-
-    services.register(middlewares)
+    //middlewares.use(ErrorMiddleware.self) // Catches errors and converts to HTTP response
+    app.middleware.use(ErrorMiddleware.default(environment: app.environment))
+    //services.register(middlewares)
    
     //custom config
     app.http.server.configuration.port = configuration.serverListeningPort
