@@ -13,6 +13,7 @@ let package = Package(
         //.package(url: "https://github.com/IBM-Swift/LoggerAPI.git", .upToNextMinor(from: "1.8.0")),
         
        // .package(url: "https://github.com/vapor-community/pagination.git", .upToNextMinor(from: "1.0.9")),
+        .package(url: "https://github.com/vapor/fluent.git", .upToNextMajor(from: "4.0.0")),
 
         // 🔵 Swift ORM (queries, models, relations, etc) built on SQLite 3.
         //.package(url: "https://github.com/vapor/fluent-sqlite.git", from: "3.3.0"),
@@ -49,12 +50,12 @@ let package = Package(
     targets: [
         .target(name: "App", dependencies: ["SwiftSMTP","JWTAuth",
                                             .product(name: "Vapor", package: "vapor"),
-                                           // .product(name: "Fluent", package: "fluent"),
+                                            .product(name: "Fluent", package: "fluent"),
                                             .product(name: "JWT", package: "jwt"),
                                             .product(name: "Meow", package: "MongoKitten"),
                                             "MongoKitten","Swiftgger","CryptoSwift","zxcvbn"]),
         .target(name: "Run", dependencies: ["App"]),
-        .testTarget(name: "AppTests", dependencies: ["App"])
+       // .testTarget(name: "AppTests", dependencies: ["App"])
     ]
 )   
 

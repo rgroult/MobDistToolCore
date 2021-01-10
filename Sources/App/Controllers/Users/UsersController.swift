@@ -219,9 +219,9 @@ final class UsersController:BaseController {
                // guard let `self` = self else { throw Abort(.internalServerError)}
                 let meow = req.meow
                 let cursor:MappedCursor<MappedCursor<FindQueryBuilder, User>,UserDto> = allUsers(into: meow, additionalQuery:searchQuery )
-                   .map{UserDto.create(from: $0, content: .full)}
+                   .map{result -> UserDto in return UserDto.create(from: result, content: .full)}
                 
-                let result:EventLoopFuture<Paginated<UserDto>> = cursor.paginate(for: req, sortFields: self.sortFields,defaultSort: "email", findQuery: searchQuery)
+                let result:EventLoopFuture<Paginated<UserDto>> = cursor.paginate(for: req, model: User.self, sortFields: self.sortFields,defaultSort: "email", findQuery: searchQuery)
                 return result
             })
     }

@@ -27,13 +27,13 @@ enum PaginationSort:String {
 
 extension MappedCursor  where Element:Content/*, Element:Content*/ {
     
-    func paginate(for req:Request, sortFields:[String:String],defaultSort:String,countQuery:EventLoopFuture<Int>) -> EventLoopFuture<Paginated<Element>>{
+    func paginate<M: ReadableModel>(for req:Request, model:M.Type, sortFields:[String:String],defaultSort:String,countQuery:EventLoopFuture<Int>) -> EventLoopFuture<Paginated<Element>>{
         return countQuery.flatMap{ count in
-            self.paginate(for: req, sortFields: sortFields,defaultSort:defaultSort, totalCount: count)
+            self.paginate(for: req, model:model, sortFields: sortFields,defaultSort:defaultSort, totalCount: count)
         }
     }
     
-    func paginate(for req:Request, sortFields:[String:String],defaultSort:String,findQuery:MongoKittenQuery? = nil) -> EventLoopFuture<Paginated<Element>>{
+    func paginate<M: ReadableModel>(for req:Request, model:M.Type, sortFields:[String:String],defaultSort:String,findQuery:MongoKittenQuery? = nil) -> EventLoopFuture<Paginated<Element>>{
         //extract "page" and "per" parameters
         
         //page info
@@ -58,7 +58,7 @@ extension MappedCursor  where Element:Content/*, Element:Content*/ {
             sortBy = sortFields[defaultSort]!
         }
         
-        let collection = req.meow.collection(for: Element.self)
+        let collection = req.meow.collection(for: model)
         let query = findQuery?.makeDocument() ?? []
         
         return collection.count(where: query).flatMap{ totalCount in
@@ -74,7 +74,7 @@ extension MappedCursor  where Element:Content/*, Element:Content*/ {
         }
     }
     
-    private func paginate(for req:Request, sortFields:[String:String],defaultSort:String,totalCount:Int) -> EventLoopFuture<Paginated<Element>>{
+    private func paginate<M: ReadableModel>(for req:Request, model:M.Type, sortFields:[String:String],defaultSort:String,totalCount:Int) -> EventLoopFuture<Paginated<Element>>{
         //extract "page" and "per" parameters
         
         //page info
@@ -105,7 +105,7 @@ extension MappedCursor  where Element:Content/*, Element:Content*/ {
        // return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)
          //   .getPageResult(position,pageData)
         
-        let collection = req.meow.collection(for: Element.self)
+        let collection = req.meow.collection(for: model)
         let query:Document = []
         return collection.raw.find(query).sort(sortOrder.convert(field: sortBy))
             .skip(skipItems).limit(perPage)

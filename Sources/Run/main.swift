@@ -4,11 +4,11 @@ import Vapor
 
 var mdtApp:Application!
 func closeApp(){
-    try? mdtApp.runningServer?.close().wait()
+   /* try? mdtApp.runningServer?.close().wait()
        mdtApp.shutdownGracefully { error in
            guard let error = error else { return }
            print("Error on shutDown :\(error)")
-       }
+       }*/
 }
 
 signal(SIGINT) { signal in

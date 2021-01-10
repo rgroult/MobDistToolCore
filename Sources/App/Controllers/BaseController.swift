@@ -59,10 +59,11 @@ class BaseController {
         }
     }
     
-    func extractSearch(from req:Request,searchField:String)  throws -> Document? {
+    func extractSearch(from req:Request,searchField:String) -> MongoKittenQuery? {
         guard let searchValue = try? req.query.get(String.self, at: "searchby") else { return nil}
         let query: Document = [searchField : ["$regex": searchValue,"$options": "i"]]
-        return query //Query.custom(query)
+        return AndQuery(conditions: [query])
+       // return query //Query.custom(query)
     }
     
     func generatePaginationParameters(sortby:[String],searchByField:String?) ->  [APIParameter] {

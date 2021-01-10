@@ -120,7 +120,7 @@ final class ApplicationsController:BaseController {
                 let (queryUse,appFounds) =  App.findApplications(platform: platformFilter, into: meow,additionalQuery:self.extractSearch(from: req, searchField: "name"))
                 return appFounds.map(transform: {self.generateSummaryDto(from:$0)})
                 //return appFounds.map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
-                    .paginate(for: req, sortFields: self.sortFields,defaultSort: "created", findQuery: queryUse)
+                    .paginate(for: req, model:MDTApplication.self, sortFields: self.sortFields,defaultSort: "created", findQuery: queryUse)
                 /*return try findApplications(platform: platformFilter, into: context)
                  .map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
                  .getAllResults()*/
@@ -368,7 +368,7 @@ final class ApplicationsController:BaseController {
             let (queryUse,artifactsFound) = try findArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, into: meow)
             return artifactsFound
                 .map(transform: {ArtifactDto(from: $0)})
-                .paginate(for: req, sortFields: self.artifactsSortFields,defaultSort: "created",findQuery: queryUse)
+                .paginate(for: req, model: Artifact.self, sortFields: self.artifactsSortFields,defaultSort: "created",findQuery: queryUse)
         }
         catch {
             return req.eventLoop.makeFailedFuture(error)
@@ -390,7 +390,7 @@ final class ApplicationsController:BaseController {
             let (artifactsFound,countFuture) = try findAndSortArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, into: meow)
             return artifactsFound
                 .map(transform: {ArtifactGroupedDto(from: $0)})
-                .paginate(for: req, sortFields: self.groupedArtifactsSortFields,defaultSort: "created",countQuery:countFuture)
+                .paginate(for: req, model: MDTApplication.self, sortFields: self.groupedArtifactsSortFields,defaultSort: "created",countQuery:countFuture)
         }
         catch {
             return req.eventLoop.makeFailedFuture(error)
