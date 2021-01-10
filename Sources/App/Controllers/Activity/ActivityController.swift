@@ -31,20 +31,22 @@ final class ActivityController:BaseController {
     }
     
     func activity(_ req: Request) throws -> EventLoopFuture<MessageDto> {
+        let trackingService = try req.application.appActivityLogger()
         return try retrieveMandatoryAdminUser(from: req)
         .flatMap({_ in
             let lines = (try? req.query.get(Int.self, at: "lines")) ?? ActivityController.defaultLines
-            let trackingService = req.activityLogger//  try req.make(MdtActivityFileLogger.self)
+            //let trackingService = try req.make(MdtActivityFileLogger.self)
             return trackingService.loadTailLines(nbreOfLines: lines, inside: req.eventLoop)
                 .map{ MessageDto(message: $0)}
         })
     }
     
     func logs(_ req: Request) throws -> EventLoopFuture<MessageDto> {
+        let loggerService = try req.application.appFileLogger()
         return try retrieveMandatoryAdminUser(from: req)
         .flatMap({_ in
             let lines = (try? req.query.get(Int.self, at: "lines")) ?? ActivityController.defaultLines
-            let loggerService = req.mdtLogger//  try req.make(MdtFileLogger.self)
+            //let loggerService = try req.make(MdtFileLogger.self)
             return loggerService.loadTailLines(nbreOfLines: lines, inside: req.eventLoop)
                 .map{ MessageDto(message: $0)}
         })

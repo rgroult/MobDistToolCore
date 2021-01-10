@@ -14,7 +14,8 @@ func random(_ n: Int) -> String
     //let allowedCharacters = "!\"#'$%&()*+-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_$"
     
     var s = ""
-    let randomData = OSRandom().generateData(count: n)
+    let randomData:[UInt8] = Array.random(count: n)
+        //OSRandom().generateData(count: n)
     
     for byte in randomData {
         let r = Int(byte%UInt8(a.count))

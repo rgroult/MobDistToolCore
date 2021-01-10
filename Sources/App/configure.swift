@@ -29,7 +29,7 @@ public func configure(_ app: Application) throws {
     let configuration:MdtConfiguration
     do {
         print("Loading Config")
-        configuration = try MdtConfiguration.loadConfig(from: nil, from: app.environment)
+        configuration = try MdtConfiguration.loadConfig(from: nil, from: &app.environment)
         print("config: \(configuration)")
     }catch {
         print("Unable to read configuration: \(error)")

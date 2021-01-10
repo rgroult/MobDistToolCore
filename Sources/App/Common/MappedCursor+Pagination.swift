@@ -25,7 +25,7 @@ enum PaginationSort:String {
     }
 }
 
-extension MappedCursor  where Element:Content, Element:Model {
+extension MappedCursor  where Element:Content/*, Element:Content*/ {
     
     func paginate(for req:Request, sortFields:[String:String],defaultSort:String,countQuery:EventLoopFuture<Int>) -> EventLoopFuture<Paginated<Element>>{
         return countQuery.flatMap{ count in

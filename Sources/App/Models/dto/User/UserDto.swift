@@ -57,4 +57,4 @@ extension UserDto {
 extension UserDto: Content {}
 
 //for pagination
-//extension UserDto: Paginatable { }
+//extension UserDto: Content { }

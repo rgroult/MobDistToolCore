@@ -84,6 +84,6 @@ class BaseController {
     func track(event:ActivityEvent, for req:Request){
        /* let trackingService = try? req.make(MdtActivityFileLogger.self)
         trackingService?.track(event: event)*/
-        req.activityLogger?.track(event: event)
+        req.application.activityLogger?.track(event: event)
     }
 }

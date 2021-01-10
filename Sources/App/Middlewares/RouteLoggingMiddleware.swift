@@ -8,32 +8,39 @@
 import Vapor
 
 final class RouteLoggingMiddleware: Middleware {
-    func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
-        let logger = try request.make(Logger.self)
+    
+    func respond(to request: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
+        let logger = request.logger// try request.make(Logger.self)
         
-        let method = request.http.method
+        let method = request.method
         //let path = request.http.url.path
         //let query = request.http.url.query
         //let reqString = "❕[\(method)]@\(path) with query:\(String(describing: query)) 🔍"
-        var reqString = "👉 \(method)@ \(request.http.url.absoluteString)"
-        if let size = request.http.body.count {
+        var reqString = "👉 \(method)@ \(request.url.description)"
+        if let size = request.headers[.contentLength].first /*  .body.count*/ {
             reqString += " - Size:\(size)"
         }
-        logger.info(reqString,file:"RouteLoggingMiddleware"/*,function: "", line: 0, column: 0*/)
-        logger.debug(" 🔍 Headers: \(request.http.headers.debugDescription)",file:"RouteLoggingMiddleware")
-        logJsonBody(logger:logger,body: request.http.body, contentType: request.http.contentType)
+        logger.info(.init(stringLiteral:reqString),file:"RouteLoggingMiddleware"/*,function: "", line: 0, column: 0*/)
+        logger.debug(" 🔍 Headers: \(request.headers.debugDescription)",file:"RouteLoggingMiddleware")
+        logJsonBody(logger:logger,body: request.body, contentType: request.content.contentType)
 
-        return try next.respond(to: request)
+        return next.respond(to: request)
             .do({[weak self] response in
-                logger.info("👈 Response \(request.http.url.absoluteString), status \(response.http.status)",file:"RouteLoggingMiddleware")
-                logger.debug(" 🔍 Headers: \(response.http.headers.debugDescription)",file:"RouteLoggingMiddleware")
-                self?.logJsonBody(logger:logger, body: response.http.body, contentType: response.http.contentType)
+                logger.info("👈 Response \(request.url.description), status \(response.status)",file:"RouteLoggingMiddleware")
+                logger.debug(" 🔍 Headers: \(response.headers.debugDescription)",file:"RouteLoggingMiddleware")
+                self?.logJsonBody(logger:logger, body: response.body, contentType: response.content.contentType)
             })
     }
 
-    private func logJsonBody(logger:Logger, body:HTTPBody, contentType:MediaType?){
-        if let size = body.count, contentType == .json && size < 1_000_000 { //< 1M
-            logger.debug(" 🔍 Body: \(body.debugDescription)",file:"RouteLoggingMiddleware")
+    private func logJsonBody(logger:Logger, body:Response.Body, contentType:HTTPMediaType?){
+        if let size = body.data?.count, contentType == .json && size < 1_000_000 { //< 1M
+            logger.debug(" 🔍 Body: \(body.description)",file:"RouteLoggingMiddleware")
+        }
+    }
+    
+    private func logJsonBody(logger:Logger, body:Request.Body, contentType:HTTPMediaType?){
+        if let size = body.data?.readableBytes, contentType == .json && size < 1_000_000 { //< 1M
+            logger.debug(" 🔍 Body: \(body.description)",file:"RouteLoggingMiddleware")
         }
     }
 }

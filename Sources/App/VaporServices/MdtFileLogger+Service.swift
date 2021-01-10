@@ -20,10 +20,14 @@ extension Application {
             self.storage[MdtFileLoggerKey.self] = newValue
         }
     }
+    func appFileLogger() throws -> MdtFileLogger {
+        guard let service = mdtLogger else { throw Abort(.internalServerError) }
+        return service
+    }
 }
-
+/*
 extension Request {
     var mdtLogger: MdtFileLogger? {
         return application.activityLogger
     }
-}
+}*/
