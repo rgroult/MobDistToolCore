@@ -15,14 +15,14 @@ extension UsersController {
     }
     
     func configure(with router: RoutesBuilder, and protectedRouter:RoutesBuilder){
-        let usersRouter = router.grouped("\(controllerVersion)/\(pathPrefix)")
+        let usersRouter = router.grouped("\(controllerVersion)","\(pathPrefix)")
         usersRouter.post([.constant(Verb.login.rawValue)], use: self.login)
         usersRouter.post([.constant(Verb.refresh.rawValue)], use: self.refreshLogin)
         usersRouter.post([.constant(Verb.register.rawValue)], use: self.register)
         usersRouter.post([.constant(Verb.forgotPassword.rawValue)], use: self.forgotPassword)
         usersRouter.get([.constant(Verb.activation.rawValue)], use: self.activation)
         
-        let usersProtectedRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
+        let usersProtectedRouter = protectedRouter.grouped("\(controllerVersion)","\(pathPrefix)")
         usersProtectedRouter.get([.constant(Verb.me.rawValue)], use: self.me)
         usersProtectedRouter.put([.constant(Verb.me.rawValue)], use: self.update)
         usersProtectedRouter.get([], use: self.all)

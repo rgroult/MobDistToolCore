@@ -63,7 +63,7 @@ extension ApplicationError:DebuggableError {
 
 func findApplications(platform:Platform? = nil ,into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?) -> (MongoKittenQuery,MappedCursor<FindQueryBuilder, MDTApplication>){
     let query:MongoKittenQuery
-    let anotherQuery = additionalQuery ?? AndQuery(conditions: [])
+    let anotherQuery = additionalQuery ?? EmptyQuery()
     if let platorm = platform {
         query =  anotherQuery && "platform" == platorm.rawValue //    Query.and([anotherQuery,Query.valEquals(field: "platform", val: platorm.rawValue)])
     }else {

@@ -52,11 +52,11 @@ extension ApplicationsController {
     }
     
     func configure(with router: RoutesBuilder, and protectedRouter:RoutesBuilder){
-        let appRouter = router.grouped("\(controllerVersion)/\(pathPrefix)")
+        let appRouter = router.grouped("\(controllerVersion)","\(pathPrefix)")
         appRouter.get([.parameter("uuid"),.constant("icon")], use:self.iconApplication)
         appRouter.get([.parameter("uuid"),.constant("maxversion"),.parameter("branch"),.parameter("name")], use:self.maxVersion)
         
-        let protectedAppsRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
+        let protectedAppsRouter = protectedRouter.grouped("\(controllerVersion)","\(pathPrefix)")
         protectedAppsRouter.get([], use : self.applications)
         protectedAppsRouter.post([], use: self.createApplication)
         protectedAppsRouter.get( [.constant(Verb.favoritesApp.uri)], use : self.applicationsFavorites)

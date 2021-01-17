@@ -63,7 +63,7 @@ extension ArtifactsController {
     }
     
     func configure(with router: RoutesBuilder, and protectedRouter:RoutesBuilder){
-        let artifactRouter = router.grouped("\(controllerVersion)/\(pathPrefix)")
+        let artifactRouter = router.grouped("\(controllerVersion)","\(pathPrefix)")
         //GET '{apiKey}/deploy
         artifactRouter.get([.parameter("apiKey"),.constant("deploy")], use:self.deploy)
         //POST '{apiKey}/{branch}/{version}/{artifactName}
@@ -88,7 +88,7 @@ extension ArtifactsController {
 
         //protected
         //GET {artifact uuid}/download
-        let protectedArtifactRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
+        let protectedArtifactRouter = protectedRouter.grouped("\(controllerVersion)","\(pathPrefix)")
         //NB: use "apiKey" parameter name instead of "uuid" to resolve conflic into TrieRouter
         protectedArtifactRouter.get([.parameter("apiKey"),.constant("download")], use:self.downloadInfo)
     }

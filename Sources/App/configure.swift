@@ -162,4 +162,8 @@ public func configure(_ app: Application) throws {
    // myServerConfig.maxBodySize = 2_000_000_000
    // myServerConfig.supportCompression = configuration.enableCompression
    // services.register(myServerConfig)
+    
+    try boot(app)
+    //print all availables routes
+    app.logger.info("Available routes:\n \(app.routes.description)")
 }

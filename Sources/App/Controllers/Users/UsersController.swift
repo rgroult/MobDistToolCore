@@ -48,7 +48,6 @@ final class UsersController:BaseController {
     
     func register(_ req: Request) throws -> EventLoopFuture<UserDto> {
         let config = try req.application.appConfiguration()    //req.make(MdtConfiguration.self)
-        let emailService = try req.application.appEmailService()
         let registerDto =  try req.content.decode(RegisterDto.self)
             //.flatMap{ registerDto -> EventLoopFuture<UserDto>  in
                 
@@ -66,15 +65,15 @@ final class UsersController:BaseController {
                 
                 //register user
                 let needRegistrationEmail = !config.automaticRegistration
-                
                 let meow = req.meow
                 
                 return createUser(name: registerDto.name, email: registerDto.email, password: registerDto.password, isActivated:!needRegistrationEmail, into: meow)
                     .flatMap{ user in
                         let userCreated = UserDto.create(from: user, content: ModelVisibility.full)
                         if needRegistrationEmail {
+                            do {
                             //sent registration email
-                            
+                            let emailService = try req.application.appEmailService()
                             return emailService.sendValidationEmail(for: user, into: req.eventLoop).map{
                                 userCreated }
                                 .flatMapError({ error -> EventLoopFuture<UserDto> in
@@ -83,12 +82,19 @@ final class UsersController:BaseController {
                                         throw error
                                     }
                                 })
+                            }catch {
+                                //delete create user
+                                return delete(user: user, into: meow).flatMapThrowing{
+                                    throw error
+                                }
+                            }
                         }else {
                             return req.eventLoop.makeSucceededFuture(userCreated)
                         }
                 }
                 .do({[weak self]  dto in self?.track(event: .Register(email: registerDto.email, isSuccess: true), for: req)})
-                .catch({[weak self]  error in self?.track(event: .Register(email: registerDto.email, isSuccess: false,failedError:error), for: req)})
+                .catch({[weak self]  error in
+                        self?.track(event: .Register(email: registerDto.email, isSuccess: false,failedError:error), for: req)})
     }
     
     func forgotPassword(_ req: Request) throws -> EventLoopFuture<MessageDto> {

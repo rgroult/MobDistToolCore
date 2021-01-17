@@ -19,7 +19,7 @@ public func routes(_ baseRouter: RoutesBuilder, authenticateMiddleware:Middlewar
     //common datamodel
         _ = openAPIBuilder.add([APIObject(object: MessageDto( message: "message"))])
     
-    router.get("/v2/status") { req in
+    router.get("v2","status") { req in
         return ["name":"MobileDistributionTool Core", "version" : "\(MDT_Version)-(\(MDT_GitCommit.prefix(8)))" ]
     }
     //add status swagger
@@ -65,7 +65,7 @@ public func routes(_ baseRouter: RoutesBuilder, authenticateMiddleware:Middlewar
     openAPIJsonString = openAPIJsonString.replacingOccurrences(of: "\\/", with: "/")
     
     
-    baseRouter.get("/swagger/swagger.json") { req  in
+    baseRouter.get("swagger","swagger.json") { req  in
         return openAPIJsonString
     }
 }

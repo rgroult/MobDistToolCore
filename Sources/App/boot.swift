@@ -1,5 +1,5 @@
 import Vapor
-//import Meow
+import Meow
 
 /// Called after your application has initialized.
 public func boot(_ app: Application) throws {
@@ -26,13 +26,13 @@ public func boot(_ app: Application) throws {
                  logger.error("Unable to create initial admin user: \(error)")
             }*/
             //display statistics of server
-            meow.collection(for: User.self).count(where: []).whenSuccess({ count in
+            meow.collection(for: User.self).count(where:Document()).whenSuccess({ count in
                 logger.info("Number Users:\(count)")
             })
-            meow.collection(for: MDTApplication.self).count(where: []).whenSuccess({ count in
+            meow.collection(for: MDTApplication.self).count(where: Document()).whenSuccess({ count in
                 logger.info("Number Applications:\(count)")
             })
-            meow.collection(for: Artifact.self).count(where: []).whenSuccess({ count in
+            meow.collection(for: Artifact.self).count(where: Document()).whenSuccess({ count in
                 logger.info("Number Artifacts:\(count)")
             })
       //  }
