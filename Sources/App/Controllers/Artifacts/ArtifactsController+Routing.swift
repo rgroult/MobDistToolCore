@@ -89,7 +89,8 @@ extension ArtifactsController {
         //protected
         //GET {artifact uuid}/download
         let protectedArtifactRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
-        protectedArtifactRouter.get([.parameter("uuid"),.constant("download")], use:self.downloadInfo)
+        //NB: use "apiKey" parameter name instead of "uuid" to resolve conflic into TrieRouter
+        protectedArtifactRouter.get([.parameter("apiKey"),.constant("download")], use:self.downloadInfo)
     }
 }
 

@@ -57,6 +57,11 @@ public struct MdtConfiguration: Codable {
             configFilePath = filePath
             // configFileContent = try String(contentsOfFile: filePath)
         }else {
+           /* #if Xcode
+            let directory = DirectoryConfiguration(workingDirectory: ".")
+            #else
+            let directory = DirectoryConfiguration.detect()
+            #endif*/
             let directory = DirectoryConfiguration.detect()
             if env == .production {
                 configFilePath = "\(directory.workingDirectory)/config/config.json"

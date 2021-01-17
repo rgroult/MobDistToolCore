@@ -164,7 +164,8 @@ final class ArtifactsController:BaseController  {
     //GET 'artifacts/{idArtifact}/download'
     func downloadInfo(_ req: Request) throws -> EventLoopFuture<DownloadInfoDto> {
         let config = try req.application.appConfiguration()// try req.make(MdtConfiguration.self)
-        guard let artifactId = req.parameters.get("idArtifact") else { throw Abort(.badRequest)}
+        //NB: use "apiKey" parameter name instead of "idArtifact" to resolve conflic into TrieRouter
+        guard let artifactId = req.parameters.get("apiKey") else { throw Abort(.badRequest)}
         let meow = req.meow
         let trackingContext = ActivityContext()
         return try retrieveMandatoryUser(from:req)
