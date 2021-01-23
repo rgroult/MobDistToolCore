@@ -117,13 +117,12 @@ final class ApplicationsController:BaseController {
                 guard let `self` = self else { return req.eventLoop.makeFailedFuture(Abort(.internalServerError))}
                 //{ throw Abort(.internalServerError)}
                 let meow = req.meow
-                let (queryUse,appFounds) =  App.findApplications(platform: platformFilter, into: meow,additionalQuery:self.extractSearch(from: req, searchField: "name"))
+              /*  let (queryUse,appFounds) =  App.findApplications(platform: platformFilter, into: meow,additionalQuery:self.extractSearch(from: req, searchField: "name"))
                 return appFounds.map(transform: {self.generateSummaryDto(from:$0)})
-                //return appFounds.map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
-                    .paginate(for: req, model:MDTApplication.self, sortFields: self.sortFields,defaultSort: "created", findQuery: queryUse)
-                /*return try findApplications(platform: platformFilter, into: context)
-                 .map(transform: {ApplicationSummaryDto(from: $0).setIconUrl(url: $0.generateIconUrl(externalUrl: serverUrl))})
-                 .getAllResults()*/
+                    .paginate(for: req, model:MDTApplication.self, sortFields: self.sortFields,defaultSort: "created", findQuery: queryUse)*/
+                
+                let (queryUsed,appFounds) = App.findApplications(platform: platformFilter, into: meow,additionalQuery:self.extractSearch(from: req, searchField: "name"))
+                return appFounds.paginate(for: req, model: MDTApplication.self, sortFields: self.sortFields, defaultSort: "created", findQuery: queryUsed, transform: {self.generateSummaryDto(from:$0)})
         }
     }
     

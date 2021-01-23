@@ -44,8 +44,8 @@ extension UserError: DebuggableError {
     }
 }
 
-func allUsers(into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?) -> MappedCursor<FindQueryBuilder, User>{
-    return context.collection(for: User.self).find(where: additionalQuery?.makeDocument() ?? [])
+func allUsers(into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?) -> FindQueryBuilder {
+    return context.collection(for: User.self).raw.find(additionalQuery?.makeDocument() ?? [:])
 }
 
 func findActivableUser(by activationToken:String,into context:Meow.MeowDatabase) -> EventLoopFuture<User?>{

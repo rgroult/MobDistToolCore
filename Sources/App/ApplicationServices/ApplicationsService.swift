@@ -61,7 +61,7 @@ extension ApplicationError:DebuggableError {
     }
 }
 
-func findApplications(platform:Platform? = nil ,into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?) -> (MongoKittenQuery,MappedCursor<FindQueryBuilder, MDTApplication>){
+func findApplications(platform:Platform? = nil ,into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?) -> (MongoKittenQuery,FindQueryBuilder) /*(MongoKittenQuery,MappedCursor<FindQueryBuilder, MDTApplication>)*/{
     let query:MongoKittenQuery
     let anotherQuery = additionalQuery ?? EmptyQuery()
     if let platorm = platform {
@@ -69,7 +69,9 @@ func findApplications(platform:Platform? = nil ,into context:Meow.MeowDatabase,a
     }else {
         query = anotherQuery
     }
-    return (query,context.collection(for: MDTApplication.self).find(where:query.makeDocument())) //   .find(MDTApplication.self,where:query))
+    context.collection(for: MDTApplication.self).raw.find(query.makeDocument())
+ //   return (query,context.collection(for: MDTApplication.self).find(where:query.makeDocument())) //   .find(MDTApplication.self,where:query))
+    return (query,context.collection(for: MDTApplication.self).raw.find(query.makeDocument()))
 }
 
 func findApplications(with uuids:[String], into context:Meow.MeowDatabase)  -> MappedCursor<FindQueryBuilder, MDTApplication>{

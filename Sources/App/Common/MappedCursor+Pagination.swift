@@ -24,8 +24,19 @@ enum PaginationSort:String {
         }
     }
 }
+//let cursor:MappedCursor<MappedCursor<FindQueryBuilder, User>,UserDto>
+//extension MappedCursor<FindQueryBuilder, Content> {// where Element:Content
+typealias MappedModelCursor<CursorElement:Model> = MappedCursor<FindQueryBuilder, CursorElement>
 
-extension MappedCursor  where Element:Content/*, Element:Content*/ {
+typealias PaginatedMappedCursor<CursorElement:Model,Element:Content> = MappedCursor<MappedCursor<FindQueryBuilder, CursorElement>,Element>
+
+
+//typealias MappedModelCursor = MappedCursor<FindQueryBuilder, Element> where Element:Model
+//typealias PaginateMappedCursor<O:Content> = MappedCursor<MappedModelCursor<C:Model>,O>
+//extension MappedCursor where Base == MappedModelCursor<CursorElement> , Element:Content, CursorElement:Model{
+//extension MappedCursor where Base == MappedModelCursor<C>, Element:Content, C:Model{
+//extension MappedCursor where MappedCursor<FindQueryBuilder, Element>
+extension PaginatedMappedCursor {
     
     func paginate<M: ReadableModel>(for req:Request, model:M.Type, sortFields:[String:String],defaultSort:String,countQuery:EventLoopFuture<Int>) -> EventLoopFuture<Paginated<Element>>{
         return countQuery.flatMap{ count in

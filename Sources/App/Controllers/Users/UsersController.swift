@@ -224,11 +224,17 @@ final class UsersController:BaseController {
             .flatMap({_ -> EventLoopFuture<Paginated<UserDto>> in
                // guard let `self` = self else { throw Abort(.internalServerError)}
                 let meow = req.meow
-                let cursor:MappedCursor<MappedCursor<FindQueryBuilder, User>,UserDto> = allUsers(into: meow, additionalQuery:searchQuery )
+             /*   let cursor:MappedCursor<MappedCursor<FindQueryBuilder, User>,UserDto> = allUsers(into: meow, additionalQuery:searchQuery )
                    .map{result -> UserDto in return UserDto.create(from: result, content: .full)}
                 
                 let result:EventLoopFuture<Paginated<UserDto>> = cursor.paginate(for: req, model: User.self, sortFields: self.sortFields,defaultSort: "email", findQuery: searchQuery)
-                return result
+ 
+                */
+                let findQuery = allUsers(into: meow, additionalQuery: searchQuery)
+                
+                return findQuery.paginate(for: req, model: User.self, sortFields: self.sortFields, defaultSort: "email", findQuery: searchQuery, transform: {UserDto.create(from: $0, content: .full)})
+                
+                //return result
             })
     }
     
