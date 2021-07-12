@@ -102,7 +102,7 @@ final class ArtifactsController:BaseController  {
         guard let apiKey = req.parameters.get("apiKey") else { throw Abort(.badRequest)}
         guard let branch = req.parameters.get("branch") else { throw Abort(.badRequest)}
         guard let version = req.parameters.get("version") else { throw Abort(.badRequest)}
-        guard let artifactName = req.parameters.get("name") else { throw Abort(.badRequest)}
+        guard let artifactName = req.parameters.get("artifactName") else { throw Abort(.badRequest)}
         
         return try createArtifactWithInfo(req, apiKey: apiKey, branch: branch, version: version, artifactName: artifactName)
     }
@@ -136,7 +136,7 @@ final class ArtifactsController:BaseController  {
         guard let apiKey = req.parameters.get("apiKey") else { throw Abort(.badRequest)}
         guard let branch = req.parameters.get("branch") else { throw Abort(.badRequest)}
         guard let version = req.parameters.get("version") else { throw Abort(.badRequest)}
-        guard let artifactName = req.parameters.get("name") else { throw Abort(.badRequest)}
+        guard let artifactName = req.parameters.get("artifactName") else { throw Abort(.badRequest)}
         
         return try deleteArtifactWithInfo(req, apiKey: apiKey, branch: branch, version: version, artifactName: artifactName)
     }
@@ -144,7 +144,7 @@ final class ArtifactsController:BaseController  {
     //POST  '{apiKey}/last/{_artifactName}
     func createLastArtifactByApiKey(_ req: Request) throws -> EventLoopFuture<ArtifactDto> {
         guard let apiKey = req.parameters.get("apiKey") else { throw Abort(.badRequest)}
-        guard let artifactName = req.parameters.get("name") else { throw Abort(.badRequest)}
+        guard let artifactName = req.parameters.get("artifactName") else { throw Abort(.badRequest)}
         let branch = lastVersionBranchName
         let version = lastVersionName
         
@@ -154,7 +154,7 @@ final class ArtifactsController:BaseController  {
     //DELETE  '{apiKey}/last/{_artifactName}
     func deleteLastArtifactByApiKey(_ req: Request) throws -> EventLoopFuture<MessageDto> {
         guard let apiKey = req.parameters.get("apiKey") else { throw Abort(.badRequest)}
-        guard let artifactName = req.parameters.get("name") else { throw Abort(.badRequest)}
+        guard let artifactName = req.parameters.get("artifactName") else { throw Abort(.badRequest)}
         let branch = lastVersionBranchName
         let version = lastVersionName
         
@@ -192,12 +192,12 @@ final class ArtifactsController:BaseController  {
     func generateDownloadInfo(user:User,artifactID:String,application:MDTApplication, config:MdtConfiguration,into context:MeowDatabase) -> EventLoopFuture<DownloadInfoDto>{
         // let config = try req.make(MdtConfiguration.self)
         let validity = 3 // 3 mins
-        let baseArtifactPath = config.serverUrl.absoluteString
+        let baseArtifactPath = config.serverUrl //.absoluteString
         
         let durationInSecs = validity * 60
         //base download URL
-        let baseDownloadUrl = baseArtifactPath + self.generateRoute(Verb.artifactFile.path)
-        let iconUrl = baseArtifactPath + self.generateRoute(Verb.icon.path)
+        let baseDownloadUrl = baseArtifactPath.appendingPathComponent(self.generateRoute(Verb.artifactFile.path)).absoluteString
+        let iconUrl = baseArtifactPath.appendingPathComponent( self.generateRoute(Verb.icon.path)).absoluteString
         //create token with Info
         let tokenInfo = [ArtifactTokenKeys.user.rawValue:user.email,
                          ArtifactTokenKeys.appName.rawValue:application.name,
@@ -220,20 +220,21 @@ final class ArtifactsController:BaseController  {
     }
     
     
-    func generateInstallPageUrl(serverExternalUrl:String,token:String)->String {
-        let baseArtifactPath = serverExternalUrl
-        return baseArtifactPath + self.generateRoute(Verb.installPage.path) + "?token=\(token)"
+    func generateInstallPageUrl(serverExternalUrl:URL,token:String)->String {
+        return serverExternalUrl.appendingPathComponent(self.generateRoute(Verb.installPage.path)).absoluteString + "?token=\(token)"
+       // let baseArtifactPath = serverExternalUrl
+       // return baseArtifactPath + self.generateRoute(Verb.installPage.path) + "?token=\(token)"
     }
     
-    func generateDirectInstallUrl(serverExternalUrl:String,token:String,platform:Platform)->String {
-        let baseArtifactPath = serverExternalUrl
+    func generateDirectInstallUrl(serverExternalUrl:URL,token:String,platform:Platform)->String {
+       // let baseArtifactPath = serverExternalUrl
         let installUrl:String
         if platform == .ios {
-            let plistInstallUrl = baseArtifactPath + self.generateRoute(Verb.artifactiOSManifest.path) + "?token=\(token)"
+            let plistInstallUrl = serverExternalUrl.appendingPathComponent( self.generateRoute(Verb.artifactiOSManifest.path)).absoluteString + "?token=\(token)"
             installUrl = self.generateItmsUrl(plistUrl:plistInstallUrl)
         }else {
-            let baseDownloadUrl = baseArtifactPath + self.generateRoute(Verb.artifactFile.path)
-            let downloadUrl = baseDownloadUrl + "?token=\(token)"
+            let baseDownloadUrl = serverExternalUrl.appendingPathComponent(self.generateRoute(Verb.artifactFile.path))
+            let downloadUrl = baseDownloadUrl.absoluteString + "?token=\(token)"
             installUrl = downloadUrl
         }
         
@@ -316,7 +317,7 @@ final class ArtifactsController:BaseController  {
             guard let artifact = artifact else { return req.eventLoop.makeFailedFuture (  Abort(.serviceUnavailable, reason: "Token content Invalid")) }
             return artifact.application.resolve(in: meow)
                 .map({ app in
-                    let installUrl = self.generateDirectInstallUrl(serverExternalUrl: config.serverUrl.absoluteString, token: token, platform: app.platform)
+                    let installUrl = self.generateDirectInstallUrl(serverExternalUrl: config.serverUrl, token: token, platform: app.platform)
                     let response = Response(body:.init(string: generateInstallPage(for: artifact, into: app,installUrl: installUrl)))
                     response.headers.contentType = .html
                     return response

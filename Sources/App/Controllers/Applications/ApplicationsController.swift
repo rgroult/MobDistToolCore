@@ -366,8 +366,10 @@ final class ApplicationsController:BaseController {
             let excludedBranch = isLatestBranch ? nil : lastVersionBranchName
             let (queryUse,artifactsFound) = try findArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, into: meow)
             return artifactsFound
-                .map(transform: {ArtifactDto(from: $0)})
-                .paginate(for: req, model: Artifact.self, sortFields: self.artifactsSortFields,defaultSort: "created",findQuery: queryUse)
+                .paginate(for: req, model: Artifact.self, sortFields: self.artifactsSortFields,defaultSort: "created",findQuery: queryUse,transform: {ArtifactDto(from: $0)})
+                
+               /* .map(transform: {ArtifactDto(from: $0)})
+                .paginate(for: req, model: Artifact.self, sortFields: self.artifactsSortFields,defaultSort: "created",findQuery: queryUse)*/
         }
         catch {
             return req.eventLoop.makeFailedFuture(error)
@@ -386,10 +388,11 @@ final class ApplicationsController:BaseController {
             do {
             guard let app = app else { throw ApplicationError.notFound }
             let excludedBranch = isLatestBranch ? nil : lastVersionBranchName
+                let paginatedInfo = req.extractPaginateInfo(sortFields: self.groupedArtifactsSortFields,defaultSort: "created")
             let (artifactsFound,countFuture) = try findAndSortArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, into: meow)
             return artifactsFound
                 .map(transform: {ArtifactGroupedDto(from: $0)})
-                .paginate(for: req, model: MDTApplication.self, sortFields: self.groupedArtifactsSortFields,defaultSort: "created",countQuery:countFuture)
+                .paginate(for: req, model: Artifact.self, sortFields: self.groupedArtifactsSortFields,defaultSort: "created",countQuery:countFuture)
         }
         catch {
             return req.eventLoop.makeFailedFuture(error)

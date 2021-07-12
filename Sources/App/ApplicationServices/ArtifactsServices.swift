@@ -66,7 +66,7 @@ func findArtifact(app:MDTApplication,branch:String,version:String,name:String,in
     context.collection(for: Artifact.self).findOne(where:"application" == app._id && "branch" == branch && "version" == version && "name" == name)
 }
 // Find artifacts
-func findArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,into context:Meow.MeowDatabase) throws -> (MongoKittenQuery,MappedCursor<FindQueryBuilder, Artifact>){
+func findArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,into context:Meow.MeowDatabase) throws -> (MongoKittenQuery,FindQueryBuilder){
     //var queryConditions = [Query.valEquals(field: "application", val: app._id)]
     var queryConditions = ["application" == app._id]
     
@@ -84,7 +84,7 @@ func findArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:Str
     let query = AndQuery(conditions: queryConditions)
     
     //return (query,context.find(Artifact.self, where: query))
-    return (query, context.collection(for: Artifact.self).find(where: query))
+    return (query, context.collection(for: Artifact.self).raw.find(query))
 }
 
 func findDistinctsBranches(app:MDTApplication,into context:Meow.MeowDatabase) -> EventLoopFuture<[String]> {
@@ -124,6 +124,43 @@ db.getCollection("MDTArtifact").aggregate([
         }}
 ]);
  */
+/*
+func findAndSortArtifacts2(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,into context:Meow.MeowDatabase,paginationInfo:PaginationStageBlock?) throws {
+    var aggregateStages = [AggregateBuilderStage]()
+    aggregateStages.append(.match("application" == app._id))
+
+        
+    if let branch = selectedBranch {
+        aggregateStages.append(.match("branch" == branch))
+    }
+    
+    if let excludedBranch = excludedBranch {
+        aggregateStages.append(.match("branch" != excludedBranch))
+    }
+    
+    let idPrimitive:Document = ["sortIdentifier" : "$sortIdentifier","branch" : "$branch" ]
+    let groupStage:Document = [ "$group" : [
+                                            "_id" : idPrimitive ,
+                                            "date" : ["$max" : "$createdAt"],
+                                            "version" : ["$first" : "$version"],
+                                            "artifacts" : ["$push" : "$$ROOT"]
+                                            ]
+                                ]
+                                            
+    aggregateStages.append(.init(document: groupStage))
+    let cursorCount = context.collection(for: Artifact.self).raw.aggregate(aggregateStages)
+    
+    if let paginationInfo = paginationInfo {
+        return cursorCount.count()
+            .flatMap{ count in
+                let (pageInfo, additionalStage) = paginationInfo(count)
+                aggregateStages += additionalStage
+            }
+    }
+    
+    return (cursor.decode(ArtifactGrouped.self),cursor.count())
+    
+}*/
 
 func findAndSortArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,into context:Meow.MeowDatabase) throws -> (MappedCursor<AggregateBuilderPipeline,ArtifactGrouped>,EventLoopFuture<Int>) {
     var aggregateStages = [AggregateBuilderStage]()
@@ -145,7 +182,8 @@ func findAndSortArtifacts(app:MDTApplication,selectedBranch:String?, excludedBra
     
     //aggregateStages.append(.grou)
     
-    let idPrimitive = Document(dictionaryLiteral:("sortIdentifier" , "$sortIdentifier"), ("branch" , "$branch"))
+   // let idPrimitive = Document(dictionaryLiteral:("sortIdentifier" , "$sortIdentifier"), ("branch" , "$branch"))
+    let idPrimitive:Document = ["sortIdentifier" : "$sortIdentifier","branch" : "$branch" ]
     let groupStage:Document = [ "$group" : [
                                             "_id" : idPrimitive ,
                                             "date" : ["$max" : "$createdAt"],

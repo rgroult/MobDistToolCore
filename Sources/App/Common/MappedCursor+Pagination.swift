@@ -9,7 +9,7 @@ import MongoKitten
 import Vapor
 import Meow
 //import FluentKit
-
+/*
 let MappedCursorDefaultPageSize:UInt = 50
 
 enum PaginationSort:String {
@@ -22,6 +22,52 @@ enum PaginationSort:String {
         case .descending:
             return Sort([(field, SortOrder.descending)])
         }
+    }
+}*/
+public typealias PaginationStageBlock = (_ totalCount:Int) -> (PageInfo,[AggregateBuilderStage])
+extension Request {
+    func extractPaginateInfo(sortFields:[String:String],defaultSort:String)-> PaginationStageBlock {
+        
+        let aggregateStages:PaginationStageBlock = {(totalCount:Int)  in
+            var stages = [AggregateBuilderStage]()
+            let req = self
+            
+            //page info
+            var page = Int((try? req.query.get(UInt.self, at: "page")) ?? 0)
+            page = max (0 , page)
+            var perPage = Int((try? req.query.get(UInt.self, at: "per")) ?? MappedCursorDefaultPageSize)
+            perPage = max (0 , perPage)
+            let skipItems = page * perPage
+            
+            //sort info
+            let sortOrder:PaginationSort
+            if let sortOrderQuery = try? req.query.get(String.self, at: "orderby"), let sort = PaginationSort(rawValue: sortOrderQuery){
+                sortOrder = sort
+            }else {
+                sortOrder = .descending
+            }
+            let sortValue = try? req.query.get(String.self, at: "sortby")
+            let sortBy:String
+            if let field = sortFields[sortValue ?? ""] {
+                sortBy = field
+            }else {
+                sortBy = sortFields[defaultSort]!
+            }
+            
+            let pageData = PageData(per: perPage, total: totalCount)
+            let maxPosition = max(0, Int(ceil(-1.0 + Double(totalCount) / Double(perPage))))
+            let position = Position(current: page, max: maxPosition)
+           // return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)
+             //   .getPageResult(position,pageData)
+            let paginatedInfo = PageInfo(position: position, data: pageData)
+            stages.append(.sort(sortOrder.convert(field: sortBy)))
+            stages.append(.skip(skipItems))
+            stages.append(.limit(perPage))
+            
+            return (paginatedInfo,stages)
+        }
+        
+        return aggregateStages
     }
 }
 //let cursor:MappedCursor<MappedCursor<FindQueryBuilder, User>,UserDto>
@@ -43,7 +89,7 @@ extension PaginatedMappedCursor {
             self.paginate(for: req, model:model, sortFields: sortFields,defaultSort:defaultSort, totalCount: count)
         }
     }
-    
+    /*
     func paginate<M: ReadableModel>(for req:Request, model:M.Type, sortFields:[String:String],defaultSort:String,findQuery:MongoKittenQuery? = nil) -> EventLoopFuture<Paginated<Element>>{
         //extract "page" and "per" parameters
         
@@ -83,7 +129,7 @@ extension PaginatedMappedCursor {
               //  .getPageResult(position,pageData)
             // return context.collection(for: Artifact.self).raw.find(query).sort(Sort([("sortIdentifier", SortOrder.descending)])).firstResult().decode(Artifact.self)
         }
-    }
+    }*/
     
     private func paginate<M: ReadableModel>(for req:Request, model:M.Type, sortFields:[String:String],defaultSort:String,totalCount:Int) -> EventLoopFuture<Paginated<Element>>{
         //extract "page" and "per" parameters
@@ -117,7 +163,7 @@ extension PaginatedMappedCursor {
          //   .getPageResult(position,pageData)
         
         let collection = req.meow.collection(for: model)
-        let query:Document = []
+        let query:Document = [:]
         return collection.raw.find(query).sort(sortOrder.convert(field: sortBy))
             .skip(skipItems).limit(perPage)
             .getPageResult(position,pageData)
