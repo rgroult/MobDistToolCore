@@ -388,11 +388,18 @@ final class ApplicationsController:BaseController {
             do {
             guard let app = app else { throw ApplicationError.notFound }
             let excludedBranch = isLatestBranch ? nil : lastVersionBranchName
-                let paginatedInfo = req.extractPaginateInfo(sortFields: self.groupedArtifactsSortFields,defaultSort: "created")
-            let (artifactsFound,countFuture) = try findAndSortArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, into: meow)
-            return artifactsFound
-                .map(transform: {ArtifactGroupedDto(from: $0)})
-                .paginate(for: req, model: Artifact.self, sortFields: self.groupedArtifactsSortFields,defaultSort: "created",countQuery:countFuture)
+            let paginatedInfo = req.extractPaginatioInfo(sortFields: self.groupedArtifactsSortFields,defaultSort: "created")
+            let pageResult = try findAndSortArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, paginationInfo: paginatedInfo, into: meow)
+            
+                return pageResult.map { pageResult in
+                    let totalCount = pageResult?.total ?? 0
+                    let pageData = PageData(per: paginatedInfo.pageSize, total: totalCount)
+                    let maxPosition = max(0, Int(ceil(-1.0 + Double(totalCount) / Double(paginatedInfo.pageSize))))
+                    let position = Position(current: paginatedInfo.currentPageIndex, max: maxPosition)
+                    let page = Paginated(page:.init(position: position, data: pageData) , data: (pageResult?.data ?? []).map{ArtifactGroupedDto(from: $0)})
+                    
+                    return page
+                }
         }
         catch {
             return req.eventLoop.makeFailedFuture(error)

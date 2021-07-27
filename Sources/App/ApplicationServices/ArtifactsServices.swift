@@ -162,9 +162,139 @@ func findAndSortArtifacts2(app:MDTApplication,selectedBranch:String?, excludedBr
     
 }*/
 
-func findAndSortArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,into context:Meow.MeowDatabase) throws -> (MappedCursor<AggregateBuilderPipeline,ArtifactGrouped>,EventLoopFuture<Int>) {
+func findAndSortArtifacts2(app:MDTApplication,selectedBranch:String?, excludedBranch:String?, pagination:PaginationInfo, into context:Meow.MeowDatabase) throws {
     var aggregateStages = [AggregateBuilderStage]()
     aggregateStages.append(.match("application" == app._id))
+    if let branch = selectedBranch {
+        //cursor = cursor.match("branch" == branch)
+        aggregateStages.append(.match("branch" == branch))
+    }
+    
+    if let excludedBranch = excludedBranch {
+        aggregateStages.append(.match("branch" != excludedBranch))
+        //cursor = cursor.match("branch" != excludedBranch)
+    }
+    //Add pagination conditions
+   // aggregateStages += pagination.additionalStages
+    
+}
+
+struct Total:Codable {
+    let count:Int
+}
+struct PaginationResult<T:Codable>:Codable {
+    let data:[T]
+    let totalObjects:[Total]
+    var total: Int {
+        return totalObjects.first?.count ?? 0
+    }
+    
+    public func map<Element>(_ transform: (T) throws -> Element) rethrows -> PaginationResult<Element> {
+        return PaginationResult<Element>(data: try data.map{try transform($0)}, totalObjects:totalObjects)
+    }
+}
+
+func findWithPagination<T:Codable>(stages:[Document], paginationInfo:PaginationInfo, into collection:MongoCollection) -> MappedCursor<AggregateBuilderPipeline, PaginationResult<T>>{
+    /*
+     db.getCollection("MDTArtifact").aggregate([
+      { "$facet": {
+          "totalData": [
+                         { $match : { application : ObjectId("6100093b50f6ab225ed36d0c") } },
+                         { $match : { branch : { "$ne" : "@@@@LAST####"} } },
+                         { $match : { branch : { "$eq" : "master"} } },
+                         { $group : {
+                             _id : {"sortIdentifier" : "$sortIdentifier","branch" : "$branch" },
+                             date : { $max : "$createdAt"},
+                             version: { $first : "$version" },
+                             artifacts : { $push: "$$ROOT" }
+                         }},
+                         { "$skip": 3 },
+                         { "$limit": 2 }
+           ],
+         "totalCount": [
+           { "$count": "count" }
+         ]
+       }}
+       ])
+    */
+    let findStage = stages + paginationInfo.additionalStages
+    let countStage:Document = [ "$count": "count" ]
+    let facetStage:Document = [ "$facet" : [
+        "data" : findStage ,
+                                "totalObjects" : [ countStage ]
+                            ]]
+    
+    var aggregateStages = [AggregateBuilderStage]()
+    aggregateStages.append(.init(document:facetStage))
+    return collection.aggregate(aggregateStages).decode(PaginationResult<T>.self)
+}
+
+func findAndSortArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,paginationInfo:PaginationInfo,into context:Meow.MeowDatabase) throws -> EventLoopFuture<PaginationResult<ArtifactGrouped>?>{
+//(MappedCursor<AggregateBuilderPipeline,ArtifactGrouped>,EventLoopFuture<Int>) {
+    
+    var aggregateDocuments = [Document]()
+    aggregateDocuments.append( ["$match": "application" == app._id])
+ 
+    if let branch = selectedBranch {
+        aggregateDocuments.append( ["$match": ["branch" : [ "$eq" : branch]]])
+    }
+    
+    if let excludedBranch = excludedBranch {
+        aggregateDocuments.append( ["$match": ["branch" : [ "$ne" : excludedBranch]]])
+    }
+    
+    let idPrimitive:Document = ["sortIdentifier" : "$sortIdentifier","branch" : "$branch" ]
+    aggregateDocuments.append([ "$group" : [
+                                            "_id" : idPrimitive ,
+                                            "date" : ["$max" : "$createdAt"],
+                                            "version" : ["$first" : "$version"],
+                                            "artifacts" : ["$push" : "$$ROOT"]
+                                            ]
+                                ])
+    
+    let cursor:MappedCursor<AggregateBuilderPipeline, PaginationResult<ArtifactGrouped>> = findWithPagination(stages: aggregateDocuments, paginationInfo: paginationInfo, into: context.collection(for: Artifact.self).raw)
+    return cursor.firstResult()
+   
+/*
+    var aggregateStages = [AggregateBuilderStage]()
+    aggregateStages.append(.match("application" == app._id))
+    
+    /* Working
+     db.getCollection("MDTArtifact").aggregate([
+         { $match : { application : ObjectId("60fe84fd22b7738ce0943715") } },
+         { $match : { branch : { "$ne" : "@@@@LAST####"} } },
+         { $match : { branch : { "$eq" : "master"} } },
+         { $group : {
+             _id : {"sortIdentifier" : "$sortIdentifier","branch" : "$branch" },
+            date : { $max : "$createdAt"},
+             version: { $first : "$version" },
+             artifacts : { $push: "$$ROOT" }
+             }}
+     ])
+     
+     //with pagination
+     db.getCollection("MDTArtifact").aggregate([
+      { "$facet": {
+          "totalData": [
+                         { $match : { application : ObjectId("60febee189e072fe87b6dcd9") } },
+                         { $match : { branch : { "$ne" : "@@@@LAST####"} } },
+                         { $match : { branch : { "$eq" : "master"} } },
+                         { $group : {
+                             _id : {"sortIdentifier" : "$sortIdentifier","branch" : "$branch" },
+                             date : { $max : "$createdAt"},
+                             version: { $first : "$version" },
+                             artifacts : { $push: "$$ROOT" }
+                         }},
+                         { "$skip": 3 },
+                         { "$limit": 2 }
+           ],
+         "totalCount": [
+           { "$count": "count" }
+         ]
+       }}
+       ])
+             
+     */
     
     //var cursor = context.manager.collection(for: Artifact.self).aggregate()
      //   .match("application" == app._id)
@@ -194,9 +324,8 @@ func findAndSortArtifacts(app:MDTApplication,selectedBranch:String?, excludedBra
                                             
     aggregateStages.append(.init(document: groupStage))
     let cursor = context.collection(for: Artifact.self).raw.aggregate(aggregateStages)
-        
-   // cursor = cursor.group(id: idPrimitive , fields: ["date" : .max("$createdAt"),"version" : .first("$version"),"artifacts" : .push("$$ROOT")])
-    return (cursor.decode(ArtifactGrouped.self),cursor.count())
+
+    return (cursor.decode(ArtifactGrouped.self),cursor.count())*/
 }
 
 // NB: Pagination is made by creationDate
