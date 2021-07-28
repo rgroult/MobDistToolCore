@@ -8,7 +8,7 @@
 import Foundation
 import Fluent
 import Vapor
-
+/*
 public struct Page<M: Model & Paginatable> {
     public let number: Int
     public let data: [M]
@@ -27,3 +27,4 @@ public struct Page<M: Model & Paginatable> {
         self.total = total
     }
 }
+*/

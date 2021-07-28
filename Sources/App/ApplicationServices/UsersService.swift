@@ -44,8 +44,11 @@ extension UserError: DebuggableError {
     }
 }
 
-func allUsers(into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?) -> FindQueryBuilder {
-    return context.collection(for: User.self).raw.find(additionalQuery?.makeDocument() ?? [:])
+func allUsersPaginated(into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?, paginationInfo:PaginationInfo) -> EventLoopFuture<PaginationResult<User>?> /*FindQueryBuilder*/ {
+    let query = additionalQuery?.makeDocument() ?? [:]
+    return findWithPagination(stages: [["$match": query]], paginationInfo: paginationInfo, into: context.collection(for: User.self).raw).firstResult()
+    
+    //return context.collection(for: User.self).raw.find(additionalQuery?.makeDocument() ?? [:])
 }
 
 func findActivableUser(by activationToken:String,into context:Meow.MeowDatabase) -> EventLoopFuture<User?>{

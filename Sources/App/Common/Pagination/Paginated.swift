@@ -52,7 +52,7 @@ public struct Paginated<M: Content>: Content {
         self.data = data
     }
 }
-
+/*
 extension Page where M: Content {
     public func response() -> Paginated<M> {
         let count = Int(ceil(Double(self.total) / Double(self.size)))
@@ -76,3 +76,4 @@ extension Page where M: Content {
         )
     }
 }
+*/

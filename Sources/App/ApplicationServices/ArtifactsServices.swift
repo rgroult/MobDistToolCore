@@ -66,6 +66,7 @@ func findArtifact(app:MDTApplication,branch:String,version:String,name:String,in
     context.collection(for: Artifact.self).findOne(where:"application" == app._id && "branch" == branch && "version" == version && "name" == name)
 }
 // Find artifacts
+/*
 func findArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,into context:Meow.MeowDatabase) throws -> (MongoKittenQuery,FindQueryBuilder){
     //var queryConditions = [Query.valEquals(field: "application", val: app._id)]
     var queryConditions = ["application" == app._id]
@@ -85,6 +86,25 @@ func findArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:Str
     
     //return (query,context.find(Artifact.self, where: query))
     return (query, context.collection(for: Artifact.self).raw.find(query))
+}*/
+
+func findArtifactsPaginated(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,pagination:PaginationInfo,into context:Meow.MeowDatabase) throws -> EventLoopFuture<PaginationResult<Artifact>?>{
+    var queryConditions = ["application" == app._id]
+    
+    if let branch = selectedBranch {
+       // queryConditions.append(Query.valEquals(field: "branch", val: branch))
+        queryConditions.append("branch" == branch)
+    }
+    
+    if let excludedBranch = excludedBranch {
+        //queryConditions.append(Query.valNotEquals(field: "branch", val: excludedBranch))
+        queryConditions.append("branch" != excludedBranch)
+    }
+    
+    //let query = Query.and(queryConditions)
+    let query = AndQuery(conditions: queryConditions)
+    
+    return findWithPagination(stages: [["$match": query.makeDocument()]], paginationInfo: pagination, into: context.collection(for: Artifact.self).raw).firstResult()
 }
 
 func findDistinctsBranches(app:MDTApplication,into context:Meow.MeowDatabase) -> EventLoopFuture<[String]> {
@@ -97,12 +117,16 @@ func findDistinctsBranches(app:MDTApplication,into context:Meow.MeowDatabase) ->
     let query = AndQuery(conditions: queryConditions)
     //let keypath:KeyPath<Artifact,String> =  \Artifact.branch
     //return context.distinct(Artifact.self, on:keypath, where: ModelQuery(query))
+    
     return context.collection(for: Artifact.self).raw.distinctValues(forKey: "branch", where: query.makeDocument())
         .flatMapThrowing { distinctValues in
             return try distinctValues.map { value in
                 return try Artifact.decoder.decode(String.self, fromPrimitive: value)
             }
         }
+        // https://github.com/OpenKitten/MongoKitten/issues/261
+        //fix due to bug to "distinctValues" functions which does not use query :S.
+        //.map {$0.filter{$0 != lastVersionBranchName}}
 }
 
 /*
@@ -162,72 +186,6 @@ func findAndSortArtifacts2(app:MDTApplication,selectedBranch:String?, excludedBr
     
 }*/
 
-func findAndSortArtifacts2(app:MDTApplication,selectedBranch:String?, excludedBranch:String?, pagination:PaginationInfo, into context:Meow.MeowDatabase) throws {
-    var aggregateStages = [AggregateBuilderStage]()
-    aggregateStages.append(.match("application" == app._id))
-    if let branch = selectedBranch {
-        //cursor = cursor.match("branch" == branch)
-        aggregateStages.append(.match("branch" == branch))
-    }
-    
-    if let excludedBranch = excludedBranch {
-        aggregateStages.append(.match("branch" != excludedBranch))
-        //cursor = cursor.match("branch" != excludedBranch)
-    }
-    //Add pagination conditions
-   // aggregateStages += pagination.additionalStages
-    
-}
-
-struct Total:Codable {
-    let count:Int
-}
-struct PaginationResult<T:Codable>:Codable {
-    let data:[T]
-    let totalObjects:[Total]
-    var total: Int {
-        return totalObjects.first?.count ?? 0
-    }
-    
-    public func map<Element>(_ transform: (T) throws -> Element) rethrows -> PaginationResult<Element> {
-        return PaginationResult<Element>(data: try data.map{try transform($0)}, totalObjects:totalObjects)
-    }
-}
-
-func findWithPagination<T:Codable>(stages:[Document], paginationInfo:PaginationInfo, into collection:MongoCollection) -> MappedCursor<AggregateBuilderPipeline, PaginationResult<T>>{
-    /*
-     db.getCollection("MDTArtifact").aggregate([
-      { "$facet": {
-          "totalData": [
-                         { $match : { application : ObjectId("6100093b50f6ab225ed36d0c") } },
-                         { $match : { branch : { "$ne" : "@@@@LAST####"} } },
-                         { $match : { branch : { "$eq" : "master"} } },
-                         { $group : {
-                             _id : {"sortIdentifier" : "$sortIdentifier","branch" : "$branch" },
-                             date : { $max : "$createdAt"},
-                             version: { $first : "$version" },
-                             artifacts : { $push: "$$ROOT" }
-                         }},
-                         { "$skip": 3 },
-                         { "$limit": 2 }
-           ],
-         "totalCount": [
-           { "$count": "count" }
-         ]
-       }}
-       ])
-    */
-    let findStage = stages + paginationInfo.additionalStages
-    let countStage:Document = [ "$count": "count" ]
-    let facetStage:Document = [ "$facet" : [
-        "data" : findStage ,
-                                "totalObjects" : [ countStage ]
-                            ]]
-    
-    var aggregateStages = [AggregateBuilderStage]()
-    aggregateStages.append(.init(document:facetStage))
-    return collection.aggregate(aggregateStages).decode(PaginationResult<T>.self)
-}
 
 func findAndSortArtifacts(app:MDTApplication,selectedBranch:String?, excludedBranch:String?,paginationInfo:PaginationInfo,into context:Meow.MeowDatabase) throws -> EventLoopFuture<PaginationResult<ArtifactGrouped>?>{
 //(MappedCursor<AggregateBuilderPipeline,ArtifactGrouped>,EventLoopFuture<Int>) {

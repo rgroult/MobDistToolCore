@@ -8,7 +8,7 @@
 import Foundation
 import Fluent
 import Vapor
-
+/*
 public enum PaginationError: Error {
     case invalidPageNumber(Int)
     case invalidPerSize(Int)
@@ -35,7 +35,7 @@ extension Paginatable {
             Self.createdAtKey?.querySort(Self.Database.querySortDirectionDescending) ?? Self.idKey.querySort(Self.Database.querySortDirectionDescending)
         ]
     }*/
-}
+}*/
 /*
 extension KeyPath where Root: Model {
     public func querySort(_ direction: Root.Database.QuerySortDirection = Root.Database.querySortDirectionDescending) -> Root.Database.QuerySort {

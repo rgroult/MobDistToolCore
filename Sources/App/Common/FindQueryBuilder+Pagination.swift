@@ -10,20 +10,7 @@ import MongoKitten
 import Vapor
 import Meow
 
-let MappedCursorDefaultPageSize:UInt = 50
 
-enum PaginationSort:String {
-    case ascending
-    case descending
-    func convert(field:String) -> MongoKitten.Sort {
-        switch self {
-        case .ascending:
-                return Sort([(field, SortOrder.ascending)])
-        case .descending:
-            return Sort([(field, SortOrder.descending)])
-        }
-    }
-}
 
 
 extension FindQueryBuilder {
@@ -33,7 +20,7 @@ extension FindQueryBuilder {
         }
     }*/
     
-    func paginate<M: ReadableModel,Element:Content>(for req:Request, model:M.Type, sortFields:[String:String],defaultSort:String,findQuery:MongoKittenQuery? = nil,transform: @escaping ((M) -> Element)) -> EventLoopFuture<Paginated<Element>>{
+    func paginateKO<M: ReadableModel,Element:Content>(for req:Request, model:M.Type, sortFields:[String:String],defaultSort:String,findQuery:MongoKittenQuery? = nil,transform: @escaping ((M) -> Element)) -> EventLoopFuture<Paginated<Element>>{
         
         //page info
         var page = Int((try? req.query.get(UInt.self, at: "page")) ?? 0)

@@ -230,9 +230,20 @@ final class UsersController:BaseController {
                 let result:EventLoopFuture<Paginated<UserDto>> = cursor.paginate(for: req, model: User.self, sortFields: self.sortFields,defaultSort: "email", findQuery: searchQuery)
  
                 */
-                let findQuery = allUsers(into: meow, additionalQuery: searchQuery)
+                //let findQuery = allUsers(into: meow, additionalQuery: searchQuery)
+                let paginatedInfo = req.extractPaginatioInfo(sortFields: self.sortFields,defaultSort: "email")
+                let pageResult = allUsersPaginated(into: meow, additionalQuery: searchQuery, paginationInfo: paginatedInfo)
+                return pageResult.map { pageResult in
+                    return pageResult?.map{UserDto.create(from: $0, content: .full)}.pageOutput(from: paginatedInfo) ?? PaginationResult.emptyOutput(from: paginatedInfo)
+                }
+                /*
+                let pageResult = try findAndSortArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, paginationInfo: paginatedInfo, into: meow)
                 
-                return findQuery.paginate(for: req, model: User.self, sortFields: self.sortFields, defaultSort: "email", findQuery: searchQuery, transform: {UserDto.create(from: $0, content: .full)})
+                    return pageResult.map { pageResult in
+                        return pageResult?.map{ ArtifactGroupedDto(from: $0)}.pageOutput(from: paginatedInfo) ?? PaginationResult.emptyOutput(from: paginatedInfo)
+                    }
+                */
+               /* return findQuery.paginate(for: req, model: User.self, sortFields: self.sortFields, defaultSort: "email", findQuery: searchQuery, transform: {UserDto.create(from: $0, content: .full)})*/
                 
                 //return result
             })

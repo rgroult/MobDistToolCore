@@ -26,7 +26,7 @@ enum PaginationSort:String {
 }*/
 public typealias PaginationStageBlock = (_ totalCount:Int) -> (PageInfo,[AggregateBuilderStage])
 extension Request {
-    func extractPaginateInfo(sortFields:[String:String],defaultSort:String)-> PaginationStageBlock {
+    func extractPaginateInfoKO(sortFields:[String:String],defaultSort:String)-> PaginationStageBlock {
         
         let aggregateStages:PaginationStageBlock = {(totalCount:Int)  in
             var stages = [AggregateBuilderStage]()
@@ -72,10 +72,13 @@ extension Request {
 }
 //let cursor:MappedCursor<MappedCursor<FindQueryBuilder, User>,UserDto>
 //extension MappedCursor<FindQueryBuilder, Content> {// where Element:Content
-typealias MappedModelCursor<CursorElement:Model> = MappedCursor<FindQueryBuilder, CursorElement>
+//typealias MappedModelCursor<CursorElement:Model> = MappedCursor<FindQueryBuilder, CursorElement>
 
-typealias PaginatedMappedCursor<CursorElement:Model,Element:Content> = MappedCursor<MappedCursor<FindQueryBuilder, CursorElement>,Element>
-
+typealias PaginatedMappedCursor<CursorElement:Model,Element:Content> = MappedCursor<MappedCursor<AggregateBuilderPipeline, CursorElement>,Element>
+/*
+extension MappedCursor<MappedCursor<AggregateBuilderPipeline,ArtifactGrouped>,ArtifactDto> {
+    
+}*/
 
 //typealias MappedModelCursor = MappedCursor<FindQueryBuilder, Element> where Element:Model
 //typealias PaginateMappedCursor<O:Content> = MappedCursor<MappedModelCursor<C:Model>,O>
@@ -84,7 +87,7 @@ typealias PaginatedMappedCursor<CursorElement:Model,Element:Content> = MappedCur
 //extension MappedCursor where MappedCursor<FindQueryBuilder, Element>
 extension PaginatedMappedCursor {
     
-    func paginate<M: ReadableModel>(for req:Request, model:M.Type, sortFields:[String:String],defaultSort:String,countQuery:EventLoopFuture<Int>) -> EventLoopFuture<Paginated<Element>>{
+    func paginateKO<M: ReadableModel>(for req:Request, model:M.Type, sortFields:[String:String],defaultSort:String,countQuery:EventLoopFuture<Int>) -> EventLoopFuture<Paginated<Element>>{
         return countQuery.flatMap{ count in
             self.paginate(for: req, model:model, sortFields: sortFields,defaultSort:defaultSort, totalCount: count)
         }
@@ -159,9 +162,10 @@ extension PaginatedMappedCursor {
         let pageData = PageData(per: perPage, total: totalCount)
         let maxPosition = max(0, Int(ceil(-1.0 + Double(totalCount) / Double(perPage))))
         let position = Position(current: page, max: maxPosition /* Int(ceil(Double(count) / Double(perPage)) - 1) *//* start indice is 0 */)
+        
        // return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)
          //   .getPageResult(position,pageData)
-        
+       
         let collection = req.meow.collection(for: model)
         let query:Document = [:]
         return collection.raw.find(query).sort(sortOrder.convert(field: sortBy))
@@ -180,6 +184,7 @@ extension FindQueryBuilder {
     func getPageResult<Element:Content>(_ position:Position,_ pageData:PageData) -> EventLoopFuture<Paginated<Element>>{
         return allResults().flatMapThrowing({ arrayOfResult in
             let decoder = BSONDecoder()
+            print("Decode as \(Element.self)")
             let elts = try arrayOfResult.map { document in
                 return try decoder.decode(Element.self, from: document)
             }

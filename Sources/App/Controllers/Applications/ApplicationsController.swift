@@ -120,9 +120,14 @@ final class ApplicationsController:BaseController {
               /*  let (queryUse,appFounds) =  App.findApplications(platform: platformFilter, into: meow,additionalQuery:self.extractSearch(from: req, searchField: "name"))
                 return appFounds.map(transform: {self.generateSummaryDto(from:$0)})
                     .paginate(for: req, model:MDTApplication.self, sortFields: self.sortFields,defaultSort: "created", findQuery: queryUse)*/
-                
-                let (queryUsed,appFounds) = App.findApplications(platform: platformFilter, into: meow,additionalQuery:self.extractSearch(from: req, searchField: "name"))
-                return appFounds.paginate(for: req, model: MDTApplication.self, sortFields: self.sortFields, defaultSort: "created", findQuery: queryUsed, transform: {self.generateSummaryDto(from:$0)})
+                let paginatedInfo = req.extractPaginatioInfo(sortFields: self.sortFields,defaultSort: "created")
+                let pageResult = App.findApplicationsPaginated(platform: platformFilter, pagination: paginatedInfo, into: meow,additionalQuery:self.extractSearch(from: req, searchField: "name"))
+                return pageResult.map { pageResult in
+                    return pageResult?.map{ self.generateSummaryDto(from:$0)}.pageOutput(from: paginatedInfo) ?? PaginationResult.emptyOutput(from: paginatedInfo)
+                }
+                /*
+                let (queryUsed,appFounds) = App.findApplicationsPaginated(platform: platformFilter, into: meow,additionalQuery:self.extractSearch(from: req, searchField: "name"))
+                return appFounds.paginate(for: req, model: MDTApplication.self, sortFields: self.sortFields, defaultSort: "created", findQuery: queryUsed, transform: {self.generateSummaryDto(from:$0)})*/
         }
     }
     
@@ -364,10 +369,17 @@ final class ApplicationsController:BaseController {
             do {
             guard let app = app else { throw ApplicationError.notFound }
             let excludedBranch = isLatestBranch ? nil : lastVersionBranchName
+            let paginatedInfo = req.extractPaginatioInfo(sortFields: self.artifactsSortFields,defaultSort: "created")
+            let pageResult = try findArtifactsPaginated(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, pagination: paginatedInfo, into: meow)
+                return pageResult.map { pageResult in
+                    return pageResult?.map{ ArtifactDto(from: $0)}.pageOutput(from: paginatedInfo) ?? PaginationResult.emptyOutput(from: paginatedInfo)
+                }
+                
+                /*
             let (queryUse,artifactsFound) = try findArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, into: meow)
             return artifactsFound
                 .paginate(for: req, model: Artifact.self, sortFields: self.artifactsSortFields,defaultSort: "created",findQuery: queryUse,transform: {ArtifactDto(from: $0)})
-                
+                */
                /* .map(transform: {ArtifactDto(from: $0)})
                 .paginate(for: req, model: Artifact.self, sortFields: self.artifactsSortFields,defaultSort: "created",findQuery: queryUse)*/
         }
@@ -392,13 +404,7 @@ final class ApplicationsController:BaseController {
             let pageResult = try findAndSortArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, paginationInfo: paginatedInfo, into: meow)
             
                 return pageResult.map { pageResult in
-                    let totalCount = pageResult?.total ?? 0
-                    let pageData = PageData(per: paginatedInfo.pageSize, total: totalCount)
-                    let maxPosition = max(0, Int(ceil(-1.0 + Double(totalCount) / Double(paginatedInfo.pageSize))))
-                    let position = Position(current: paginatedInfo.currentPageIndex, max: maxPosition)
-                    let page = Paginated(page:.init(position: position, data: pageData) , data: (pageResult?.data ?? []).map{ArtifactGroupedDto(from: $0)})
-                    
-                    return page
+                    return pageResult?.map{ ArtifactGroupedDto(from: $0)}.pageOutput(from: paginatedInfo) ?? PaginationResult.emptyOutput(from: paginatedInfo)
                 }
         }
         catch {
