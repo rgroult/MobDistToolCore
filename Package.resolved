@@ -114,8 +114,8 @@
         "repositoryURL": "https://github.com/vapor/jwt-kit.git",
         "state": {
           "branch": null,
-          "revision": "b50b30b567726b14ac282aa6d3a42a52c1ebc8c0",
-          "version": "4.2.2"
+          "revision": "df7955305940ea0fcd1626a0a6d1a1556623f95e",
+          "version": "4.2.3"
         }
       },
       {
@@ -132,8 +132,8 @@
         "repositoryURL": "https://github.com/OpenKitten/MongoKitten.git",
         "state": {
           "branch": null,
-          "revision": "8a98326aca11c29d87a8bf1538679bb5ad9fd733",
-          "version": "6.6.6"
+          "revision": "73a904c5e07018adfcbbd983cc6ec69e01b9c624",
+          "version": "6.6.8"
         }
       },
       {
@@ -168,8 +168,8 @@
         "repositoryURL": "https://github.com/vapor/sql-kit.git",
         "state": {
           "branch": null,
-          "revision": "dd87127c7b005237b24ee24917c515ecae9ff0ef",
-          "version": "3.9.1"
+          "revision": "b70d1fea1b544dd819c17e83d59fb9aa85c81e74",
+          "version": "3.10.0"
         }
       },
       {
@@ -177,8 +177,8 @@
         "repositoryURL": "https://github.com/swift-server/swift-backtrace.git",
         "state": {
           "branch": null,
-          "revision": "54a65d6391a1467a896d0d351ff2de6f469ee53c",
-          "version": "1.2.3"
+          "revision": "d3e04a9d4b3833363fb6192065b763310b156d54",
+          "version": "1.3.1"
         }
       },
       {
@@ -276,8 +276,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "f6a422c84cd8c60f656a868c10834c17b6b25c87",
-          "version": "4.48.0"
+          "revision": "2ada54b7ce56cc6934cd2c0207bef2305bfbd7a1",
+          "version": "4.48.2"
         }
       },
       {
