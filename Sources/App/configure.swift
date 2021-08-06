@@ -155,7 +155,7 @@ public func configure(_ app: Application) throws {
     app.http.server.configuration.port = configuration.serverListeningPort
     app.http.server.configuration.hostname = "0.0.0.0"
     app.routes.defaultMaxBodySize = 2_000_000_000
-    app.http.server.configuration.responseCompression = .enabled
+    app.http.server.configuration.responseCompression = configuration.enableCompression ? .enabled : .disabled
     //var myServerConfig = NIOServerConfig.default()
     //myServerConfig.port = configuration.serverListeningPort
     //myServerConfig.hostname = "0.0.0.0"

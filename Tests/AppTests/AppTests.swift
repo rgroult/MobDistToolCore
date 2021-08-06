@@ -1,6 +1,7 @@
 import App
 import XCTest
 import Vapor
+@testable import App
 
 final class AppTests: BaseAppTests {
     //let droplet = try! Droplet.testable()
@@ -36,22 +37,23 @@ final class AppTests: BaseAppTests {
         ("testNothing", testNothing)
     ]
 
-    func ttestLoginOK() throws {
+    func testAdminLoginOK() throws {
         let email = "admin@localhost.com"
         let loginJSON = """
             {
                 "email": "\(email)",
-                "password": "1234"
+                "password": "\(try app.appConfiguration().initialAdminPassword)"
             }
         """
         
-        let body = loginJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/login", body){ res in
+       // let body = try loginJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/login", loginJSON){ res in
             XCTAssertNotNil(res)
            // let token = res.content.get(String.self, at: "token")
-            let loginResp = try res.content.decode(LoginRespDto.self).wait()
+           //print(res.body.string)
+            let loginResp = try res.content.decode(LoginRespDto.self)
             XCTAssertEqual(loginResp.email, email)
-            XCTAssertEqual(loginResp.name, "admin")
+            XCTAssertEqual(loginResp.name, "Admin")
             print(loginResp)
         }
     }

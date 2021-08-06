@@ -50,12 +50,12 @@ final class LocalStorageServiceTests: BaseAppTests {
         let tempFile = createRandomFile(size: 1024)
         let info = StorageInfo(applicationName: "test", platform: .ios, version: "X.Y.Z", uploadFilename: nil, uploadContentType: nil)
         var accessUrl:StorageAccessUrl = ""
-        XCTAssertNoThrow(accessUrl = try storageService.store(file: tempFile, with: info, into: app.eventLoop).wait())
+        XCTAssertNoThrow(accessUrl = try storageService.store(file: tempFile, with: info, into: app.eventLoopGroup.next()).wait())
         //reset to begin
         tempFile.seek(toFileOffset: 0)
         
         //retrieve storedFile
-        let storedInfo = try storageService.getStoredFile(storedIn: accessUrl, into: app.eventLoop).wait()
+        let storedInfo = try storageService.getStoredFile(storedIn: accessUrl, into: app.eventLoopGroup.next()).wait()
         switch storedInfo {
         case .asFile(let file):
             //check file content
@@ -73,11 +73,11 @@ final class LocalStorageServiceTests: BaseAppTests {
         let tempFile = createRandomFile(size: 1024)
         let info = StorageInfo(applicationName: "test", platform: .ios, version: "X.Y.Z", uploadFilename: nil, uploadContentType: nil)
         var accessUrl:StorageAccessUrl = ""
-        XCTAssertNoThrow(accessUrl = try storageService.store(file: tempFile, with: info, into: app.eventLoop).wait())
+        XCTAssertNoThrow(accessUrl = try storageService.store(file: tempFile, with: info, into: app.eventLoopGroup.next()).wait())
         
-        XCTAssertNoThrow(try storageService.deleteStoredFileStorageId(storedIn: accessUrl, into: app.eventLoop).wait())
+        XCTAssertNoThrow(try storageService.deleteStoredFileStorageId(storedIn: accessUrl, into: app.eventLoopGroup.next()).wait())
         
-        XCTAssertThrowsError(try storageService.deleteStoredFileStorageId(storedIn: accessUrl, into: app.eventLoop).wait(), "") { error in
+        XCTAssertThrowsError(try storageService.deleteStoredFileStorageId(storedIn: accessUrl, into: app.eventLoopGroup.next()).wait(), "") { error in
             switch (error as? StorageError){
             case StorageError.notFound?:
                  XCTAssertTrue(true)
@@ -94,10 +94,10 @@ final class LocalStorageServiceTests: BaseAppTests {
         
         let info = StorageInfo(applicationName: "test", platform: .ios, version: "X.Y.Z", uploadFilename: nil, uploadContentType: nil)
         var accessUrl:StorageAccessUrl = ""
-        XCTAssertNoThrow(accessUrl = try storageService.store(file: tempFile, with: info, into: app.eventLoop).wait())
+        XCTAssertNoThrow(accessUrl = try storageService.store(file: tempFile, with: info, into: app.eventLoopGroup.next()).wait())
         
         //retrieve storedFile
-        let storedInfo = try storageService.getStoredFile(storedIn: accessUrl, into: app.eventLoop).wait()
+        let storedInfo = try storageService.getStoredFile(storedIn: accessUrl, into: app.eventLoopGroup.next()).wait()
         switch storedInfo {
          case .asFile(let file):
             //check file size

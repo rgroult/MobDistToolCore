@@ -33,8 +33,13 @@ func findWithPagination<T:Codable>(stages:[Document], paginationInfo:PaginationI
     */
     //let findStage = stages + paginationInfo.additionalStages
     let countStage:Document = [ "$count": "count" ]
+    var additionalStages = paginationInfo.additionalStages
+    if additionalStages.isEmpty {
+        //$facet need as least one stage
+        additionalStages.append(["$match": Document()])
+    }
     let facetStage:Document = [ "$facet" : [
-        "data" : paginationInfo.additionalStages ,
+        "data" : additionalStages ,
                                 "totalObjects" : [ countStage ]
                             ]]
     

@@ -7,9 +7,40 @@
 
 import Foundation
 import Vapor
+import XCTVapor
 
 extension Encodable {
-    func convertToHTTPBody() throws -> HTTPBody {
-       return try JSONEncoder().encode(self).convertToHTTPBody()
+    //TO REMOVE
+    func convertToHTTPBody() throws -> Encodable {
+        return self
+        //fatalError("TODO")
+        //return .init(data: try JSONEncoder().encode(self))
+      // return try JSONEncoder().encode(self).convertToHTTPBody()
+    }
+    
+    func wait() -> Self {
+        return self
+    }
+}
+
+extension XCTHTTPResponse {
+    var http:XCTHTTPResponse {
+        return  self
+    }
+}
+
+extension ResponseType {
+    var http:ResponseType {
+        return  self
+    }
+}
+
+extension ClientResponse {
+    var bodyData:Data {
+        guard var body = body else { return Data() }
+        return body.readData(length: body.readableBytes) ?? Data()
+    }
+    var bodyCount:Int {
+        return body?.readableBytes ?? 0
     }
 }

@@ -8,7 +8,7 @@
 import Foundation
 import Vapor
 import XCTest
-import Pagination
+//import Pagination
 @testable import App
 
 final class DeployScriptTests: BaseAppTests {
@@ -28,8 +28,8 @@ final class DeployScriptTests: BaseAppTests {
             iOSApiKey = try ApplicationsControllerTests.createApp(with: appDtoiOS, inside: app,token: token).apiKey
             androidApiKey = try ApplicationsControllerTests.createApp(with: appDtoAndroid, inside: app,token: token).apiKey
             
-            let dirConfig = DirectoryConfig.detect()
-            let filePath = dirConfig.workDir+"Ressources/python.path"
+            let dirConfig = DirectoryConfiguration.detect()
+            let filePath = dirConfig.workingDirectory+"Ressources/python.path"
             pythonPath = String(data: try Data(contentsOf: URL(fileURLWithPath: filePath)),encoding: .utf8)
             pythonPath = pythonPath.trimmingCharacters(in: .newlines)
         }catch{
@@ -39,13 +39,13 @@ final class DeployScriptTests: BaseAppTests {
     }
     
     func callScript(apiKey:String, args:[String],isSucess:Bool = true){
-        let config = try! app.make(MdtConfiguration.self)
+        let config = try! app.appConfiguration()
         //call http://localhost:8080/great/v2/Artifacts/92f5cb62-610b-4a4c-9777-b2f0b4b1171e/deploy | | python -
         #if os(Linux)
         #else
         let curlTask = Process()
         curlTask.launchPath = "/usr/bin/curl"
-        curlTask.arguments = ["-Ls","http://localhost:8081\(config.pathPrefix)/v2/Artifacts/\(apiKey)/deploy"]
+        curlTask.arguments = ["-Ls","http://localhost:8081/\(config.pathPrefix)/v2/Artifacts/\(apiKey)/deploy"]
         let pipe = Pipe()
         curlTask.standardOutput = pipe
         
@@ -87,8 +87,8 @@ final class DeployScriptTests: BaseAppTests {
     }
     
     func getIpaAbsoluteFilePath() -> String {
-        let dirConfig = DirectoryConfig.detect()
-        let filePath = dirConfig.workDir+"Ressources/calculator.ipa"
+        let dirConfig = DirectoryConfiguration.detect()
+        let filePath = dirConfig.workingDirectory+"Ressources/calculator.ipa"
         return filePath
     }
     
@@ -124,9 +124,9 @@ final class DeployScriptTests: BaseAppTests {
     }
     
     func testCallFromFileOK(){
-        let dirConfig = DirectoryConfig.detect()
-        let configFull = dirConfig.workDir+"Ressources/deployfull.json"
-        let configLatest = dirConfig.workDir+"Ressources/deployLatest.json"
+        let dirConfig = DirectoryConfiguration.detect()
+        let configFull = dirConfig.workingDirectory+"Ressources/deployfull.json"
+        let configLatest = dirConfig.workingDirectory+"Ressources/deployLatest.json"
         
         callScript(apiKey: iOSApiKey, args: ["ADD","fromFile", configFull],isSucess: true)
         callScript(apiKey: iOSApiKey, args: ["ADD","--latest","fromFile", configLatest],isSucess: true)

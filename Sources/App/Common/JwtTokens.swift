@@ -16,9 +16,9 @@ let refreshTokenExpiration:TimeInterval = 45*60 // 45mins
 
 struct JWTTokenPayload: JWTPayload ,Authenticatable/*, JWTPayload, Equatable*/ {
     
-    init(_ id: String = UUID().uuidString, email:String) {
+    init(_ id: String = UUID().uuidString, email:String, startDate:Date = Date()) {
         self.id = id
-        self.expireAt = ExpirationClaim(value: Date().addingTimeInterval(tokenExpiration))
+        self.expireAt = ExpirationClaim(value: startDate.addingTimeInterval(tokenExpiration))
         self.email = email
     }
     
@@ -38,8 +38,8 @@ struct JWTTokenPayload: JWTPayload ,Authenticatable/*, JWTPayload, Equatable*/ {
 
 struct JWTRefreshTokenPayload: JWTPayload /*JWTAuthenticatable, JWTPayload, Equatable */{
     
-    init(email:String) {
-        self.expireAt = ExpirationClaim(value: Date().addingTimeInterval(refreshTokenExpiration))
+    init(email:String, startDate:Date = Date()) {
+        self.expireAt = ExpirationClaim(value: startDate.addingTimeInterval(refreshTokenExpiration))
         self.username = email
         self.id = UUID().uuidString
     }
