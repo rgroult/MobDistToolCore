@@ -14,7 +14,7 @@ import XCTVapor
 //Samples App found here :https://github.com/bitbar/bitbar-samples/
 //Thank to him
 
-let ipaContentType = HTTPMediaType.fileExtension("ipa")! //HTTPMediaType.parse(IPA_CONTENT_TYPE.data(using: .utf8)!)!
+let ipaContentType = HTTPMediaType(type: "application", subType: "octet-stream ipa") //HTTPMediaType.parse(IPA_CONTENT_TYPE.data(using: .utf8)!)!
 let apkContentType = HTTPMediaType.fileExtension("apk")! //HTTPMediaType.parse(APK_CONTENT_TYPE.data(using: .utf8)!)!
 
 final class ArtifactsContollerTests: BaseAppTests {

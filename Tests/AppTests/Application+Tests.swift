@@ -27,9 +27,10 @@ extension Application {
     
     static func runningAppTest(loadingEnv:Environment? = nil) throws -> Application {
         var env = loadingEnv ?? Environment.xcode
-        let app = Application(env)
+        let app = try Application(env)
         try configure(app)
         try app.start()
+        //return try app.testable(method: .running(port: 8081))
         
         return app
     }
@@ -57,11 +58,17 @@ extension Application {
     func clientTest(
         _ method: HTTPMethod,
         _ path: String,
+        _ query: [String: String]? = nil,
         token: String? = nil,
         beforeSend: (inout XCTHTTPRequest) throws -> () = { _ in },
         afterSend: (XCTHTTPResponse) throws -> ()
         ) throws {
-        try clientTest(method, path, nilBody, token: token, beforeSend: beforeSend, afterSend: afterSend)
+        try clientTest(method, path, nilBody, token: token, beforeSend: {req in
+            if let query = query {
+                try req.query.encode(query)
+            }
+            try beforeSend(&req)
+        }, afterSend: afterSend)
     }
     func clientTest<T:Content>(
         _ method: HTTPMethod,
@@ -72,14 +79,19 @@ extension Application {
         afterSend: (XCTHTTPResponse) throws -> ()
         ) throws {
         
-        try test(method, path, beforeRequest: { req in
-            if  body != nil {
+        let mdtConfig = try appConfiguration()
+        let path = path.hasPrefix("/") ? path : "/\(path)"
+        
+        try test(method, mdtConfig.pathPrefix + path, beforeRequest: { req in
+            if  let body = body {
+                try req.content.encode(body)
                 req.headers.contentType = .json
             }
             if let token = token {
                 req.headers.add(name: "Authorization", value: "Bearer \(token)")
             }
             try beforeSend(&req)
+          //  print("BODY : \(req.body.string)")
             
         }, afterResponse: { res in
             try afterSend(res)
@@ -114,7 +126,7 @@ extension Application {
         token: String? = nil,
         beforeSend: (inout XCTHTTPRequest) throws -> () = { _ in },
         isAbsoluteUrl:Bool = false) throws -> XCTHTTPResponse {
-        return try clientSyncTest(method, path, nilBody,query,beforeSend:beforeSend)
+        return try clientSyncTest(method, path, nilBody,query,token: token, beforeSend:beforeSend)
     }
     
     func clientSyncTest<T:Content> (
@@ -131,6 +143,7 @@ extension Application {
             if let query = query {
                 try req.query.encode(query)
             }
+            try beforeSend(&req)
         }) {res  in
             response = res
         }

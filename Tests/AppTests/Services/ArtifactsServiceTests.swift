@@ -27,7 +27,7 @@ final class ArtifactsServiceTests: BaseAppTests {
         XCTAssertNoThrow(try deleteUser(withEmail: normalUser.email, into: context).wait())
        
         //delete all apps
-        XCTAssertNoThrow(try context.collection(for: MDTApplication.self).deleteAll(where: []).wait())
+        XCTAssertNoThrow(try context.collection(for: MDTApplication.self).deleteAll(where: [:]).wait())
          super.tearDown()
     }
     

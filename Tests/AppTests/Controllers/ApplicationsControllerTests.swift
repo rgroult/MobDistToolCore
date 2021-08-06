@@ -127,7 +127,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         XCTAssertEqual(pageApps.page.data.total , 1)
         
         //find Android App
-        try app.clientTest(.GET, "/v2/Applications", ["platform":Platform.ios.rawValue], token: token){ res in
+        try app.clientTest(.GET, "/v2/Applications", ["platform":Platform.android.rawValue], token: token){ res in
             let AndroidApps = try res.content.decode(Paginated<ApplicationSummaryDto>.self)
             XCTAssertEqual(AndroidApps.data.count , 1)
             XCTAssertEqual(AndroidApps.page.data.total , 1)

@@ -49,6 +49,7 @@ final class AppTests: BaseAppTests {
         try app.clientTest(.POST, "/v2/Users/login", loginJSON){ res in
             XCTAssertNotNil(res)
            // let token = res.content.get(String.self, at: "token")
+            print(res.body.string)
             let loginResp = try res.content.decode(LoginRespDto.self)
             XCTAssertEqual(loginResp.email, email)
             XCTAssertEqual(loginResp.name, "admin")

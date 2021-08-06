@@ -28,7 +28,7 @@ let normalUSerInfo = RegisterDto(email: "toto@toto.Com", name: "toto", password:
         XCTAssertNoThrow(try deleteUser(withEmail: normalUser.email, into: context).wait())
        
         //delete all apps
-        XCTAssertNoThrow(try context.collection(for: MDTApplication.self).deleteAll(where: []).wait())
+        XCTAssertNoThrow(try context.collection(for: MDTApplication.self).deleteAll(where: [:]).wait())
         //XCTAssertNoThrow(try context.deleteAll(MDTApplication.self,where:Query()).wait())
          super.tearDown()
     }

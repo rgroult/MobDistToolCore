@@ -10,6 +10,7 @@ import XCTest
 import Vapor
 import Meow
 @testable import App
+import XCTVapor
 
 class BaseAppTests: XCTestCase {
     //let droplet = try! Droplet.testable()
@@ -46,7 +47,7 @@ class BaseAppTests: XCTestCase {
             try cleanDatabase(into: context)
             //try context.manager.database.drop().wait()
             let config = try app.appConfiguration()//  try app.make(MdtConfiguration.self)
-            _ = try createSysAdminIfNeeded(into: context, with: config)
+            _ = try createSysAdminIfNeeded(into: context, with: config).wait()
             
         }catch {
             print("Error Starting server:\(error)")
@@ -55,17 +56,17 @@ class BaseAppTests: XCTestCase {
     }
     
     private func cleanDatabase(into:Meow.MeowDatabase) throws {
-        try context.collection(for: User.self).deleteAll(where: [])
-        try context.collection(for: MDTApplication.self).deleteAll(where: [])
-        try context.collection(for: TokenInfo.self).deleteAll(where: [])
-        try context.collection(for: Artifact.self).deleteAll(where: [])
+        try context.collection(for: User.self).deleteAll(where: [:]).wait()
+        try context.collection(for: MDTApplication.self).deleteAll(where: [:]).wait()
+        try context.collection(for: TokenInfo.self).deleteAll(where: [:]).wait()
+        try context.collection(for: Artifact.self).deleteAll(where: [:]).wait()
     }
     
     override func tearDown()  {
         do {
             try app.server.shutdown()//   runningServer?.close().wait()
         //try context.manager.database.drop().wait()
-        try context.syncShutdownGracefully()
+       // try context.syncShutdownGracefully()
             context = nil
         }catch {
             print("Error Stopping server:\(error)")
