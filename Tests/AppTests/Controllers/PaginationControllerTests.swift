@@ -8,7 +8,7 @@
 import Foundation
 import Vapor
 import XCTest
-import Pagination
+//import Pagination
 @testable import App
 
 final class PaginationControllerTests: BaseAppTests {
@@ -206,7 +206,7 @@ final class PaginationControllerTests: BaseAppTests {
         if let sortBy = sortBy {
             query["sortby"] = sortBy
         }
-        let pageResp = try app.clientSyncTest(.GET, path, nil, query,token: token)
+        let pageResp = try app.clientSyncTest(.GET, path, query,token: token)
         let page = try pageResp.content.decode(Paginated<DATA>.self).wait()
         
         let eltPerPage = min(perPage,maxElt)

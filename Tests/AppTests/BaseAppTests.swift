@@ -32,7 +32,7 @@ class BaseAppTests: XCTestCase {
 //        }
 //    }
     internal var app:Application!
-    internal var context:Meow.Context!
+    internal var context:Meow.MeowDatabase!
     override func setUp() {
         configure()
     }
@@ -40,11 +40,12 @@ class BaseAppTests: XCTestCase {
     func configure(with env:Environment? = nil) {
         do {
             app = try Application.runningAppTest(loadingEnv:env)
-            context = try app.make(Future<Meow.Context>.self).wait()
+            context = app.meow
+            //context = try app.make(Future<Meow.Context>.self).wait()
             //delete existing data
             try cleanDatabase(into: context)
             //try context.manager.database.drop().wait()
-            let config = try app.make(MdtConfiguration.self)
+            let config = try app.appConfiguration()//  try app.make(MdtConfiguration.self)
             _ = try createSysAdminIfNeeded(into: context, with: config)
             
         }catch {
@@ -53,16 +54,16 @@ class BaseAppTests: XCTestCase {
         }
     }
     
-    private func cleanDatabase(into:Context) throws {
-        try context.deleteAll(User.self, where:Query()).wait()
-        try context.deleteAll(MDTApplication.self, where:Query()).wait()
-        try context.deleteAll(TokenInfo.self, where:Query()).wait()
-        try context.deleteAll(Artifact.self, where:Query()).wait()
+    private func cleanDatabase(into:Meow.MeowDatabase) throws {
+        try context.collection(for: User.self).deleteAll(where: [])
+        try context.collection(for: MDTApplication.self).deleteAll(where: [])
+        try context.collection(for: TokenInfo.self).deleteAll(where: [])
+        try context.collection(for: Artifact.self).deleteAll(where: [])
     }
     
     override func tearDown()  {
         do {
-        try app.runningServer?.close().wait()
+            try app.server.shutdown()//   runningServer?.close().wait()
         //try context.manager.database.drop().wait()
         try context.syncShutdownGracefully()
             context = nil

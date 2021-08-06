@@ -36,7 +36,7 @@ final class AppTests: BaseAppTests {
         ("testNothing", testNothing)
     ]
 
-    func ttestLoginOK() throws {
+    func testLoginOK() throws {
         let email = "admin@localhost.com"
         let loginJSON = """
             {
@@ -45,11 +45,11 @@ final class AppTests: BaseAppTests {
             }
         """
         
-        let body = loginJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/login", body){ res in
+       // let body = try loginJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/login", loginJSON){ res in
             XCTAssertNotNil(res)
            // let token = res.content.get(String.self, at: "token")
-            let loginResp = try res.content.decode(LoginRespDto.self).wait()
+            let loginResp = try res.content.decode(LoginRespDto.self)
             XCTAssertEqual(loginResp.email, email)
             XCTAssertEqual(loginResp.name, "admin")
             print(loginResp)

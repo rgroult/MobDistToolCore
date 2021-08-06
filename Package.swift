@@ -55,7 +55,7 @@ let package = Package(
                                             .product(name: "Meow", package: "MongoKitten"),
                                             "MongoKitten","Swiftgger","CryptoSwift","zxcvbn"]),
         .target(name: "Run", dependencies: ["App"]),
-       // .testTarget(name: "AppTests", dependencies: ["App"])
+        .testTarget(name: "AppTests", dependencies: ["App",.product(name: "XCTVapor", package: "vapor")])
     ]
 )   
 

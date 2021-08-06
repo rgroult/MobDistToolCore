@@ -8,7 +8,7 @@
 import Foundation
 import Vapor
 
-public struct LoginReqDto: Codable {
+public struct LoginReqDto: Codable, Content {
     var email:String
     var password:String
 }
@@ -23,7 +23,7 @@ public struct LoginRespDto: Codable {
 /// Allows `Todo` to be encoded to and decoded from HTTP messages.
 extension LoginRespDto: Content { }
 
-public struct RefreshTokenDto: Codable {
+public struct RefreshTokenDto: Codable, Content {
     var email:String
     var refreshToken:String
 }

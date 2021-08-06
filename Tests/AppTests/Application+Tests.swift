@@ -6,12 +6,15 @@
 //
 
 import XCTest
+import XCTVapor
 import Vapor
 import App
 @testable import App
 
+let nilBody:String? = nil
+
 extension Application {
-    static func runningAppTest(loadingEnv:Environment? = nil) throws -> Application {
+   /* static func runningAppTest(loadingEnv:Environment? = nil) throws -> Application {
         var config = Config.default()
         var env = loadingEnv ?? Environment.xcode
         var services = Services.default()
@@ -20,9 +23,18 @@ extension Application {
         
         try app.asyncRun().wait()
         return app
+    }*/
+    
+    static func runningAppTest(loadingEnv:Environment? = nil) throws -> Application {
+        var env = loadingEnv ?? Environment.xcode
+        let app = Application(env)
+        try configure(app)
+        try app.start()
+        
+        return app
     }
     
-    static func runningTest(port: Int, configure: ((Router) throws -> ())?) throws -> Application {
+    /*static func runningTest(port: Int, configure: ((Router) throws -> ())?) throws -> Application {
         let router = EngineRouter.default()
         try configure?(router)
         var services = Services.default()
@@ -41,16 +53,39 @@ extension Application {
         let app = try Application.asyncBoot(config: .default(), environment: .xcode, services: services).wait()
         try app.asyncRun().wait()
         return app
-    }
-    
+    }*/
     func clientTest(
         _ method: HTTPMethod,
         _ path: String,
-        _ body: HTTPBody? = nil,
         token: String? = nil,
-        beforeSend: (Request) throws -> () = { _ in },
-        afterSend: (Response) throws -> ()
+        beforeSend: (inout XCTHTTPRequest) throws -> () = { _ in },
+        afterSend: (XCTHTTPResponse) throws -> ()
         ) throws {
+        try clientTest(method, path, nilBody, token: token, beforeSend: beforeSend, afterSend: afterSend)
+    }
+    func clientTest<T:Content>(
+        _ method: HTTPMethod,
+        _ path: String,
+        _ body: T?,
+        token: String? = nil,
+        beforeSend: (inout XCTHTTPRequest) throws -> () = { _ in },
+        afterSend: (XCTHTTPResponse) throws -> ()
+        ) throws {
+        
+        try test(method, path, beforeRequest: { req in
+            if  body != nil {
+                req.headers.contentType = .json
+            }
+            if let token = token {
+                req.headers.add(name: "Authorization", value: "Bearer \(token)")
+            }
+            try beforeSend(&req)
+            
+        }, afterResponse: { res in
+            try afterSend(res)
+        })
+        
+        /*
         let config = try make(NIOServerConfig.self)
         let path = path.hasPrefix("/") ? path : "/\(path)"
         let mdtConfig = try make(MdtConfiguration.self)
@@ -70,16 +105,39 @@ extension Application {
         try beforeSend(req)
         let res = try FoundationClient.default(on: self).send(req).wait()
         try afterSend(res)
+        */
     }
-    
     func clientSyncTest (
         _ method: HTTPMethod,
         _ path: String,
-        _ body: HTTPBody? = nil,
         _ query: [String: String]? = nil,
         token: String? = nil,
-        beforeSend: (Request) throws -> () = { _ in },
-        isAbsoluteUrl:Bool = false) throws -> Response {
+        beforeSend: (inout XCTHTTPRequest) throws -> () = { _ in },
+        isAbsoluteUrl:Bool = false) throws -> XCTHTTPResponse {
+        return try clientSyncTest(method, path, nilBody,query,beforeSend:beforeSend)
+    }
+    
+    func clientSyncTest<T:Content> (
+        _ method: HTTPMethod,
+        _ path: String,
+        _ body: T?,
+        _ query: [String: String]? = nil,
+        token: String? = nil,
+        beforeSend: (inout XCTHTTPRequest) throws -> () = { _ in },
+        isAbsoluteUrl:Bool = false) throws -> XCTHTTPResponse {
+        
+        var response:XCTHTTPResponse!
+        try clientTest(method, path, body, token: token, beforeSend: { req in
+            if let query = query {
+                try req.query.encode(query)
+            }
+        }) {res  in
+            response = res
+        }
+        
+        return response
+    
+        /*
         let config = try make(NIOServerConfig.self)
         let mdtConfig = try make(MdtConfiguration.self)
         let urlString:String
@@ -105,12 +163,15 @@ extension Application {
         }
         try beforeSend(req)
         return  try FoundationClient.default(on: self).send(req).wait()
+        */
     }
     
     func clientTest(_ method: HTTPMethod, _ path: String, equals: String) throws {
+        fatalError("TODO")
+        /*
         return try clientTest(method, path) { res in
             let bodyString = String(data: res.http.body.data ?? Data(), encoding: .ascii)
             XCTAssertEqual(bodyString, equals)
-        }
+        }*/
     }
 }

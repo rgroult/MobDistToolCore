@@ -17,7 +17,7 @@ let normalUSerInfo = RegisterDto(email: "toto@toto.Com", name: "toto", password:
     
     override func setUp() {
         super.setUp()
-        XCTAssertNoThrow(context = try app.make(Future<Meow.Context>.self).wait())
+        context = try app.meow
         XCTAssertNoThrow(normalUser =  try createUser(name: normalUSerInfo.name, email: normalUSerInfo.email, password: normalUSerInfo.password,isActivated:true, into: context).wait())
         let adminUser = try? findUser(by: "admin@localhost.com", into: context).wait()
         XCTAssertNotNil(adminUser)
@@ -28,7 +28,8 @@ let normalUSerInfo = RegisterDto(email: "toto@toto.Com", name: "toto", password:
         XCTAssertNoThrow(try deleteUser(withEmail: normalUser.email, into: context).wait())
        
         //delete all apps
-        XCTAssertNoThrow(try context.deleteAll(MDTApplication.self,where:Query()).wait())
+        XCTAssertNoThrow(try context.collection(for: MDTApplication.self).deleteAll(where: []).wait())
+        //XCTAssertNoThrow(try context.deleteAll(MDTApplication.self,where:Query()).wait())
          super.tearDown()
     }
     
@@ -70,7 +71,7 @@ let normalUSerInfo = RegisterDto(email: "toto@toto.Com", name: "toto", password:
         try testCreateApplication()
         //find app
         
-        var app:MDTApplication? = try findApplications(for: normalUser, into: context).getFirstResult().wait()
+        var app:MDTApplication? = try findApplications(for: normalUser, into: context).firstResult().wait()
         XCTAssertNotNil(app)
         XCTAssertEqual(app!.adminUsers.count, 1)
         _ = try app!.removeAdmin(user: normalUser, into: context).wait()
@@ -78,17 +79,18 @@ let normalUSerInfo = RegisterDto(email: "toto@toto.Com", name: "toto", password:
         XCTAssertEqual(app!.adminUsers.count, 0)
         
         //find app
-        XCTAssertNil(try findApplications(for: normalUser, into: context).getFirstResult().wait())
+        XCTAssertNil(try findApplications(for: normalUser, into: context).firstResult().wait())
         
         //reload app
-        app = try findApplications(into: context,additionalQuery:nil).1.getFirstResult().wait()
+        app = try findApplicationsPaginated(pagination: .init(additionalStages: [], currentPageIndex: 0, pageSize: 999), into: context, additionalQuery: nil).wait()?.data.first
+       // app = try findApplications(into: context,additionalQuery:nil).1.firstResult().wait()
         XCTAssertEqual(app?.adminUsers.count, 0)
         
         //add user as admin
         _ = try app?.addAdmin(user: normalUser, into: context).wait()
         XCTAssertNotNil(app)
         //reload app
-        let reloadApp:MDTApplication? = try findApplications(for: normalUser, into: context).getFirstResult().wait()
+        let reloadApp:MDTApplication? = try findApplications(for: normalUser, into: context).firstResult().wait()
         XCTAssertNotNil(reloadApp)
         XCTAssertEqual(app?._id, reloadApp?._id)
     }
@@ -97,7 +99,7 @@ let normalUSerInfo = RegisterDto(email: "toto@toto.Com", name: "toto", password:
         try testCreateApplication()
         
         //find app
-        let app:MDTApplication? = try findApplications(for: normalUser, into: context).getFirstResult().wait()
+        let app:MDTApplication? = try findApplications(for: normalUser, into: context).firstResult().wait()
         XCTAssertNotNil(app)
         
         //find by uuid
