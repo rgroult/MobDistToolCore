@@ -6,6 +6,7 @@ extension AppTests {
     //   `swift test --generate-linuxmain`
     // to regenerate.
     static let __allTests__AppTests = [
+        ("testAdminLoginOK", testAdminLoginOK),
         ("testNothing", testNothing),
     ]
 }
@@ -43,6 +44,7 @@ extension ApplicationsControllerTests {
         ("testCreateTwiceError", testCreateTwiceError),
         ("testDeleteApplication", testDeleteApplication),
         ("testDeleteApplicationKO", testDeleteApplicationKO),
+        ("testDeleteApplicationWithArtifacts", testDeleteApplicationWithArtifacts),
         ("testFavoritesApplications", testFavoritesApplications),
         ("testFilterApplications", testFilterApplications),
         ("testFilterApplicationsBadPlatform", testFilterApplicationsBadPlatform),
@@ -77,6 +79,7 @@ extension ArtifactsContollerTests {
         ("testCreateArtifactBigFile", testCreateArtifactBigFile),
         ("testCreateIpaArtifact", testCreateIpaArtifact),
         ("testCreateIpaArtifactFullArgs", testCreateIpaArtifactFullArgs),
+        ("testCreateIpaArtifactWithEmptySortIdentifier", testCreateIpaArtifactWithEmptySortIdentifier),
         ("testCreateIpaArtifactWithSortIdentifier", testCreateIpaArtifactWithSortIdentifier),
         ("testCreateLastArtifact", testCreateLastArtifact),
         ("testCreateLastArtifactFullArgs", testCreateLastArtifactFullArgs),
@@ -91,6 +94,7 @@ extension ArtifactsContollerTests {
         ("testDownloadInfoIOS", testDownloadInfoIOS),
         ("testDownloadiOSDownloadFile", testDownloadiOSDownloadFile),
         ("testDownloadiOSManifest", testDownloadiOSManifest),
+        ("testInstallPageAndroid", testInstallPageAndroid),
         ("testInstallPageIOS", testInstallPageIOS),
     ]
 }
@@ -101,6 +105,7 @@ extension ArtifactsServiceTests {
     // to regenerate.
     static let __allTests__ArtifactsServiceTests = [
         ("testAddArtifactsAndsort", testAddArtifactsAndsort),
+        ("testDeleteArtifactForApplication", testDeleteArtifactForApplication),
     ]
 }
 
@@ -122,7 +127,10 @@ extension LocalStorageArtifactsContollerTests {
     //   `swift test --generate-linuxmain`
     // to regenerate.
     static let __allTests__LocalStorageArtifactsContollerTests = [
-        ("testDownloadiOSManifest", testDownloadiOSManifest),
+        ("testStorageDeleteArtifactData", testStorageDeleteArtifactData),
+        ("testStorageDownloadAndroidDownloadFile", testStorageDownloadAndroidDownloadFile),
+        ("testStorageDownloadiOSDownloadFile", testStorageDownloadiOSDownloadFile),
+        ("testStorageDownloadiOSManifest", testStorageDownloadiOSManifest),
     ]
 }
 
@@ -218,15 +226,19 @@ extension UsersControllerNoAutomaticRegistrationTests {
         ("testLoginNotActivated", testLoginNotActivated),
         ("testMe", testMe),
         ("testMeKOBadToken", testMeKOBadToken),
+        ("testMeKOExpiredToken", testMeKOExpiredToken),
         ("testMeKOWithRefreshToken", testMeKOWithRefreshToken),
         ("testRefreshLogin", testRefreshLogin),
         ("testRefreshLoginKOBadEmail", testRefreshLoginKOBadEmail),
         ("testRefreshLoginKOBadToken", testRefreshLoginKOBadToken),
+        ("testRefreshLoginKOExpiredToken", testRefreshLoginKOExpiredToken),
         ("testRegister", testRegister),
         ("testUpdate", testUpdate),
         ("testUpdateDelete", testUpdateDelete),
         ("testUpdateNotAdmin", testUpdateNotAdmin),
         ("testUpdateOther", testUpdateOther),
+        ("testUpdatePassword", testUpdatePassword),
+        ("testUpdatePasswordAsSysAdmin", testUpdatePasswordAsSysAdmin),
         ("testUpdateWithApp", testUpdateWithApp),
     ]
 }

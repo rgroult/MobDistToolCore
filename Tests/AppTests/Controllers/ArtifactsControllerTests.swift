@@ -369,15 +369,10 @@ final class ArtifactsContollerTests: BaseAppTests {
         let dwInfo = try donwloadInfo(apiKey: iOSApiKey!, fileData: fileData)
         print(dwInfo.directLinkUrl)
         let ipaFile = try app.clientSyncTest(.GET, dwInfo.directLinkUrl,isAbsoluteUrl:true)
-        #if os(Linux)
-            //URLSEssion on linux doens not handle redirect by default
-            XCTAssertEqual(ipaFile.http.status, .seeOther)
-            XCTAssertEqual( ipaFile.http.headers.firstValue(name: .location),TestingStorageService.defaultIpaUrl)
-        #else
-            XCTAssertTrue(ipaFile.content.contentType == .binary)
-            XCTAssertEqual(ipaFile.bodyCount,fileData.count)
-            XCTAssertEqual( ipaFile.headers.first(name: .contentLength),"\(fileData.count)")
-        #endif
+        XCTAssertTrue(ipaFile.content.contentType == .binary)
+        XCTAssertEqual(ipaFile.bodyCount,fileData.count)
+        XCTAssertEqual( ipaFile.headers.first(name: .contentLength),"\(fileData.count)")
+        
         //print(ipaFile.http.headers)
       //  print(ipaFile.content)
     }
@@ -392,16 +387,10 @@ final class ArtifactsContollerTests: BaseAppTests {
         let dwInfo = try donwloadInfo(apiKey: androidApiKey!, fileData: fileData,contentType:apkContentType)
         print(dwInfo.directLinkUrl)
         XCTAssertEqual(dwInfo.installUrl,dwInfo.directLinkUrl)
-        let ipaFile = try app.clientSyncTest(.GET, dwInfo.installUrl,isAbsoluteUrl:true)
-        #if os(Linux)
-            //URLSEssion on linux doens not handle redirect by default
-            XCTAssertEqual(ipaFile.http.status, .seeOther)
-           XCTAssertEqual( ipaFile.http.headers.firstValue(name: .location),TestingStorageService.defaultApkUrl)
-            
-        #else
-            XCTAssertTrue(ipaFile.content.contentType == .binary)
-            XCTAssertEqual(ipaFile.bodyCount,fileData.count)
-        #endif
+        let apkFile = try app.clientSyncTest(.GET, dwInfo.installUrl,isAbsoluteUrl:true)
+        XCTAssertTrue(apkFile.content.contentType == .binary)
+        XCTAssertEqual(apkFile.bodyCount,fileData.count)
+        XCTAssertEqual( apkFile.headers.first(name: .contentLength),"\(fileData.count)")
        
         //print(ipaFile.http.headers)
         //  print(ipaFile.content)
@@ -465,7 +454,7 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
         }
     }
 
-    func testDeleteArtifactData() throws {
+    func testStorageDeleteArtifactData() throws {
         let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
         let version = "XX.XX.XX"
         let _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: iOSApiKey!, branch: "master", version: version, name: "prod", contentType:ipaContentType, inside: app!)
@@ -481,7 +470,7 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
         print(files)
     }
     
-    func testDownloadiOSManifest() throws {
+    func testStorageDownloadiOSManifest() throws {
         let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
         let dwInfo = try ArtifactsContollerTests.donwloadInfo(apiKey: iOSApiKey!, fileData: fileData,into:app!,with:token)
         
@@ -508,7 +497,7 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
         XCTAssertEqual(ipaFile.http.bodyCount,fileData.count)
     }
 
-    func testDownloadiOSDownloadFile() throws {
+    func testStorageDownloadiOSDownloadFile() throws {
             let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
             let dwInfo = try ArtifactsContollerTests.donwloadInfo(apiKey: iOSApiKey!, fileData: fileData,into:app!,with:token)
             print(dwInfo.directLinkUrl)
@@ -521,7 +510,7 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
         }
 
 
-        func testDownloadAndroidDownloadFile() throws {
+        func testStorageDownloadAndroidDownloadFile() throws {
             let fileData = try ArtifactsContollerTests.fileData(name: "testdroid-sample-app", ext: "apk")
             let dwInfo = try ArtifactsContollerTests.donwloadInfo(apiKey: androidApiKey!, fileData: fileData,contentType:apkContentType,into:app!,with:token)
             print(dwInfo.directLinkUrl)

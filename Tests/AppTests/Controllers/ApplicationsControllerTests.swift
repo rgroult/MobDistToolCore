@@ -841,14 +841,8 @@ final class ApplicationsControllerTests: BaseAppTests {
         
         //test direct download
         let ipaFile = try app.clientSyncTest(.GET, maxVersion.info.directLinkUrl,isAbsoluteUrl:true)
-        #if os(Linux)
-            //URLSEssion on linux doens not handle redirect by default
-            XCTAssertEqual(ipaFile.http.status, .seeOther)
-            XCTAssertEqual( ipaFile.http.headers.firstValue(name: .location),TestingStorageService.defaultIpaUrl)
-        #else
-            XCTAssertTrue(ipaFile.content.contentType == .binary)
-            XCTAssertEqual(ipaFile.bodyCount,fileData.count)
-        #endif
+        XCTAssertTrue(ipaFile.content.contentType == .binary)
+        XCTAssertEqual(ipaFile.bodyCount,fileData.count)
     }
     
     func testMaxVersionNotActivated() throws {

@@ -57,10 +57,12 @@ class BaseAppTests: XCTestCase {
     }
     
     private func cleanDatabase(into:Meow.MeowDatabase) throws {
+        try into.raw.drop().wait()
+        /*
         try context.collection(for: User.self).deleteAll(where: [:]).wait()
         try context.collection(for: MDTApplication.self).deleteAll(where: [:]).wait()
         try context.collection(for: TokenInfo.self).deleteAll(where: [:]).wait()
-        try context.collection(for: Artifact.self).deleteAll(where: [:]).wait()
+        try context.collection(for: Artifact.self).deleteAll(where: [:]).wait()*/
     }
     
     override func tearDown()  {
