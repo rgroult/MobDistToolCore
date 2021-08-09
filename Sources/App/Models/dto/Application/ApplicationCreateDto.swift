@@ -7,7 +7,7 @@
 
 import Foundation
 import Vapor
-import Meow
+//import Meow
 
 struct ApplicationCreateDto: Codable {
     var name:String
@@ -22,3 +22,5 @@ extension ApplicationCreateDto {
         return ApplicationCreateDto( name: "Awesome App", platform:.ios ,description:"",base64IconData:nil,enableMaxVersionCheck:false)
     }
 }
+
+extension ApplicationCreateDto : Content {}

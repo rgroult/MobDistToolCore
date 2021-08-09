@@ -19,7 +19,7 @@ enum UserError: Error,Equatable {
     case invalidPassworsStrength(required:Int)
 }
 
-extension UserError: Debuggable {
+extension UserError: DebuggableError {
     var reason: String {
         switch self {
         case .invalidLoginOrPassword:
@@ -44,53 +44,61 @@ extension UserError: Debuggable {
     }
 }
 
-func allUsers(into context:Meow.Context,additionalQuery:Query?) throws -> MappedCursor<FindCursor, User>{
-    return context.find(User.self, where: additionalQuery ?? Query())
+func allUsersPaginated(into context:Meow.MeowDatabase,additionalQuery:MongoKittenQuery?, paginationInfo:PaginationInfo) -> EventLoopFuture<PaginationResult<User>?> /*FindQueryBuilder*/ {
+    let query = additionalQuery?.makeDocument() ?? [:]
+    return findWithPagination(stages: [["$match": query]], paginationInfo: paginationInfo, into: context.collection(for: User.self).raw).firstResult()
+    
+    //return context.collection(for: User.self).raw.find(additionalQuery?.makeDocument() ?? [:])
 }
 
-func findActivableUser(by activationToken:String,into context:Meow.Context) throws -> Future<User?>{
-    return context.find(User.self, where:  Query.valEquals(field: "activationToken", val: activationToken))
-        .getFirstResult()
+func findActivableUser(by activationToken:String,into context:Meow.MeowDatabase) -> EventLoopFuture<User?>{
+    return context.collection(for: User.self).find(where: "activationToken" == activationToken)
+        .firstResult()
 }
 
-func findUser(by email:String,into context:Meow.Context) throws -> Future<User?>{
-    return context.find(User.self, where:  Query.valEquals(field: "email", val: email))
-        .getFirstResult()
+func findUser(by email:String,into context:Meow.MeowDatabase) -> EventLoopFuture<User?>{
+    return context.collection(for: User.self).find(where: "email" == email).firstResult()
+    //return context.find(User.self, where:  Query.valEquals(field: "email", val: email))
+     //   .getFirstResult()
 }
 
-func findUser(by email:String, and password:String, updateLastLogin:Bool = true,into context:Meow.Context) throws  -> Future<User>{
-    return try findUser(by: email, into: context)
+func findUser(by email:String, and password:String, updateLastLogin:Bool = true,into context:Meow.MeowDatabase)  -> EventLoopFuture<User>{
+    return findUser(by: email, into: context)
         .flatMap{user in
-            guard let user = user else { throw UserError.invalidLoginOrPassword }
+            guard let user = user else { return context.eventLoop.makeFailedFuture(UserError.invalidLoginOrPassword)}
+            //{ throw UserError.invalidLoginOrPassword }
             //check password
-            guard checkPassword(plain: password, salt: user.salt, hash: user.password) else { throw UserError.invalidLoginOrPassword }
+            guard checkPassword(plain: password, salt: user.salt, hash: user.password) else { return context.eventLoop.makeFailedFuture(UserError.invalidLoginOrPassword)}
+            //{ throw UserError.invalidLoginOrPassword }
             
             if updateLastLogin {
                 user.lastLogin = Date()
-                return user.save(to: context).map{user}
+                return user.save(in: context).map{_ in user}
             }else {
-                return context.eventLoop.newSucceededFuture(result: user)
+                return context.eventLoop.makeSucceededFuture(user)
             }
         }
 }
 
-func createSysAdminIfNeeded(into context:Meow.Context,with config:MdtConfiguration) throws -> Future<Bool>{
-    return context.findOne(User.self,where: Query.valEquals(field: "isSystemAdmin", val: true))
+func createSysAdminIfNeeded(into context:Meow.MeowDatabase,with config:MdtConfiguration) -> EventLoopFuture<Bool>{
+    return context.collection(for: User.self).findOne(where: "isSystemAdmin" == true)
+    //return context.findOne(User.self,where: Query.valEquals(field: "isSystemAdmin", val: true))
         .flatMap({ user  in
             if let _ = user {
-                return context.eventLoop.newSucceededFuture(result: false)
+                return context.eventLoop.makeSucceededFuture( false)
             }else {
                 //create Admin user
-                return try createUser(name: "Admin", email: config.initialAdminEmail, password: config.initialAdminPassword, isSystemAdmin:true, isActivated: true, into: context)
+                return createUser(name: "Admin", email: config.initialAdminEmail, password: config.initialAdminPassword, isSystemAdmin:true, isActivated: true, into: context)
                     .map{_ in  true}
             }
         })
 }
 
-func createUser(name:String,email:String,password:String,isSystemAdmin:Bool = false, isActivated:Bool = false , into context:Meow.Context) throws -> Future<User>{
+func createUser(name:String,email:String,password:String,isSystemAdmin:Bool = false, isActivated:Bool = false , into context:Meow.MeowDatabase) -> EventLoopFuture<User>{
     //find existing user
-    return try findUser(by: email, into: context).flatMap { user in
-        guard user == nil else { throw UserError.alreadyExist }
+    return findUser(by: email, into: context).flatMap { user in
+        guard user == nil else { return context.eventLoop.makeFailedFuture(UserError.alreadyExist)}
+        //{ throw UserError.alreadyExist }
         
         //create  user
         let createdUser = User(email: email, name: name)
@@ -104,11 +112,11 @@ func createUser(name:String,email:String,password:String,isSystemAdmin:Bool = fa
             //generate activation token
             createdUser.activationToken = UUID().uuidString
         }
-        return createdUser.save(to: context).map{ createdUser}
+        return createdUser.save(in: context).map{ _ in createdUser}
     }
 }
 
-func updateUser(user:User, newName:String?,newPassword:String?, newFavoritesApplicationsUUID:[String]? ,isSystemAdmin:Bool?,isActivated:Bool?, into context:Meow.Context) throws -> Future<User>{
+func updateUser(user:User, newName:String?,newPassword:String?, newFavoritesApplicationsUUID:[String]? ,isSystemAdmin:Bool?,isActivated:Bool?, into context:Meow.MeowDatabase) throws -> EventLoopFuture<User>{
     if let name = newName {
         user.name = name
     }
@@ -134,37 +142,41 @@ func updateUser(user:User, newName:String?,newPassword:String?, newFavoritesAppl
             }
         }
     }
-    return user.save(to: context).map{user}
+    return user.save(in: context).map{_ in user}
 }
 
-func activateUser(withToken:String, into context:Meow.Context) throws -> Future<User>{
-    return try findActivableUser(by: withToken, into: context)
+func activateUser(withToken:String, into context:Meow.MeowDatabase) -> EventLoopFuture<User>{
+    return findActivableUser(by: withToken, into: context)
         .flatMap({ user in
-            guard let user = user else { throw UserError.notFound }
+            guard let user = user else { return context.eventLoop.makeFailedFuture(UserError.notFound)}
+            //{ throw UserError.notFound }
             //activate user
             user.isActivated = true
             user.activationToken  = nil
-            return user.save(to: context).map{user}
+            return user.save(in: context).map{_ in user}
         })
 }
 
-func deleteUser(withEmail email:String, into context:Meow.Context) throws -> Future<Void>{
-    return context.deleteOne(User.self, where: Query.valEquals(field: "email", val: email))
-        .map({ count -> () in
-            guard count == 1 else { throw UserError.notFound }
+func deleteUser(withEmail email:String, into context:Meow.MeowDatabase) throws -> EventLoopFuture<Void>{
+    return context.collection(for: User.self).deleteOne(where: "email" == email)
+   // return context.deleteOne(User.self, where: Query.valEquals(field: "email", val: email))
+        .flatMapThrowing({ deleteReply -> () in
+            guard deleteReply.deletes == 1 else { throw UserError.notFound }
         })
 }
 
-func delete(user:User, into context:Meow.Context) throws -> Future<Void>{
-    return context.delete(user)
+func delete(user:User, into context:Meow.MeowDatabase) -> EventLoopFuture<Void>{
+    return context.collection(for: User.self).deleteOne(where: "_id" == user._id)
+        .map{ _ in return }
+    //return context.delete(user)
 }
 
-func resetUser(user:User,newPassword:String,into context:Meow.Context) throws -> Future<User>{
+func resetUser(user:User,newPassword:String,into context:Meow.MeowDatabase) -> EventLoopFuture<User>{
     user.password = generateHashedPassword(plain: newPassword,salt: user.salt)
     //generate activation token
     user.activationToken = UUID().uuidString
     user.isActivated = false
-    return user.save(to: context).map{user}
+    return user.save(in: context).map{_ in user}
 }
 
 private func checkPassword(plain:String,salt:String,hash:String) -> Bool{

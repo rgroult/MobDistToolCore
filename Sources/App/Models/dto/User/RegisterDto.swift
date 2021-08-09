@@ -6,9 +6,12 @@
 //
 
 import Foundation
+import Vapor
 
 struct RegisterDto: Codable {
     var email:String
     var name:String
     var password:String
 }
+
+extension RegisterDto :Content {}

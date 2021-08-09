@@ -5,10 +5,10 @@
 //  Created by Rémi Groult on 12/02/2019.
 //
 import Vapor
-import MeowVapor
+import Meow
 import MongoKitten
 
- final class MDTApplication: Model {
+ final class MDTApplication: Model/*,ReadableModel */{
     struct TokenLink {
         let tokenId:String
         var application:MDTApplication?

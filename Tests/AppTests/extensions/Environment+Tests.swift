@@ -11,6 +11,7 @@ import Vapor
 
 extension Environment {
     static var xcode: Environment {
-        return .init(name: "xcode", isRelease: false, arguments: ["xcode"])
+        return .init(name: "xcode", arguments:  ["xcode"])
+       // return .init(name: "xcode", isRelease: false, arguments: ["xcode"])
     }
 }

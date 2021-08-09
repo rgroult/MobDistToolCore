@@ -51,32 +51,30 @@ extension ApplicationsController {
         }
     }
     
-    func configure(with router: Router, and protectedRouter:Router){
-        let appRouter = router.grouped("\(controllerVersion)/\(pathPrefix)")
-        appRouter.get("",String.parameter,PathComponent.constant("icon"), use:self.iconApplication)
-        //{appUUID}/maxversion/{branch}/{name}
-        appRouter.get("",String.parameter,PathComponent.constant("maxversion"),String.parameter,String.parameter, use:self.maxVersion)
+    func configure(with router: RoutesBuilder, and protectedRouter:RoutesBuilder){
+        let appRouter = router.grouped("\(controllerVersion)","\(pathPrefix)")
+        appRouter.get([.parameter("uuid"),.constant("icon")], use:self.iconApplication)
+        appRouter.get([.parameter("uuid"),.constant("maxversion"),.parameter("branch"),.parameter("name")], use:self.maxVersion)
         
-        let protectedAppsRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
-        protectedAppsRouter.get("", use : self.applications)
-        protectedAppsRouter.post("", use: self.createApplication)
-        protectedAppsRouter.get("", PathComponent.constant(Verb.favoritesApp.uri), use : self.applicationsFavorites)
-        protectedAppsRouter.put("", String.parameter /*PathComponent.parameter("uuid")*/,  use: self.updateApplication)
-        protectedAppsRouter.get("", String.parameter /*PathComponent.parameter("uuid")*/,  use: self.applicationDetail)
-        protectedAppsRouter.delete("", String.parameter /*PathComponent.parameter("uuid")*/,  use: self.deleteApplication)
+        let protectedAppsRouter = protectedRouter.grouped("\(controllerVersion)","\(pathPrefix)")
+        protectedAppsRouter.get([], use : self.applications)
+        protectedAppsRouter.post([], use: self.createApplication)
+        protectedAppsRouter.get( [.constant(Verb.favoritesApp.uri)], use : self.applicationsFavorites)
+        protectedAppsRouter.put([.parameter("uuid")],  use: self.updateApplication)
+        protectedAppsRouter.get([.parameter("uuid")],  use: self.applicationDetail)
+        protectedAppsRouter.delete([.parameter("uuid")],  use: self.deleteApplication)
         //application versions
-        protectedAppsRouter.get("",String.parameter,PathComponent.constant("versions"), use:self.getApplicationVersions)
-        protectedAppsRouter.get("",String.parameter,PathComponent.constant("versions"),PathComponent.constant("grouped"), use:self.getApplicationVersionsGrouped)
+        protectedAppsRouter.get([.parameter("uuid"),.constant("versions")], use:self.getApplicationVersions)
+        protectedAppsRouter.get([.parameter("uuid"),.constant("versions"),.constant("grouped")], use:self.getApplicationVersionsGrouped)
     
-        protectedAppsRouter.get("",String.parameter,PathComponent.constant("versions"),PathComponent.constant("latest"), use:self.getApplicationLastVersions)
-       // protectedAppsRouter.get("",String.parameter,PathComponent.constant("versions"),PathComponent.constant("latest"),PathComponent.constant("grouped"), use:self.getApplicationLastVersionsGrouped)
+        protectedAppsRouter.get([.parameter("uuid"),.constant("versions"),.constant("latest")], use:self.getApplicationLastVersions)
         //admin user
-        protectedAppsRouter.put("", PathComponent.parameter("uuid"),PathComponent.constant("adminUsers"),String.parameter,/*PathComponent.parameter("email"),*/ use: self.addAdminUser)
-        protectedAppsRouter.delete("", PathComponent.parameter("uuid"),PathComponent.constant("adminUsers"),String.parameter,/*PathComponent.parameter("email"),*/ use: self.deleteAdminUser)
+        protectedAppsRouter.put([.parameter("uuid"),.constant("adminUsers"),.parameter("email")], use: self.addAdminUser)
+        protectedAppsRouter.delete([.parameter("uuid"),.constant("adminUsers"),.parameter("email")], use: self.deleteAdminUser)
         //links
-        protectedAppsRouter.get("",String.parameter, PathComponent.parameter("links"), use: self.applicationPermanentLinks)
-        protectedAppsRouter.post("",String.parameter, PathComponent.parameter("links"), use: self.createApplicationPermanentLink)
-        protectedAppsRouter.delete("",String.parameter, PathComponent.parameter("links"), use: self.deleteApplicationPermanentLink)
-        router.get("", PathComponent.constant(Verb.permanentLinkInstall.uri), use: self.installPermanentLink)
+        protectedAppsRouter.get([.parameter("uuid"),.parameter("links")], use: self.applicationPermanentLinks)
+        protectedAppsRouter.post([.parameter("uuid"),.parameter("links")], use: self.createApplicationPermanentLink)
+        protectedAppsRouter.delete([.parameter("uuid"),.parameter("links")], use: self.deleteApplicationPermanentLink)
+        router.get([.constant(Verb.permanentLinkInstall.uri)], use: self.installPermanentLink)
     }
 }

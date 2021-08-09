@@ -1,13 +1,13 @@
 import Vapor
 import Swiftgger
-import Authentication
+//import Authentication
 import JWTAuth
-import JWT
+//import JWT
 
 /// Register your application's routes here.
-public func routes(_ baseRouter: Router, authenticateMiddleware:Middleware,config:MdtConfiguration) throws {
+public func routes(_ baseRouter: RoutesBuilder, authenticateMiddleware:Middleware,config:MdtConfiguration) throws {
     
-    let router = baseRouter.grouped(BaseController.basePathPrefix)
+    let router = baseRouter.grouped("\(BaseController.basePathPrefix)")
     
     // Create builder.
     let openAPIBuilder = OpenAPIBuilder(
@@ -19,7 +19,7 @@ public func routes(_ baseRouter: Router, authenticateMiddleware:Middleware,confi
     //common datamodel
         _ = openAPIBuilder.add([APIObject(object: MessageDto( message: "message"))])
     
-    router.get("/v2/status") { req in
+    router.get("v2","status") { req in
         return ["name":"MobileDistributionTool Core", "version" : "\(MDT_Version)-(\(MDT_GitCommit.prefix(8)))" ]
     }
     //add status swagger
@@ -39,7 +39,7 @@ public func routes(_ baseRouter: Router, authenticateMiddleware:Middleware,confi
     ))
     
     
-    let protected = router.grouped(authenticateMiddleware,JWTTokenPayload.guardAuthMiddleware())
+    let protected = router.grouped(authenticateMiddleware,JWTTokenPayload.guardMiddleware())
     
     let appsController = ApplicationsController(apiBuilder: openAPIBuilder,externalUrl: config.serverUrl)
     appsController.configure(with: router, and: protected)
@@ -65,7 +65,7 @@ public func routes(_ baseRouter: Router, authenticateMiddleware:Middleware,confi
     openAPIJsonString = openAPIJsonString.replacingOccurrences(of: "\\/", with: "/")
     
     
-    baseRouter.get("/swagger/swagger.json") { req  in
+    baseRouter.get("swagger","swagger.json") { req  in
         return openAPIJsonString
     }
 }
