@@ -28,3 +28,19 @@ extension XCTHTTPResponse {
         return  self
     }
 }
+
+extension ResponseType {
+    var http:ResponseType {
+        return  self
+    }
+}
+
+extension ClientResponse {
+    var bodyData:Data {
+        guard var body = body else { return Data() }
+        return body.readData(length: body.readableBytes) ?? Data()
+    }
+    var bodyCount:Int {
+        return body?.readableBytes ?? 0
+    }
+}

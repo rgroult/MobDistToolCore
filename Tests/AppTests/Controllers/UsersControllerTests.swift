@@ -336,11 +336,24 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
          try testActivation()
         let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         //refresh Login
-        let login = RefreshTokenDto(email: "user@email.Com", refreshToken: loginDto.refreshToken!)
+        let refreshDto = RefreshTokenDto(email: "user@email.Com", refreshToken: loginDto.refreshToken!)
      //   let bodyJSON = try JSONEncoder().encode(login)
         
    //     let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/refresh", login){ res in
+        try app.clientTest(.POST, "/v2/Users/refresh", refreshDto){ res in
+            print(res.content)
+            XCTAssertEqual(res.http.status.code , 401)
+        }
+    }
+    
+    func testRefreshLoginKOExpiredToken() throws {
+        try testActivation()
+        //login
+        let login = LoginReqDto(email: userIOS.email, password: userIOS.password)
+        let refreshToken = try app.jwt.signers.sign(JWTRefreshTokenPayload(email: userIOS.email,startDate:Date().addingTimeInterval(-refreshTokenExpiration - 1)))
+        
+        let refreshDto = RefreshTokenDto(email: userIOS.email, refreshToken: refreshToken)
+        try app.clientTest(.POST, "/v2/Users/refresh", refreshDto){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 401)
         }
@@ -433,6 +446,16 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
         XCTAssertNotNil(loginResp.refreshToken)
         let token = loginResp.refreshToken!
+        let result = try app.clientSyncTest(.GET, "/v2/Users/me", token: token)
+        XCTAssertEqual(result.http.status.code , 400) // NB: 401 should be better but this middleware version generate 400 on bad token format
+    }
+    
+    func testMeKOExpiredToken() throws {
+        try testActivation()
+        //login
+        let login = LoginReqDto(email: userIOS.email, password: userIOS.password)
+        let token = try app.jwt.signers.sign(JWTTokenPayload(email: userIOS.email,startDate:Date().addingTimeInterval(-tokenExpiration - 1)))
+        
         let result = try app.clientSyncTest(.GET, "/v2/Users/me", token: token)
         XCTAssertEqual(result.http.status.code , 401)
     }

@@ -11,7 +11,7 @@ import Foundation
 
 func purgeAllTokens(into context:Meow.MeowDatabase) -> EventLoopFuture<Int> {
     //return context.deleteAll(TokenInfo.self, where: Query())
-    return context.collection(for: TokenInfo.self).raw.deleteAll(where: [])
+    return context.collection(for: TokenInfo.self).raw.deleteAll(where: [:])
         .map { $0.deletes}
 }
 

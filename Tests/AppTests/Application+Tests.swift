@@ -12,6 +12,8 @@ import App
 @testable import App
 
 let nilBody:String? = nil
+typealias RequestType = ClientRequest //XCTHTTPRequest
+typealias ResponseType = ClientResponse //XCTHTTPResponse
 
 extension Application {
    /* static func runningAppTest(loadingEnv:Environment? = nil) throws -> Application {
@@ -60,8 +62,8 @@ extension Application {
         _ path: String,
         _ query: [String: String]? = nil,
         token: String? = nil,
-        beforeSend: (inout XCTHTTPRequest) throws -> () = { _ in },
-        afterSend: (XCTHTTPResponse) throws -> ()
+        beforeSend: (inout RequestType) throws -> () = { _ in },
+        afterSend: (ResponseType) throws -> ()
         ) throws {
         try clientTest(method, path, nilBody, token: token, beforeSend: {req in
             if let query = query {
@@ -75,14 +77,79 @@ extension Application {
         _ path: String,
         _ body: T?,
         token: String? = nil,
-        beforeSend: (inout XCTHTTPRequest) throws -> () = { _ in },
-        afterSend: (XCTHTTPResponse) throws -> ()
+        beforeSend: (inout RequestType) throws -> () = { _ in },
+        afterSend: (ResponseType) throws -> ()
         ) throws {
         
         let mdtConfig = try appConfiguration()
-        let path = path.hasPrefix("/") ? path : "/\(path)"
+        let requestUri:String
+        let needExternalAccess:Bool
+        if let url = URL(string: path) , url.scheme != nil { //absolute Url
+            requestUri = url.absoluteString
+            needExternalAccess = true
+        }else {
+            let path = path.hasPrefix("/") ? path : "/\(path)"
+            requestUri = "http://0.0.0.0:\(mdtConfig.serverListeningPort)/" + mdtConfig.pathPrefix + path
+            //requestUri = mdtConfig.pathPrefix + path
+            needExternalAccess = false
+        }
+        /*
+        let beforeRequest:((inout RequestType) throws -> Void) = {req in
+            if  let body = body {
+                try req.content.encode(body)
+                req.headers.contentType = .json
+            }
+            if let token = token {
+                req.headers.add(name: "Authorization", value: "Bearer \(token)")
+            }
+            try beforeSend(&req)
+        }
+        */
+        let response = try client.send(method, to: .init(string: requestUri)){req in
+            if  let body = body {
+                try req.content.encode(body)
+                req.headers.contentType = .json
+            }
+            if let token = token {
+                req.headers.add(name: "Authorization", value: "Bearer \(token)")
+            }
+            try beforeSend(&req)
+           // print("BODY : \(req.body?.string)")
+        }.wait()
         
-        try test(method, mdtConfig.pathPrefix + path, beforeRequest: { req in
+        try afterSend(response)
+        /*
+        if needExternalAccess {
+            client.send(method, to: .init(string: requestUri)){req in
+                if  let body = body {
+                    try req.content.encode(body)
+                    req.headers.contentType = .json
+                }
+                if let token = token {
+                    req.headers.add(name: "Authorization", value: "Bearer \(token)")
+                }
+            }
+            //client.get(.init(path: requestUri))
+            
+            let testApp = try testable(method: .running(port: mdtConfig.serverListeningPort))
+            try testApp.test(method, requestUri,beforeRequest:beforeRequest, afterResponse:{ res in try afterSend(res) })
+        }   else {
+            try test(method, requestUri,beforeRequest:beforeRequest, afterResponse:{ res in try afterSend(res) })
+        }*/
+        
+        /*
+        let requestPath:String
+        if let url = URL(string: path) , url.host == "localhost", url.port == mdtConfig.serverListeningPort { //truncate host
+            requestPath = url.path
+        }else {
+            let path = path.hasPrefix("/") ? path : "/\(path)"
+            requestPath = mdtConfig.pathPrefix + path
+        }
+       */
+        
+      //  let testApp = try testable(method: .running(port: mdtConfig.serverListeningPort))
+        /*
+        try test(method,requestPath , beforeRequest: { req in
             if  let body = body {
                 try req.content.encode(body)
                 req.headers.contentType = .json
@@ -96,7 +163,7 @@ extension Application {
         }, afterResponse: { res in
             try afterSend(res)
         })
-        
+        */
         /*
         let config = try make(NIOServerConfig.self)
         let path = path.hasPrefix("/") ? path : "/\(path)"
@@ -124,8 +191,8 @@ extension Application {
         _ path: String,
         _ query: [String: String]? = nil,
         token: String? = nil,
-        beforeSend: (inout XCTHTTPRequest) throws -> () = { _ in },
-        isAbsoluteUrl:Bool = false) throws -> XCTHTTPResponse {
+        beforeSend: (inout RequestType) throws -> () = { _ in },
+        isAbsoluteUrl:Bool = false) throws -> ResponseType {
         return try clientSyncTest(method, path, nilBody,query,token: token, beforeSend:beforeSend)
     }
     
@@ -135,10 +202,10 @@ extension Application {
         _ body: T?,
         _ query: [String: String]? = nil,
         token: String? = nil,
-        beforeSend: (inout XCTHTTPRequest) throws -> () = { _ in },
-        isAbsoluteUrl:Bool = false) throws -> XCTHTTPResponse {
+        beforeSend: (inout RequestType) throws -> () = { _ in },
+        isAbsoluteUrl:Bool = false) throws -> ResponseType {
         
-        var response:XCTHTTPResponse!
+        var response:ResponseType!
         try clientTest(method, path, body, token: token, beforeSend: { req in
             if let query = query {
                 try req.query.encode(query)
@@ -187,4 +254,6 @@ extension Application {
             XCTAssertEqual(bodyString, equals)
         }*/
     }
+    
+    
 }

@@ -23,7 +23,7 @@ final class ArtifactsContollerTests: BaseAppTests {
                                      contentType:HTTPMediaType?,
                                      sortIdentifier:String? = nil,
                                      metaTags:[String:String]? = nil,
-                                     inside app:Application ) throws ->XCTHTTPResponse {
+                                     inside app:Application ) throws -> ResponseType {
         //POST '{apiKey}/{branch}/{version}/{artifactName}
         var uri = "/v2/Artifacts/\(apiKey)"
         if let branch = branch {
@@ -34,7 +34,7 @@ final class ArtifactsContollerTests: BaseAppTests {
         }
         uri =  uri + "/" + name
         
-        let beforeSend:(inout XCTHTTPRequest) throws -> () = { req in
+        let beforeSend:(inout RequestType) throws -> () = { req in
             req.headers.add(name: "x-filename", value: "testArtifact.zip")
             req.headers.add(name: "x-mimetype", value: contentType?.description ?? "")
             req.headers.contentType = .binary
@@ -49,7 +49,9 @@ final class ArtifactsContollerTests: BaseAppTests {
         
        // let body = contentFile.convertToHTTPBody()
         return try app.clientSyncTest(.POST, uri){req in
-            req.body.writeData(contentFile)
+            req.body = .init(data: contentFile)
+            //try req.content.encode(contentFile, as: .binary)
+           // req.body.writeData(contentFile)
             try beforeSend(&req)
         }
         // XCTAssertEqual(resp.http.status.code , 200)
@@ -82,7 +84,7 @@ final class ArtifactsContollerTests: BaseAppTests {
         return result
     }
     
-    class func deleteArtifact(apiKey:String,branch:String,version:String,name:String, inside app:Application ) throws -> XCTHTTPResponse {
+    class func deleteArtifact(apiKey:String,branch:String,version:String,name:String, inside app:Application ) throws -> ResponseType {
         let uri = "/v2/Artifacts/\(apiKey)/\(branch)/\(version)/\(name)"
         
         return try app.clientSyncTest(.DELETE, uri)
@@ -343,7 +345,8 @@ final class ArtifactsContollerTests: BaseAppTests {
         var manifestPlist = try app.clientSyncTest(.GET, plistUrl,isAbsoluteUrl:true)
         XCTAssertEqual(manifestPlist.content.contentType, .xml)
         //download url must be in manifest
-        if let data =  manifestPlist.body.readData(length: manifestPlist.body.readableBytes) {
+        let  data = manifestPlist.bodyData
+        //if let data =  manifestPlist.body.readData(length: manifestPlist.body.readableBytes) {
             let manifestPlistDict =  try PropertyListSerialization.propertyList(from: data, format: nil) as! [String:Any]
             let metadata = (((manifestPlistDict["items"] as? Array<Any>)?.first as? [String:Any])?["metadata"]) as? [String:Any]
             let assets = ((((manifestPlistDict["items"] as? Array<Any>)?.first as? [String:Any])?["assets"]) as? [Any])?.first as? [String:Any]
@@ -358,7 +361,7 @@ final class ArtifactsContollerTests: BaseAppTests {
             //test icon
             let iconFile = try app.clientSyncTest(.GET, iconUrl! ,isAbsoluteUrl:true)
             XCTAssertEqual(iconFile.http.status, .ok)
-        }
+      //  }
     }
     
     func testDownloadiOSDownloadFile() throws {
@@ -372,7 +375,7 @@ final class ArtifactsContollerTests: BaseAppTests {
             XCTAssertEqual( ipaFile.http.headers.firstValue(name: .location),TestingStorageService.defaultIpaUrl)
         #else
             XCTAssertTrue(ipaFile.content.contentType == .binary)
-            XCTAssertEqual(ipaFile.body.readableBytes,fileData.count)
+            XCTAssertEqual(ipaFile.bodyCount,fileData.count)
             XCTAssertEqual( ipaFile.headers.first(name: .contentLength),"\(fileData.count)")
         #endif
         //print(ipaFile.http.headers)
@@ -397,7 +400,7 @@ final class ArtifactsContollerTests: BaseAppTests {
             
         #else
             XCTAssertTrue(ipaFile.content.contentType == .binary)
-            XCTAssertEqual(ipaFile.body.readableBytes,fileData.count)
+            XCTAssertEqual(ipaFile.bodyCount,fileData.count)
         #endif
        
         //print(ipaFile.http.headers)
@@ -409,7 +412,8 @@ final class ArtifactsContollerTests: BaseAppTests {
         let dwInfo = try donwloadInfo(apiKey: iOSApiKey!, fileData: fileData)
         var installPage = try app.clientSyncTest(.GET, dwInfo.installPageUrl ,isAbsoluteUrl:true)
         //check install page contains installUrl
-        if let data =  installPage.body.readData(length: installPage.body.readableBytes), let stringContent = String(data: data, encoding: .utf8) {
+        let data = installPage.bodyData
+        if /*let data =  installPage.body.readData(length: installPage.body.readableBytes), */let stringContent = String(data: data, encoding: .utf8) {
             XCTAssertTrue(stringContent.contains(dwInfo.installUrl))
         }else {
             XCTAssertTrue(false)
@@ -422,7 +426,8 @@ final class ArtifactsContollerTests: BaseAppTests {
         let dwInfo = try donwloadInfo(apiKey: androidApiKey!, fileData: fileData,contentType:apkContentType)
         var installPage = try app.clientSyncTest(.GET, dwInfo.installPageUrl ,isAbsoluteUrl:true)
         //check install page contains installUrl
-        if let data =  installPage.body.readData(length: installPage.body.readableBytes), let stringContent = String(data: data, encoding: .utf8) {
+        let data = installPage.bodyData
+        if /*let data =  installPage.body.readData(length: installPage.body.readableBytes),*/ let stringContent = String(data: data, encoding: .utf8) {
             XCTAssertTrue(stringContent.contains(dwInfo.installUrl))
         }else {
             XCTAssertTrue(false)
@@ -486,7 +491,7 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
         var manifestPlist = try app.clientSyncTest(.GET, plistUrl,isAbsoluteUrl:true)
         XCTAssertEqual(manifestPlist.content.contentType, .xml)
         //download url must be in manifest
-        if let data =  manifestPlist.body.readData(length: manifestPlist.body.readableBytes) {
+         let data = manifestPlist.bodyData //  manifestPlist.body.readData(length: manifestPlist.body.readableBytes) {
             let manifestPlistDict =  try PropertyListSerialization.propertyList(from: data, format: nil) as! [String:Any]
             let metadata = (((manifestPlistDict["items"] as? Array<Any>)?.first as? [String:Any])?["metadata"]) as? [String:Any]
             let assets = ((((manifestPlistDict["items"] as? Array<Any>)?.first as? [String:Any])?["assets"]) as? [Any])?.first as? [String:Any]
@@ -495,12 +500,12 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
             XCTAssertEqual(metadata?["bundle-identifier"] as? String, "com.petri.calculator.calculator")
             
             XCTAssertEqual(assets?["url"] as? String, dwInfo.directLinkUrl)
-        }
+      //  }
         
         let ipaFile = try app.clientSyncTest(.GET, dwInfo.directLinkUrl,isAbsoluteUrl:true)
     
         XCTAssertTrue(ipaFile.content.contentType == ipaContentType)
-        XCTAssertEqual(ipaFile.http.body.readableBytes,fileData.count)
+        XCTAssertEqual(ipaFile.http.bodyCount,fileData.count)
     }
 
     func testDownloadiOSDownloadFile() throws {
@@ -511,7 +516,7 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
 
             XCTAssertTrue(file.content.contentType == ipaContentType)
             XCTAssertEqual(file.headers.first(name: .contentLength),"\(fileData.count)")
-            XCTAssertEqual(file.body.readableBytes,fileData.count)
+            XCTAssertEqual(file.bodyCount,fileData.count)
 
         }
 
@@ -525,6 +530,6 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
 
             XCTAssertTrue(file.content.contentType == apkContentType)
             XCTAssertEqual( file.headers.first(name: .contentLength),"\(fileData.count)")
-            XCTAssertEqual(file.body.readableBytes,fileData.count)
+            XCTAssertEqual(file.bodyCount,fileData.count)
         }
 }

@@ -603,7 +603,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         
         //check detail
         var iconResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)/icon")
-        let responseData = iconResp.body.readData(length: iconResp.body.readableBytes)
+        let responseData = iconResp.bodyData// body.readData(length: iconResp.body.readableBytes)
         print(iconResp.content)
         XCTAssertEqual(responseData,Data(base64Encoded: base64EncodedData))
         XCTAssertEqual(iconResp.content.contentType?.serialize(), "image/png")
@@ -611,7 +611,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         //check if result is same as it from app
         print("retrieve with url :\(appFound?.iconUrl)")
         var icon = try app.clientSyncTest(.GET, appFound!.iconUrl!,isAbsoluteUrl:true)
-        let iconData = icon.body.readData(length: icon.body.readableBytes)
+        let iconData = icon.bodyData //body.readData(length: icon.body.readableBytes)
         
         XCTAssertEqual(iconData,responseData)
     }
@@ -847,7 +847,7 @@ final class ApplicationsControllerTests: BaseAppTests {
             XCTAssertEqual( ipaFile.http.headers.firstValue(name: .location),TestingStorageService.defaultIpaUrl)
         #else
             XCTAssertTrue(ipaFile.content.contentType == .binary)
-            XCTAssertEqual(ipaFile.body.readableBytes,fileData.count)
+            XCTAssertEqual(ipaFile.bodyCount,fileData.count)
         #endif
     }
     
