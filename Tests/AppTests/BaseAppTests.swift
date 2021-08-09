@@ -40,6 +40,7 @@ class BaseAppTests: XCTestCase {
         
     func configure(with env:Environment? = nil) {
         do {
+           // app?.shutdown()
             app = try Application.runningAppTest(loadingEnv:env)
             context = app.meow
             //context = try app.make(Future<Meow.Context>.self).wait()
@@ -64,7 +65,9 @@ class BaseAppTests: XCTestCase {
     
     override func tearDown()  {
         do {
-            try app.server.shutdown()//   runningServer?.close().wait()
+            app.shutdown()
+            //try app.running?.onStop.wait()
+        // try app.server.shutdown()//   runningServer?.close().wait()
         //try context.manager.database.drop().wait()
        // try context.syncShutdownGracefully()
             context = nil

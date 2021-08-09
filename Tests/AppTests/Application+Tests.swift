@@ -83,15 +83,12 @@ extension Application {
         
         let mdtConfig = try appConfiguration()
         let requestUri:String
-        let needExternalAccess:Bool
         if let url = URL(string: path) , url.scheme != nil { //absolute Url
             requestUri = url.absoluteString
-            needExternalAccess = true
         }else {
             let path = path.hasPrefix("/") ? path : "/\(path)"
             requestUri = "http://0.0.0.0:\(mdtConfig.serverListeningPort)/" + mdtConfig.pathPrefix + path
             //requestUri = mdtConfig.pathPrefix + path
-            needExternalAccess = false
         }
         /*
         let beforeRequest:((inout RequestType) throws -> Void) = {req in

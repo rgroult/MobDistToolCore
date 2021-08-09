@@ -45,7 +45,7 @@ final class DeployScriptTests: BaseAppTests {
         #else
         let curlTask = Process()
         curlTask.launchPath = "/usr/bin/curl"
-        curlTask.arguments = ["-Ls","http://localhost:8081\(config.pathPrefix)/v2/Artifacts/\(apiKey)/deploy"]
+        curlTask.arguments = ["-Ls","http://localhost:8081/\(config.pathPrefix)/v2/Artifacts/\(apiKey)/deploy"]
         let pipe = Pipe()
         curlTask.standardOutput = pipe
         
