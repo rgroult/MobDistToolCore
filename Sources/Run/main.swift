@@ -4,6 +4,7 @@ import Vapor
 
 var mdtApp:Application!
 func closeApp(){
+    mdtApp.shutdown()
    /* try? mdtApp.runningServer?.close().wait()
        mdtApp.shutdownGracefully { error in
            guard let error = error else { return }

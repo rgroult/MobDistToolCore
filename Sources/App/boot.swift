@@ -11,6 +11,15 @@ public func boot(_ app: Application) throws {
     //try app.make(EventLoopFuture<Meow.Context>.self)
     //    .whenSuccess{ context in
            // do {
+    do {
+        let adminUserCreated = try createSysAdminIfNeeded(into: meow, with: config).wait()
+        if adminUserCreated {
+            logger.info("Admin user(\(config.initialAdminEmail)) created !")
+        }
+    }catch {
+        logger.error("Unable to create initial admin user: \(error)")
+    }
+    /*
                 let adminUserCreation = createSysAdminIfNeeded(into: meow, with: config)
     
                 adminUserCreation.whenSuccess { result in
@@ -21,7 +30,7 @@ public func boot(_ app: Application) throws {
                 
                 adminUserCreation.whenFailure{error in
                         logger.error("Unable to create initial admin user: \(error)")
-                }
+                }*/
             /*}catch {
                  logger.error("Unable to create initial admin user: \(error)")
             }*/
