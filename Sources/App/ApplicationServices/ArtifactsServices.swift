@@ -454,13 +454,11 @@ private func  extractIpaMetaData(IpaFilePath:String,into context:Meow.MeowDataba
 private func  extractApkMetaData(ApkFilePath:String,into context:Meow.MeowDatabase) -> EventLoopFuture<[String:String]>{
     let task = Vapor.Process()
     #if os(Linux)
-    task.launchPath = "/usr/bin/aapt2"
+    task.launchPath = "/usr/bin/aapt"
     #else
-    task.launchPath = "/usr/local/bin/aapt2"
+    task.launchPath = "/usr/local/bin/aapt"
     #endif
-    
-    task.arguments = ["dump", "xmltree","--file", "AndroidManifest.xml",ApkFilePath]
-    let aapt2XmlPrefix = "http://schemas.android.com/apk/res/"
+    task.arguments = ["d", "xmltree",ApkFilePath, "AndroidManifest.xml"]
     let outputPipe = Pipe()
     task.standardOutput = outputPipe
     do {
@@ -481,33 +479,29 @@ private func  extractApkMetaData(ApkFilePath:String,into context:Meow.MeowDataba
                 guard let packageName = apkExtractString(from: line) else { continue }
                 metaDataResult["PACKAGE_NAME"] = packageName
                 
-            case _ where  line.hasPrefix("A: \(aapt2XmlPrefix)android:versionCode"):
+            case _ where  line.hasPrefix("A: android:versionCode"):
                 //A: android:versionCode(0x0101021b)=(type 0x10)0x1
-                //aapt2: A: http://schemas.android.com/apk/res/android:versionCode(0x0101021b)=1
-                guard let versionCode = apkExtractValue(from:line) else { continue }
+                guard let versionCode = apkExtractHexVersion(from:line) else { continue }
                 metaDataResult["VERSION_CODE"] = versionCode
             
-            case _ where  line.hasPrefix("A: \(aapt2XmlPrefix)android:versionName"):
+            case _ where  line.hasPrefix("A: android:versionName"):
                 //A: android:versionName(0x0101021c)="0.3" (Raw: "0.3")
                 guard let version = apkExtractString(from: line) else { continue }
                 metaDataResult["VERSION_NAME"] = version
                 
-            case _ where  line.hasPrefix("A: \(aapt2XmlPrefix)android:minSdkVersion"):
+            case _ where  line.hasPrefix("A: android:minSdkVersion"):
                 // A: android:minSdkVersion(0x0101020c)=(type 0x10)0xe
-                //aapt2: A: http://schemas.android.com/apk/res/android:minSdkVersion(0x0101020c)=14
-                guard let versionCode = apkExtractValue(from:line) else { continue }
+                guard let versionCode = apkExtractHexVersion(from:line) else { continue }
                 metaDataResult["MIN_SDK"] = versionCode
                 
-            case _ where  line.hasPrefix("A: \(aapt2XmlPrefix)android:maxSdkVersion"):
+            case _ where  line.hasPrefix("A: android:maxSdkVersion"):
                 //A: android:maxSdkVersion(0x01010330)=(type 0x10)0x12
-                //aapt2: A: http://schemas.android.com/apk/res/android:maxSdkVersion(0x0101020c)=14
-                guard let versionCode = apkExtractValue(from:line) else { continue }
+                guard let versionCode = apkExtractHexVersion(from:line) else { continue }
                 metaDataResult["MAX_SDK"] = versionCode
                 
-            case _ where  line.hasPrefix("A: \(aapt2XmlPrefix)android:targetSdkVersion"):
+            case _ where  line.hasPrefix("A: android:targetSdkVersion"):
                 //A: android:targetSdkVersion(0x01010270)=(type 0x10)0x13
-                //aapt2: A: http://schemas.android.com/apk/res/android:targetSdkVersion(0x01010270)=19
-                guard let versionCode = apkExtractValue(from:line) else { continue }
+                guard let versionCode = apkExtractHexVersion(from:line) else { continue }
                 metaDataResult["TARGET_SDK"] = versionCode
                 
             default:
@@ -536,7 +530,3 @@ private func apkExtractString(from line:String) -> String? {
     return String(removedPrefix[removedPrefix.startIndex..<nextIndex])
 }
 
-private func apkExtractValue(from line:String) -> String? {
-    guard let lastIndex = line.lastIndex(of: "=") else { return nil }
-    return String(line.suffix(from: lastIndex).dropFirst()) //remove "="
-}
