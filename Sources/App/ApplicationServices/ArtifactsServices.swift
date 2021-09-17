@@ -386,16 +386,13 @@ func storeArtifactData(data:Data,filename:String,contentType:String?, artifact:A
     //TO DO Extract metadata
     //try extractFileMetaData(filePath: temporaryFile)
     
-    return artifact.application.resolve(in: context)
+    let result:EventLoopFuture<Artifact> = artifact.application.resolve(in: context)
         .flatMap({ app  in
             return extractFileMetaData(filePath: temporaryFile,applicationType: app.platform,into: context)
                 .flatMap({metadata in
                     let storageInfo = StorageInfo(applicationName: app.name, platform: app.platform, version: artifact.version, uploadFilename: filename, uploadContentType: contentType)
                     return storage.store(file: file, with: storageInfo, into: context.eventLoop)
                         .map({ storageUrl in
-                            //delete temporary file
-                            file.closeFile()
-                            try? FileManager.default.removeItem(at: temporaryFileUrl)
                             //update artifact
                             artifact.storageInfos = storageUrl
                             artifact.filename = filename
@@ -406,6 +403,13 @@ func storeArtifactData(data:Data,filename:String,contentType:String?, artifact:A
                         })
                 })
         })
+    result.whenComplete(){_ in
+        //delete temporary file
+        file.closeFile()
+        try? FileManager.default.removeItem(at: temporaryFileUrl)
+    }
+    
+    return result
 }
 
 func saveArtifact(artifact:Artifact,into context:Meow.MeowDatabase) -> EventLoopFuture<Artifact>{
@@ -430,7 +434,6 @@ private func  extractIpaMetaData(IpaFilePath:String,into context:Meow.MeowDataba
     task.arguments = ["-p",IpaFilePath,"*.app/Info.plist"]
     let outputPipe = Pipe()
     task.standardOutput = outputPipe
-    
     do {
         #if os(Linux)
             try task.run()
@@ -438,8 +441,9 @@ private func  extractIpaMetaData(IpaFilePath:String,into context:Meow.MeowDataba
             task.launch()
         #endif
         let plistBinary = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        guard plistBinary.count > 0 else { throw "Empty Content for PropertyList" }
         var plistFormat = PropertyListSerialization.PropertyListFormat.binary
-        let propertyList = try PropertyListSerialization.propertyList(from: plistBinary, options: [], format: &plistFormat) as! [String:Any]
+        guard let propertyList = try PropertyListSerialization.propertyList(from: plistBinary, options: [], format: &plistFormat) as? [String:Any] else { throw "Invalid Content for PropertyList"}
         var metaData = [String:String]()
         iosPlistKeysToExtract.forEach { key in
             metaData[key] = "\(propertyList[key] ?? "")"
