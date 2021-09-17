@@ -21,7 +21,7 @@ final class LocalStorageServiceTests: BaseAppTests {
             }
          catch { print("Unable to create \(baseURL) log directory.") }
         
-        return baseURL.absoluteString
+        return baseURL.path
     }()
     
     override func setUp() {

@@ -41,7 +41,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: apt-get update && apt-get install -y libssl-dev zlib1g-dev unzip aapt
-    - run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery --sanitize=thread
+    #- run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery --sanitize=thread
+    - run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery
 
   linux_bionic:
     services:
@@ -55,7 +56,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: apt-get update && apt-get install -y libssl-dev zlib1g-dev unzip aapt
-    - run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery --sanitize=thread
+    #- run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery --sanitize=thread
+    - run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery
       
   deploy_fat:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'

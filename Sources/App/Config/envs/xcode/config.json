@@ -12,6 +12,7 @@
     "initialAdminPassword":"password",
     "smtpConfiguration" : {"smtpServer":"gmail","smtpLogin":"toto","smtpPassword":"password","smtpSender":"toto","fakeMode":"true"},
     "storageConfiguration" : {"RootDirectory":"/tmp/mdt"},
+    "logDirectory" : "/tmp/mdtlogs",
     "enableCompression":false,
     "logLevel":"info"
 }
