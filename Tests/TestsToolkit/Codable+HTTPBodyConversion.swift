@@ -11,36 +11,36 @@ import XCTVapor
 
 extension Encodable {
     //TO REMOVE
-    func convertToHTTPBody() throws -> Encodable {
+    public func convertToHTTPBody() throws -> Encodable {
         return self
         //fatalError("TODO")
         //return .init(data: try JSONEncoder().encode(self))
       // return try JSONEncoder().encode(self).convertToHTTPBody()
     }
     
-    func wait() -> Self {
+    public func wait() -> Self {
         return self
     }
 }
 
 extension XCTHTTPResponse {
-    var http:XCTHTTPResponse {
+    public var http:XCTHTTPResponse {
         return  self
     }
 }
 
 extension ResponseType {
-    var http:ResponseType {
+    public  var http:ResponseType {
         return  self
     }
 }
 
 extension ClientResponse {
-    var bodyData:Data {
+    public  var bodyData:Data {
         guard var body = body else { return Data() }
         return body.readData(length: body.readableBytes) ?? Data()
     }
-    var bodyCount:Int {
+    public  var bodyCount:Int {
         return body?.readableBytes ?? 0
     }
 }

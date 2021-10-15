@@ -43,8 +43,11 @@ let package = Package(
         
         //✉️ email
         //.package(url: "https://github.com/IBM-Swift/Swift-SMTP", .upToNextMinor(from: "5.1.0"))
-        .package(name:"SwiftSMTP", url: "https://github.com/rgroult/Swift-SMTP.git", .branch("master"))
+        .package(name:"SwiftSMTP", url: "https://github.com/rgroult/Swift-SMTP.git", .branch("master")),
         //.package(path: "../Swift-SMTP")
+        
+        // 🧪 Test BDD
+        .package(url: "https://github.com/Tyler-Keith-Thompson/CucumberSwift",.upToNextMinor(from: "3.3.6"))
        
     ],
     targets: [
@@ -55,7 +58,13 @@ let package = Package(
                                             .product(name: "Meow", package: "MongoKitten"),
                                             "MongoKitten","Swiftgger","CryptoSwift","zxcvbn"]),
         .target(name: "Run", dependencies: ["App"]),
-        .testTarget(name: "AppTests", dependencies: ["App",.product(name: "XCTVapor", package: "vapor")])
+        .target(name: "TestsToolkit", dependencies: ["App"],path: "Tests/TestsToolkit"),
+        .testTarget(
+            name: "CucumberAppTests",
+            dependencies: ["App", "TestsToolkit", .product(name: "XCTVapor", package: "vapor"), "CucumberSwift"],
+            resources: [.copy("Features")]
+        ),
+        .testTarget(name: "AppTests",dependencies: ["TestsToolkit", "App",.product(name: "XCTVapor", package: "vapor"), "CucumberSwift"])
     ]
 )   
 

@@ -11,9 +11,10 @@ import Vapor
 import App
 @testable import App
 
-let nilBody:String? = nil
-typealias RequestType = ClientRequest //XCTHTTPRequest
-typealias ResponseType = ClientResponse //XCTHTTPResponse
+public let nilBody:String? = nil
+public typealias RequestType = ClientRequest //XCTHTTPRequest
+public typealias ResponseType = ClientResponse //XCTHTTPResponse
+public typealias Application = Vapor.Application
 
 extension Application {
    /* static func runningAppTest(loadingEnv:Environment? = nil) throws -> Application {
@@ -27,7 +28,7 @@ extension Application {
         return app
     }*/
     
-    static func runningAppTest(loadingEnv:Environment? = nil) throws -> Application {
+    public static func runningAppTest(loadingEnv:Environment? = nil) throws -> Application {
         var env = loadingEnv ?? Environment.xcode
         let app = try Application(env)
         try configure(app)
@@ -57,7 +58,7 @@ extension Application {
         try app.asyncRun().wait()
         return app
     }*/
-    func clientTest(
+    public func clientTest(
         _ method: HTTPMethod,
         _ path: String,
         _ query: [String: String]? = nil,
@@ -72,7 +73,7 @@ extension Application {
             try beforeSend(&req)
         }, afterSend: afterSend)
     }
-    func clientTest<T:Content>(
+    public func clientTest<T:Content>(
         _ method: HTTPMethod,
         _ path: String,
         _ body: T?,
@@ -183,7 +184,7 @@ extension Application {
         try afterSend(res)
         */
     }
-    func clientSyncTest (
+    public func clientSyncTest (
         _ method: HTTPMethod,
         _ path: String,
         _ query: [String: String]? = nil,
@@ -193,7 +194,7 @@ extension Application {
         return try clientSyncTest(method, path, nilBody,query,token: token, beforeSend:beforeSend)
     }
     
-    func clientSyncTest<T:Content> (
+    public func clientSyncTest<T:Content> (
         _ method: HTTPMethod,
         _ path: String,
         _ body: T?,
@@ -243,7 +244,7 @@ extension Application {
         */
     }
     
-    func clientTest(_ method: HTTPMethod, _ path: String, equals: String) throws {
+    public func clientTest(_ method: HTTPMethod, _ path: String, equals: String) throws {
         fatalError("TODO")
         /*
         return try clientTest(method, path) { res in

@@ -2,6 +2,10 @@ import App
 import XCTest
 import Vapor
 @testable import App
+import TestsToolkit
+
+typealias RequestType = TestsToolkit.RequestType
+typealias ResponseType = TestsToolkit.ResponseType
 
 final class AppTests: BaseAppTests {
     //let droplet = try! Droplet.testable()
