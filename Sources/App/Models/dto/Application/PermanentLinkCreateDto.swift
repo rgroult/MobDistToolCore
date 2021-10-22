@@ -8,8 +8,9 @@
 import Foundation
 import Vapor
 
-class PermanentLinkCreateDto: Codable {
+struct PermanentLinkCreateDto: Codable {
     let daysValidity:Int
     let branch:String
     let artifactName:String
 }
+extension PermanentLinkCreateDto: Content {}

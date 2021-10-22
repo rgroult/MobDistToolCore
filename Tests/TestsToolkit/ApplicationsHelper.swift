@@ -24,3 +24,23 @@ public func populateApplications(nbre:Int,tempo:Double = 0,inside app:Applicatio
         _ = try createApp(with: appDto, inside: app, token: token)
     }
 }
+
+
+public func createPermanentLink(appUUID:String, branch:String, name:String, validity:Int,inside app:Application,token:String?) throws -> PermanentLinkDto{
+    let linkDto = PermanentLinkCreateDto(daysValidity:validity,branch:branch,artifactName:name)
+    
+    let result = try app.clientSyncTest(.POST, "/v2/Applications/\(appUUID)/links", linkDto,token: token)
+    return try result.content.decode(PermanentLinkDto.self).wait()
+}
+
+public func getPermanentLinks(appUUID:String,inside app:Application,token:String?) throws -> [PermanentLinkDto]{
+    
+    let result = try app.clientSyncTest(.GET, "/v2/Applications/\(appUUID)/links",token: token)
+    return try result.content.decode([PermanentLinkDto].self).wait()
+}
+
+
+public func applicationDetail(appUUID:String,inside app:Application,token:String?) throws -> ApplicationDto{
+    let result = try app.clientSyncTest(.GET, "/v2/Applications/\(appUUID)",token: token)
+    return try result.content.decode(ApplicationDto.self).wait()
+}

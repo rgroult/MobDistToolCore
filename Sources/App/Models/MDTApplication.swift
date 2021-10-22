@@ -9,6 +9,15 @@ import Meow
 import MongoKitten
 
  final class MDTApplication: Model/*,ReadableModel */{
+    struct PermanentLink2:Codable {
+        let applicationUuid:String
+        let branch:String
+        let artifactName:String
+        var expirationDate:Date
+        let validity:Int
+    }
+         /*
+         
     struct TokenLink {
         let tokenId:String
         var application:MDTApplication?
@@ -19,7 +28,7 @@ import MongoKitten
         let branch:String
         let artifactName:String
         let validity:Int
-    }
+    }*/
     //static let defaultIconPlaceholder = "images/placeholder.jpg"
     //static let collectionName = "MDTApplication"
     var _id = ObjectId()

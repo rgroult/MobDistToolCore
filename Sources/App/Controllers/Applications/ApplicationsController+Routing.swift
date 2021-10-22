@@ -72,7 +72,7 @@ extension ApplicationsController {
         protectedAppsRouter.put([.parameter("uuid"),.constant("adminUsers"),.parameter("email")], use: self.addAdminUser)
         protectedAppsRouter.delete([.parameter("uuid"),.constant("adminUsers"),.parameter("email")], use: self.deleteAdminUser)
         //links
-        protectedAppsRouter.get([.parameter("uuid"),.parameter("links")], use: self.applicationPermanentLinks)
+       // protectedAppsRouter.get([.parameter("uuid"),.parameter("links")], use: self.applicationPermanentLinks)
         protectedAppsRouter.post([.parameter("uuid"),.parameter("links")], use: self.createApplicationPermanentLink)
         protectedAppsRouter.delete([.parameter("uuid"),.parameter("links")], use: self.deleteApplicationPermanentLink)
         router.get([.constant(Verb.permanentLinkInstall.uri)], use: self.installPermanentLink)

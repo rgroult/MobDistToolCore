@@ -39,8 +39,9 @@ final class ApplicationsController:BaseController {
                     guard let user = user else { throw Abort(.unauthorized)}
                     let appDto = try req.content.decode(ApplicationCreateDto.self)
                     return try App.createApplication(name: appDto.name, platform: appDto.platform, description: appDto.description, adminUser: user,base64Icon:appDto.base64IconData,maxVersionCheckEnabled:appDto.enableMaxVersionCheck, into: context)
-                        .flatMap{app in
-                            ApplicationDto.create(from: app, content: .full, in : context)
+                        .flatMap{[weak self]app in
+                            guard let `self` = self else { return req.eventLoop.makeFailedFuture(Abort(.internalServerError))}
+                            return ApplicationDto.create(from: app, content: .full, urlCreator: {self.generateUrls(with: $0)},  in : context)
                                 .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
                                 .do({ [weak self] dto in self?.track(event: .CreateApp(app: app, user: user), for: req)})
                         }
@@ -63,14 +64,15 @@ final class ApplicationsController:BaseController {
                 let applicationUpdateDto = try req.content.decode(ApplicationUpdateDto.self)
                    // .flatMap({ applicationUpdateDto in
                         return findApplication(uuid: appUuid, into: context)
-                            .flatMap({ app  in
+                            .flatMap({[weak self] app  in
                                 guard let app = app else { return req.eventLoop.makeFailedFuture(ApplicationError.notFound)}
+                                guard let `self` = self else { return req.eventLoop.makeFailedFuture(Abort(.internalServerError))}
                                 //{throw ApplicationError.notFound }
                                 //check if user is app admin
                                 guard app.isAdmin(user: user) else { return req.eventLoop.makeFailedFuture(ApplicationError.notAnApplicationAdministrator)}
                                 //{ throw ApplicationError.notAnApplicationAdministrator }
                                 return App.updateApplicationWithParameters(from: app, name: applicationUpdateDto.name, description: applicationUpdateDto.description, maxVersionCheckEnabled: applicationUpdateDto.maxVersionCheckEnabled, iconData: applicationUpdateDto.base64IconData, into: context)
-                                .flatMap {ApplicationDto.create(from: $0, content: .full, in : context)}
+                                    .flatMap {ApplicationDto.create(from: $0, content: .full, urlCreator: {self.generateUrls(with: $0)}, in : context)}
                                 .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
                                 .do({ [weak self] dto in self?.track(event: .UpdateApp(app: app, user: user), for: req)})
                             })
@@ -162,12 +164,7 @@ final class ApplicationsController:BaseController {
                     })
         }
     }
-    
-    private func generatePermanentLink(token:MDTApplication.TokenLink,artifact:Artifact?,platform:Platform) throws -> PermanentLinkDto {
-        let (installUrl,intallPage) = try generateUrls(with: token, platform: platform)
-        return PermanentLinkDto(from: token.link, artifact: artifact, installUrl: installUrl, installPageUrl: intallPage)
-    }
-    
+    /*
     //GET /<uuid>/link
     func applicationPermanentLinks(_ req: Request) throws -> EventLoopFuture<[PermanentLinkDto]> {
       //  let appUuid = try req.parameters.next(String.self)
@@ -176,6 +173,7 @@ final class ApplicationsController:BaseController {
         return try retrieveUserAndApp(req, appUuid: appUuid, needToBeAdmin: true)
             .flatMap { (user, app) in
                 let meow = req.meow
+                
                 return retrievePermanentLinks(app: app, into: meow)
                     .flatMapThrowing{ permanentLinkInfoList throws -> [PermanentLinkDto] in
                         return try permanentLinkInfoList.map {[weak self] permanentLinkInfo throws in
@@ -186,7 +184,7 @@ final class ApplicationsController:BaseController {
                         }
                 }
         }
-    }
+    }*/
     
     //POST /<uuid>/link
     func createApplicationPermanentLink(_ req: Request) throws -> EventLoopFuture<PermanentLinkDto> {
@@ -196,9 +194,32 @@ final class ApplicationsController:BaseController {
         return try retrieveUserAndApp(req, appUuid: appUuid, needToBeAdmin: true)
             .flatMap { (user, app) in
                 let meow = req.meow
+                let link = MDTApplication.PermanentLink2(applicationUuid: appUuid, branch: linkCreateDto.branch, artifactName: linkCreateDto.artifactName, expirationDate: Date().addingTimeInterval(Double(linkCreateDto.daysValidity) * 3600 * 24 /*second value required*/), validity: linkCreateDto.daysValidity)
+                do {
+                    return try App.generatePermanentLink(inside: app, with: link, into: meow)
+                        .flatMap{ tokenInfo ->  EventLoopFuture<PermanentLinkDto> in
+                            do {
+                            return try retrieveArtifact(link: link, into: meow)
+                                .flatMapThrowing { [weak self] artifact throws in
+                                    guard let `self` = self else { throw Abort(.internalServerError)}
+                                    return try self.generatePermanentLinkDto(link: link, tokenId: tokenInfo.uuid, artifact: artifact, platform: app.platform)
+                                 /*   let  (token, artifact)  = permanentLinkInfo
+                                    return try self.generatePermanentLink(token: token, artifact: artifact, platform: app.platform)*/
+                                }
+                            }
+                            catch {
+                                return req.eventLoop.makeFailedFuture(error)
+                            }
+                        }
+                }
+                catch {
+                    return req.eventLoop.makeFailedFuture(error)
+                }
+                
+                /*
                 let link = MDTApplication.PermanentLink(applicationUuid: appUuid, branch: linkCreateDto.branch, artifactName: linkCreateDto.artifactName, validity: linkCreateDto.daysValidity)
                 do {
-                    return  try App.generatePermanentLink(with: link, into: meow)
+                    return  try App.generatePermanentLink(inside: app, with: link, into: meow)
                         .flatMap{ tokenInfo in
                             let tokenLink = MDTApplication.TokenLink(tokenId: tokenInfo.uuid, application: app, link: link)
                             //throw "not implemented"
@@ -210,12 +231,20 @@ final class ApplicationsController:BaseController {
                                     return try self.generatePermanentLink(token: token, artifact: artifact, platform: app.platform)
                                 }
                         }
-                }
-                catch {
-                    return req.eventLoop.makeFailedFuture(error)
-                }
+                }*/
+                
             }
     }
+    
+    private func generatePermanentLinkDto(link: MDTApplication.PermanentLink2, tokenId:String,artifact:Artifact?,platform:Platform) -> PermanentLinkDto {
+        let (installUrl,intallPage) = generateUrls(with: tokenId)
+        return PermanentLinkDto(from: link, artifact: artifact, installUrl: installUrl, installPageUrl: intallPage)
+    }
+    /*
+    private func generatePermanentLink(token:TokenInfo,artifact:Artifact?,platform:Platform) throws -> PermanentLinkDto {
+        let (installUrl,intallPage) = try generateUrls(with: token, platform: platform)
+        return PermanentLinkDto(from: token.link, artifact: artifact, installUrl: installUrl, installPageUrl: intallPage)
+    }*/
     
     //DELETE /<uuid>/link
     func deleteApplicationPermanentLink(_ req: Request) throws -> EventLoopFuture<MessageDto> {
@@ -233,6 +262,73 @@ final class ApplicationsController:BaseController {
         let installType = try req.query.get(InstallType.self, at: "install")
         let meow = req.meow
         
+        return findTokenInfo(with: reqToken, into:  meow)
+            .flatMap{tokenInfo in
+                do {
+                    guard let tokenInfo = tokenInfo else { throw ApplicationError.expiredLink}
+                    return try retrievePermanentLinkArtifact(tokenInfo: tokenInfo, into: meow)
+                        .flatMap{[weak self] (link, artifact) in
+                            do {
+                                guard let `self` = self else { throw Abort(.internalServerError)}
+                                let config = try req.application.appConfiguration()
+                                guard let artifact = artifact else {throw ArtifactError.notFound}
+                                
+                                return artifact.application.resolve(in: meow)
+                                    .flatMap{app in
+                                        return self.artifactController.generateDownloadInfo(user: User.anonymous(), artifactID: artifact.uuid, application: app, config: config, into: meow)
+                                            .map{ dwInfo -> Response in
+                                                let installUrl:String
+                                                switch installType{
+                                                case .direct:
+                                                    installUrl = dwInfo.installUrl
+                                                case .page:
+                                                    installUrl = dwInfo.installPageUrl
+                                                }
+                                                return req.redirect(to: installUrl)
+                                        }
+                                    }
+                            }catch {
+                                return req.eventLoop.makeFailedFuture(error)
+                            }
+                            
+                            
+                            /*return try self.generatePermanentLinkDto(link: link, token: tokenInfo, artifact: artifact, platform: link.platform)*/
+                        }
+                }
+                catch {
+                    return req.eventLoop.makeFailedFuture(error)
+                }
+            }
+        
+        /*
+        
+        do {
+            return findTokenInfo(with: reqToken, into:  meow)
+                .fla
+            
+            return try retrievePermanentLinkArtifact(tokenId: reqToken, into: meow)
+                .flatMapThrowing { [weak self](token, artifact) in
+                    guard let `self` = self else { throw Abort(.internalServerError)}
+                    return try self.generatePermanentLinkDto(link: link, token: tokenInfo, artifact: artifact, platform: app.platform)
+                }
+            /*
+                .flatMap({ (tokenLink, artifact) in
+                do {
+                return try retrieveArtifact(link: link, into: meow)
+                    .flatMapThrowing { [weak self] artifact throws in
+                        guard let `self` = self else { throw Abort(.internalServerError)}
+                        return try self.generatePermanentLinkDto(link: link, token: tokenInfo, artifact: artifact, platform: app.platform)
+                    }
+                }
+                catch {
+                    return req.eventLoop.makeFailedFuture(error)
+                }*/
+            }
+            catch {
+                return req.eventLoop.makeFailedFuture(error)
+            }
+        
+        /*
         return try retriveTokenInfo(tokenId: reqToken, into: meow)
             .flatMap{retrievePermanentLinkArtifact(token: $0, into: meow)}
             .flatMap({ (tokenLink, artifact) in
@@ -256,15 +352,16 @@ final class ApplicationsController:BaseController {
             catch {
                 return req.eventLoop.makeFailedFuture(error)
             }
-            })
+            })*/
+         */
     }
     
-    private func generateUrls(with token:MDTApplication.TokenLink,platform:Platform) throws -> (installUrl:String,installPageUrl:String){
+    private func generateUrls(with tokenId:String/*,platform:Platform*/) -> (installUrl:String,installPageUrl:String){
         let serverUrl = externalUrl.absoluteString
         let baseInstallUrl = serverUrl + self.generateRoute(Verb.permanentLinkInstall.uri)
         
-        let installUrl = baseInstallUrl + "?token=\(token.link)&install=\(InstallType.direct.rawValue)"
-        let installPageUrl = baseInstallUrl + "?token=\(token.link)&install=\(InstallType.page.rawValue)"
+        let installUrl = baseInstallUrl + "?token=\(tokenId)&install=\(InstallType.direct.rawValue)"
+        let installPageUrl = baseInstallUrl + "?token=\(tokenId)&install=\(InstallType.page.rawValue)"
         
         /* let installUrl = artifactController.generateDirectInstallUrl(serverExternalUrl: serverUrl, token: token.tokenId, platform: platform)
          let installPageUrl = artifactController.generateInstallPageUrl(serverExternalUrl: serverUrl, token: token.tokenId)
@@ -282,18 +379,17 @@ final class ApplicationsController:BaseController {
               //  guard let user = user else { throw Abort(.unauthorized)}
                 let meow = req.meow
                 return findApplication(uuid: appUuid, into: meow)
-                    .flatMap({app in
+                    .flatMap({[weak self] app in
                         guard let app = app else { return req.eventLoop.makeFailedFuture(ApplicationError.notFound)}
                         //{ throw ApplicationError.notFound }
-                        //  guard let `self` = self else { throw Abort(.internalServerError)}
+                        guard let `self` = self else { return req.eventLoop.makeFailedFuture(Abort(.internalServerError))}
                         
                         let isAdminForApp = app.isAdmin(user: user)
                         //find permanent links
                         // let permanentLinks:Future<[PermanentLinkDto]?> = isAdminForApp ? req.eventLoop.future(nil) : try self.applicationPermanentLinks(req, application: app)
                         
-                        return ApplicationDto.create(from: app, content:isAdminForApp ? .full : .light , in : meow)
+                        return ApplicationDto.create(from: app, content:isAdminForApp ? .full : .light, urlCreator:{ self.generateUrls(with: $0) } , in : meow)
                             .map{$0.setIconUrl(url: app.generateIconUrl(externalUrl: serverUrl))}
-                        
                     })}
     }
     

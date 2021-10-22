@@ -15,7 +15,6 @@ final class UsersServiceTests: BaseAppTests {
     
     override func setUp() {
         super.setUp()
-        
     }
     
     func dropNormalUsers(){

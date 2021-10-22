@@ -319,6 +319,9 @@ func searchMaxArtifact(app:MDTApplication,branch:String,artifactName:String,into
     let query = "application" == app._id && "branch" == branch && "name" == artifactName
     
     return context.collection(for: Artifact.self).raw.find(query).sort(Sort([("sortIdentifier", SortOrder.descending)])).firstResult().decode(Artifact.self)
+     /*  .flatMap { artifact -> EventLoopFuture<Artifact?> in
+            return artifact?.application.resolve(in: context).map { _ in artifact} ??  context.eventLoop.makeSucceededFuture(nil)
+        }*/
         //.find(where: query).sort(Sort([("sortIdentifier", SortOrder.descending)])).getFirstResult()
    // retun context.collection(for: Artifact.self).find(where: query)
 }

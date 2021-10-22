@@ -15,6 +15,8 @@ import Meow
 struct StepContext {
     var app:Application!
     var context:Meow.MeowDatabase!
+    var loginToken:String?
+    var testContext = [String:Any]()
     func closeApp(){
         app.shutdown()
     }
