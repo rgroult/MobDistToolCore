@@ -25,6 +25,7 @@ enum ApplicationError: Error, Equatable {
     case invalidSignature
     case unknownPlatform
     case expiredLink
+    case invalidLink
 }
 
 extension ApplicationError: DebuggableError {
@@ -54,6 +55,8 @@ extension ApplicationError: DebuggableError {
             return "ApplicationError.invalidSignature"
         case .expiredLink:
             return "ApplicationError.expiredLink"
+        case .invalidLink:
+            return "ApplicationError.invalidLink"
         }
     }
 
@@ -446,6 +449,13 @@ extension MDTApplication {
         var links = permanentLinks ?? []
         links.append(Reference(to: link))
         permanentLinks = links
+        return save(in: context).map { _ in self }
+    }
+    
+    func removePermanentLink(link: TokenInfo, into context: Meow.MeowDatabase) -> EventLoopFuture<MDTApplication> {
+        permanentLinks?.removeAll { reference -> Bool in
+            reference.reference == link._id
+        }
         return save(in: context).map { _ in self }
     }
 }

@@ -76,10 +76,20 @@ public extension Cucumber {
             }
             
         }
+        
+        Then("^I get iOS Application detail$") { _, _ in
+            do {
+                let appDto = (currentStep?.testContext["APP"] as? ApplicationDto)
+                let appDetail = try applicationDetail(appUUID: appDto!.uuid, inside: currentStep!.app, token: currentStep?.loginToken)
+                currentStep?.testContext["APP"] = appDetail
+                print("new detail \(currentStep?.testContext["APP"])")
+            }catch {
+                XCTFail("Error : \(error)")
+            }
+        }
 
         
-        
-        When("^I get iOS Applation detail$") { _, _ in
+        When("^I get iOS Application detail$") { _, _ in
             do {
                 let appDto = (currentStep?.testContext["APP"] as? ApplicationDto)
                 let appDetail = try applicationDetail(appUUID: appDto!.uuid, inside: currentStep!.app, token: currentStep?.loginToken)
@@ -114,6 +124,18 @@ public extension Cucumber {
             let appDto = (currentStep?.testContext["APP"] as? ApplicationDto)
             XCTAssertNotNil(appDto?.permanentLinks?.first?.currentVersion)
         }
+        
+        Then("^I delete first permanent link$") { _, _ in
+            do {
+                let appDto = (currentStep?.testContext["APP"] as? ApplicationDto)
+                XCTAssertNotNil(appDto?.permanentLinks?.first)
+                let messageDto = try deletePermanentLink(appUUID: appDto!.uuid, permanentLinkId: appDto!.permanentLinks!.first!.uuid, inside: currentStep!.app, token: currentStep?.loginToken)
+                
+            } catch {
+                XCTFail("Error : \(error)")
+            }
+        }
+        
         Then("^I can donwload artifact from first permanent link installUrl$") { _, _ in
             let appDto = (currentStep?.testContext["APP"] as? ApplicationDto)
             let installPageUrl = appDto?.permanentLinks?.first?.installUrl
@@ -127,17 +149,6 @@ public extension Cucumber {
                     XCTAssertEqual(resp.http.status,.ok)
                 #endif
             }
-            /*
-             var installPage = try app.clientSyncTest(.GET, dwInfo.installPageUrl ,isAbsoluteUrl:true)
-             //check install page contains installUrl
-             let data = installPage.bodyData
-             if /*let data =  installPage.body.readData(length: installPage.body.readableBytes), */let stringContent = String(data: data, encoding: .utf8) {
-                 XCTAssertTrue(stringContent.contains(dwInfo.installUrl))
-             }else {
-                 XCTAssertTrue(false)
-             }
-             */
-            
         }
 
         

@@ -42,7 +42,7 @@ extension ApplicationDto {
                 appDto.availableBranches = branches
                 appDto.permanentLinks = content == .light ? nil : linksInfo.map{ info in
                     let (installUrl, installPageUrl) = urlCreator(info.tokenId)
-                    return PermanentLinkDto(from: info.link, artifact: info.artifact, installUrl: installUrl, installPageUrl: installPageUrl) }
+                    return PermanentLinkDto(uuid: info.tokenId, from: info.link, artifact: info.artifact, installUrl: installUrl, installPageUrl: installPageUrl) }
                 //appDto.permanentLinks = content == .light ? nil : tokensInfo.map{ PermanentLinkDto(from: $0)}.compactMap{ $0} //only as admin
                 return appDto
             })

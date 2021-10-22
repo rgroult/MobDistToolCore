@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import XCTest
 @testable import App
 
 public func createApp(with info:ApplicationCreateDto, inside app:Application,token:String?) throws -> ApplicationDto {
@@ -33,8 +34,13 @@ public func createPermanentLink(appUUID:String, branch:String, name:String, vali
     return try result.content.decode(PermanentLinkDto.self).wait()
 }
 
+public func deletePermanentLink(appUUID:String, permanentLinkId:String, inside app:Application,token:String?) throws -> MessageDto{
+    let result = try app.clientSyncTest(.DELETE, "/v2/Applications/\(appUUID)/links?token=\(permanentLinkId)",token: token)
+    XCTAssertEqual(result.http.status.code, 200)
+    return try result.content.decode(MessageDto.self).wait()
+}
+
 public func getPermanentLinks(appUUID:String,inside app:Application,token:String?) throws -> [PermanentLinkDto]{
-    
     let result = try app.clientSyncTest(.GET, "/v2/Applications/\(appUUID)/links",token: token)
     return try result.content.decode([PermanentLinkDto].self).wait()
 }

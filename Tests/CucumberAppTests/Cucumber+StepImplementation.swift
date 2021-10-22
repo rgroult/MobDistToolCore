@@ -42,17 +42,20 @@ extension Cucumber: StepImplementation {
         print("setupSteps")
         
         BeforeScenario { (_) in
+            print("Scenario : BEFORE")
         }
         
         AfterScenario { _ in
             //close Server
             currentStep?.closeApp()
             currentStep = nil
+            print("Scenario : AFTER \(currentStep)")
         }
         
         //Global
         Given("^A started server$") { _, _ in
-            print("Started Server")
+            print("Scenario : Started Server \(currentStep != nil)")
+            print("Started Server : \(currentStep)")
             do {
                 try startServer()
             }
