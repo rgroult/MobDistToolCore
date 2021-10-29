@@ -39,11 +39,3 @@ Feature: Permanent link
         And I get iOS Application detail
         Then I can see 0 permanent link on iOS Application application detail
         
-Feature: Application Destruction
-        Scenario: Application Empty
-
-Feature: Application Destruction
-        Scenario: Application with artifacts
-
-Feature: Application Destruction
-        Scenario: Application with permanents links
