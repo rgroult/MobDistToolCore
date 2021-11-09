@@ -390,7 +390,8 @@ final class ApplicationsController:BaseController {
                 let meow = req.meow
                 //  try req.make(StorageServiceProtocol.self)
                 return App.deleteAllArtifacts(app: info.app, storage: storage, into: meow)
-                    .flatMap{
+                    .flatMap{ deleteTokens(for: info.app, into: meow) }
+                    .flatMap{ _ -> EventLoopFuture<MessageDto> in
                         return App.deleteApplication(by: info.app, into: meow).map {
                             return MessageDto(message: "Application Deleted")
                         }

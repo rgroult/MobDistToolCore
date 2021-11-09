@@ -67,6 +67,7 @@ extension Cucumber: StepImplementation {
         }
         
         setupStepsPermanentLinks()
+        setupStepsApplications()
     }
 }
 

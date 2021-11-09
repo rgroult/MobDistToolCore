@@ -12,9 +12,16 @@ import XCTest
 public func createApp(with info:ApplicationCreateDto, inside app:Application,token:String?) throws -> ApplicationDto {
     //let body = try info.convertToHTTPBody()
     let result = try app.clientSyncTest(.POST, "/v2/Applications", info,token:token)
-    print(result.content)
+  //  print(result.content)
     return try result.content.decode(ApplicationDto.self).wait()
 }
+
+public func deleteApp(appUUID:String, inside app:Application,token:String?) throws -> MessageDto {
+    //let body = try info.convertToHTTPBody()
+    let result = try app.clientSyncTest(.DELETE, "/v2/Applications/\(appUUID)",token:token)
+    return try result.content.decode(MessageDto.self).wait()
+}
+
 public func populateApplications(nbre:Int,tempo:Double = 0,inside app:Application,token:String) throws{
     for i in 1...nbre {
         if tempo > 0.0 {

@@ -22,7 +22,8 @@ Feature: Application Destruction
             Given A started server
             And Create a user and login
             And Create a sample iOS Application
-            Then I create a permanent link for last version on branch master
+            Then I create a permanent link for last version on branch "master"
+            And I get iOS Application detail
             Then I can see 1 permanent link on iOS Application application detail
             When I delete sample iOS Application
             Then I retrieve all applications, I can see 0 application(s)

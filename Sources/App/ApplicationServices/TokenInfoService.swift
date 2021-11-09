@@ -21,6 +21,15 @@ func purgeExpiredTokens(into context:Meow.MeowDatabase) -> EventLoopFuture<Int> 
      //return context.deleteAll(TokenInfo.self, where: Query.smallerThanOrEqual(field: "expirationDate", val: Date()))
 }
 
+func deleteTokens(for app:MDTApplication, into context:Meow.MeowDatabase) -> EventLoopFuture<Int> {
+    //should be optimized if lot of tokens to remove
+    return (app.permanentLinks ?? []).map{ $0.deleteTarget(in: context) }.flatten(on: context.eventLoop)
+        .flatMap { results in
+            app.permanentLinks = []
+            return saveApplication(app: app, into: context).map { _ in results.count }
+        }
+}
+
 func findTokenInfo(with tokenId:String, into context:Meow.MeowDatabase)-> EventLoopFuture<TokenInfo?>{
     let collection = context.collection(for: TokenInfo.self)
     return collection.find(where: "uuid" == tokenId)
