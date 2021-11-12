@@ -69,7 +69,7 @@ func findApplicationsPaginated(platform: Platform? = nil, pagination: Pagination
     let query: MongoKittenQuery
     let anotherQuery = additionalQuery ?? EmptyQuery()
     if let platorm = platform {
-        query = anotherQuery && platorm.rawValue == "platform" //    Query.and([anotherQuery,Query.valEquals(field: "platform", val: platorm.rawValue)])
+        query = anotherQuery &&  "platform" == platorm.rawValue //    Query.and([anotherQuery,Query.valEquals(field: "platform", val: platorm.rawValue)])
     } else {
         query = anotherQuery
     }

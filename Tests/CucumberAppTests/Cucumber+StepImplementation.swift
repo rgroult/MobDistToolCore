@@ -10,7 +10,7 @@ import CucumberSwift
 import XCTest
 import Vapor
 import Meow
-@testable import AppTests
+//@testable import AppTests
 
 struct StepContext {
     var app:Application!
