@@ -50,7 +50,8 @@ let package = Package(
         .package(url: "https://github.com/Tyler-Keith-Thompson/CucumberSwift",.upToNextMinor(from: "3.3.6"))
        
     ],
-    targets: [
+    targets: generateTargets()
+    /*[
         .target(name: "App", dependencies: ["SwiftSMTP","JWTAuth",
                                             .product(name: "Vapor", package: "vapor"),
                                             .product(name: "Fluent", package: "fluent"),
@@ -65,6 +66,27 @@ let package = Package(
             resources: [.copy("Features")]
         ),
         .testTarget(name: "AppTests",dependencies: ["TestsToolkit", "App",.product(name: "XCTVapor", package: "vapor"), "CucumberSwift"])
-    ]
-)   
+    ]*/
+)
+
+func generateTargets() -> [Target] {
+    var targets:[Target] = [
+        .target(name: "App", dependencies: ["SwiftSMTP","JWTAuth",
+                                            .product(name: "Vapor", package: "vapor"),
+                                            .product(name: "Fluent", package: "fluent"),
+                                            .product(name: "JWT", package: "jwt"),
+                                            .product(name: "Meow", package: "MongoKitten"),
+                                            "MongoKitten","Swiftgger","CryptoSwift","zxcvbn"]),
+        .target(name: "Run", dependencies: ["App"]),
+        .target(name: "TestsToolkit", dependencies: ["App"],path: "Tests/TestsToolkit"),
+        .testTarget(name: "AppTests",dependencies: ["TestsToolkit", "App",.product(name: "XCTVapor", package: "vapor")])]
+#if os(macOS)
+    targets.append(.testTarget(
+        name: "CucumberAppTests",
+        dependencies: ["App", "TestsToolkit", .product(name: "XCTVapor", package: "vapor"), "CucumberSwift"],
+        resources: [.copy("Features")]
+    ))
+#endif
+    return targets
+}
 
