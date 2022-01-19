@@ -139,9 +139,9 @@ extension PaginatedMappedCursor {
         
         //page info
         var page = Int((try? req.query.get(UInt.self, at: "page")) ?? 0)
-        page = max (0 , page)
+        page = Swift.max (0 , page)
         var perPage = Int((try? req.query.get(UInt.self, at: "per")) ?? MappedCursorDefaultPageSize)
-        perPage = max (0 , perPage)
+        perPage = Swift.max (0 , perPage)
         let skipItems = page * perPage
         
         //sort info
@@ -160,7 +160,7 @@ extension PaginatedMappedCursor {
         }
         
         let pageData = PageData(per: perPage, total: totalCount)
-        let maxPosition = max(0, Int(ceil(-1.0 + Double(totalCount) / Double(perPage))))
+        let maxPosition = Swift.max(0, Int(ceil(-1.0 + Double(totalCount) / Double(perPage))))
         let position = Position(current: page, max: maxPosition /* Int(ceil(Double(count) / Double(perPage)) - 1) *//* start indice is 0 */)
         
        // return self.sort(sortOrder.convert(field: sortBy)).skip(skipItems).limit(perPage)
