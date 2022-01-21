@@ -459,13 +459,22 @@ private func  extractIpaMetaData(IpaFilePath:String,into context:Meow.MeowDataba
 }
 
 private func  extractApkMetaData(ApkFilePath:String,into context:Meow.MeowDatabase) -> EventLoopFuture<[String:String]>{
-    let task = Vapor.Process()
+#if os(Linux)
+    return extractApkMetaDataAAPT(ApkFilePath:ApkFilePath,into:context)
+#else
+    return extractApkMetaDataAAPT2(ApkFilePath:ApkFilePath,into:context)
+#endif
+}
+
+private func  extractApkMetaDataAAPT2(ApkFilePath:String,into context:Meow.MeowDatabase) -> EventLoopFuture<[String:String]>{
+    let task = Process()
     #if os(Linux)
-    task.launchPath = "/usr/bin/aapt"
+    task.launchPath = "/usr/bin/aapt2"
     #else
-    task.launchPath = "/usr/local/bin/aapt"
+    task.launchPath = "/usr/local/bin/aapt2"
     #endif
-    task.arguments = ["d", "xmltree",ApkFilePath, "AndroidManifest.xml"]
+    task.arguments = ["dump", "xmltree","--file", "AndroidManifest.xml", ApkFilePath ]
+    //aapt2 dump xmltree  --file AndroidManifest.xml Ressources/testdroid-sample-app.apk
     let outputPipe = Pipe()
     task.standardOutput = outputPipe
     do {
@@ -486,29 +495,29 @@ private func  extractApkMetaData(ApkFilePath:String,into context:Meow.MeowDataba
                 guard let packageName = apkExtractString(from: line) else { continue }
                 metaDataResult["PACKAGE_NAME"] = packageName
                 
-            case _ where  line.hasPrefix("A: android:versionCode"):
-                //A: android:versionCode(0x0101021b)=(type 0x10)0x1
-                guard let versionCode = apkExtractHexVersion(from:line) else { continue }
+            case _ where  line.hasPrefix("A: http://schemas.android.com/apk/res/android:versionCode"):
+                //A: http://schemas.android.com/apk/res/android:versionCode(0x0101021b)=1
+                guard let versionCode = apkExtractValue(from:line) else { continue }
                 metaDataResult["VERSION_CODE"] = versionCode
             
-            case _ where  line.hasPrefix("A: android:versionName"):
-                //A: android:versionName(0x0101021c)="0.3" (Raw: "0.3")
+            case _ where  line.hasPrefix("A: http://schemas.android.com/apk/res/android:versionName"):
+                //A: http://schemas.android.com/apk/res/android:versionName(0x0101021c)="0.3" (Raw: "0.3")
                 guard let version = apkExtractString(from: line) else { continue }
                 metaDataResult["VERSION_NAME"] = version
                 
-            case _ where  line.hasPrefix("A: android:minSdkVersion"):
-                // A: android:minSdkVersion(0x0101020c)=(type 0x10)0xe
-                guard let versionCode = apkExtractHexVersion(from:line) else { continue }
+            case _ where  line.hasPrefix("A: http://schemas.android.com/apk/res/android:minSdkVersion"):
+                // A: http://schemas.android.com/apk/res/android:minSdkVersion(0x0101020c)=14
+                guard let versionCode = apkExtractValue(from:line) else { continue }
                 metaDataResult["MIN_SDK"] = versionCode
                 
-            case _ where  line.hasPrefix("A: android:maxSdkVersion"):
-                //A: android:maxSdkVersion(0x01010330)=(type 0x10)0x12
-                guard let versionCode = apkExtractHexVersion(from:line) else { continue }
+            case _ where  line.hasPrefix("A: http://schemas.android.com/apk/res/android:maxSdkVersion"):
+                // A: http://schemas.android.com/apk/res/android:maxSdkVersion(0x0101020c)=14
+                guard let versionCode = apkExtractValue(from:line) else { continue }
                 metaDataResult["MAX_SDK"] = versionCode
                 
-            case _ where  line.hasPrefix("A: android:targetSdkVersion"):
-                //A: android:targetSdkVersion(0x01010270)=(type 0x10)0x13
-                guard let versionCode = apkExtractHexVersion(from:line) else { continue }
+            case _ where  line.hasPrefix("A: http://schemas.android.com/apk/res/android:targetSdkVersion"):
+                //A: http://schemas.android.com/apk/res/android:targetSdkVersion(0x01010270)=19
+                guard let versionCode = apkExtractValue(from:line) else { continue }
                 metaDataResult["TARGET_SDK"] = versionCode
                 
             default:
@@ -523,10 +532,82 @@ private func  extractApkMetaData(ApkFilePath:String,into context:Meow.MeowDataba
       //  throw ArtifactError.invalidContent
     }
 }
+
+private func extractApkMetaDataAAPT(ApkFilePath: String, into context: Meow.MeowDatabase) -> EventLoopFuture<[String: String]> {
+    let task = Vapor.Process()
+    #if os(Linux)
+    task.launchPath = "/usr/bin/aapt"
+    #else
+    task.launchPath = "/usr/local/bin/aapt"
+    #endif
+    task.arguments = ["d", "xmltree", ApkFilePath, "AndroidManifest.xml"]
+    let outputPipe = Pipe()
+    task.standardOutput = outputPipe
+    do {
+        print("before Manifest")
+        #if os(Linux)
+        try task.run()
+        #else
+        task.launch()
+        #endif
+        let manifestContent = String(data: outputPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)
+        guard let allLines = manifestContent?.split(separator: "\n") else { throw ArtifactError.invalidContent }
+        var metaDataResult = [String: String]()
+        for rawLine in allLines {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            switch line {
+            case _ where line.hasPrefix("A: package"):
+                // A: package="com.testdroid.sample.android" (Raw: "com.testdroid.sample.android")
+                guard let packageName = apkExtractString(from: line) else { continue }
+                metaDataResult["PACKAGE_NAME"] = packageName
+                
+            case _ where line.hasPrefix("A: android:versionCode"):
+                // A: android:versionCode(0x0101021b)=(type 0x10)0x1
+                guard let versionCode = apkExtractHexVersion(from: line) else { continue }
+                metaDataResult["VERSION_CODE"] = versionCode
+            
+            case _ where line.hasPrefix("A: android:versionName"):
+                // A: android:versionName(0x0101021c)="0.3" (Raw: "0.3")
+                guard let version = apkExtractString(from: line) else { continue }
+                metaDataResult["VERSION_NAME"] = version
+                
+            case _ where line.hasPrefix("A: android:minSdkVersion"):
+                // A: android:minSdkVersion(0x0101020c)=(type 0x10)0xe
+                guard let versionCode = apkExtractHexVersion(from: line) else { continue }
+                metaDataResult["MIN_SDK"] = versionCode
+                
+            case _ where line.hasPrefix("A: android:maxSdkVersion"):
+                // A: android:maxSdkVersion(0x01010330)=(type 0x10)0x12
+                guard let versionCode = apkExtractHexVersion(from: line) else { continue }
+                metaDataResult["MAX_SDK"] = versionCode
+                
+            case _ where line.hasPrefix("A: android:targetSdkVersion"):
+                // A: android:targetSdkVersion(0x01010270)=(type 0x10)0x13
+                guard let versionCode = apkExtractHexVersion(from: line) else { continue }
+                metaDataResult["TARGET_SDK"] = versionCode
+                
+            default:
+                ()
+            }
+        }
+        
+        return context.eventLoop.makeSucceededFuture(metaDataResult)
+        
+    } catch {
+        return context.eventLoop.makeFailedFuture(ArtifactError.invalidContent)
+        //  throw ArtifactError.invalidContent
+    }
+}
+
 private func apkExtractHexVersion(from stringValue:String) -> String? {
     guard let lastIndex = stringValue.lastIndex(of: ")") else { return nil }
     guard let hexVersion = Int( stringValue[stringValue.index(lastIndex,offsetBy: 3 /* remove')' and the 0x */)..<stringValue.endIndex], radix: 16) else { return nil }
     return  "\(hexVersion)"
+}
+
+private func apkExtractValue(from stringValue:String) -> String? {
+    guard let lastIndex = stringValue.lastIndex(of: "=") else { return nil }
+    return String(stringValue.substring(from: stringValue.index(after: lastIndex)))
 }
 
 private func apkExtractString(from line:String) -> String? {
