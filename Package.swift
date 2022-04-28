@@ -78,7 +78,7 @@ func generateTargets() -> [Target] {
                                             .product(name: "Meow", package: "MongoKitten"),
                                             "MongoKitten","Swiftgger","CryptoSwift","zxcvbn"]),
         .target(name: "Run", dependencies: ["App"]),
-        .target(name: "TestsToolkit", dependencies: ["App"],path: "Tests/TestsToolkit"),
+        .target(name: "TestsToolkit", dependencies: ["App", .product(name: "XCTVapor", package: "vapor")],path: "Tests/TestsToolkit"),
         .testTarget(name: "AppTests",dependencies: ["TestsToolkit", "App",.product(name: "XCTVapor", package: "vapor")])]
 #if os(macOS)
     targets.append(.testTarget(
