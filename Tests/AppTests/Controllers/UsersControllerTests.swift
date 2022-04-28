@@ -494,12 +494,13 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
         let token = loginResp.token
 
+        let newPassword = "new password"
         //should failed without current password
-        var updateInfo = UpdateUserDto(password:"new password")
+        var updateInfo = UpdateUserDto(password:newPassword)
         var httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
         XCTAssertEqual(httpResult.http.status.code , 400)
 
-        let newPassword = "new password"
+        
         updateInfo = UpdateUserDto(password:newPassword,currentPassword:userIOS.password )
         httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
         XCTAssertEqual(httpResult.http.status.code , 200)
@@ -511,6 +512,30 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         //login with new password
         _ = try login(withEmail: userIOS.email,password:newPassword,inside:app)
     }
+    
+    func testUpdatePasswordEmpty() throws {
+        try testActivation()
+        let loginResp = try login(withEmail: userIOS.email,password:userIOS.password,inside:app)
+        let token = loginResp.token
+        var updateInfo = UpdateUserDto(password:"")
+        var httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
+        let error = try httpResult.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(httpResult.http.status.code , 400)
+        XCTAssertEqual(error.reason , "UserError.invalidPassworsStrength")
+    }
+    
+    func testUpdatePasswordEmptyAsSysAdmin() throws {
+        try testActivation()
+        var environment = app.environment
+        let configuration = try MdtConfiguration.loadConfig(from: nil, from: &environment)
+        let loginResp = try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app)
+        let token = loginResp.token
+        let updateInfo = UpdateUserDto(password:"")
+        let httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
+        let error = try httpResult.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(httpResult.http.status.code , 400)
+        XCTAssertEqual(error.reason , "UserError.invalidPassworsStrength")
+    }
 
     func testUpdatePasswordAsSysAdmin() throws {
         try testActivation()
@@ -520,11 +545,17 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         let loginResp = try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app)
         let token = loginResp.token
 
-        //should sucess without current password because sysadmin
+        //should failed without current password even if sysadmin
         let newPassword = "new password"
-        let updateInfo = UpdateUserDto(password:newPassword)
-        let httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
+        var updateInfo = UpdateUserDto(password:newPassword)
+        var httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
+        XCTAssertEqual(httpResult.http.status.code , 400)
+        
+        //success
+        updateInfo = UpdateUserDto(password: newPassword, currentPassword: configuration.initialAdminPassword)
+        httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
         XCTAssertEqual(httpResult.http.status.code , 200)
+        
         let _ = try httpResult.content.decode(UserDto.self).wait()
 
         //login with old password must failed
