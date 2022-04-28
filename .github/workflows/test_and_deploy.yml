@@ -6,9 +6,10 @@ on:
 
 jobs:
   macos:
-    runs-on: macos-latest
+    runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
+    - run: swift -version
     - run: gem install xcpretty
     - run: gem install xcpretty-travis-formatter
     - run: brew install pkg-config
@@ -16,15 +17,16 @@ jobs:
     - run: brew tap mongodb/brew
     - run: brew install mongodb-community@3.6
     - run: mkdir -p $PWD/data/db
-    - run: cp binaries/aapt /usr/local/bin && chmod +x /usr/local/bin/aapt
+    - run: cp binaries/aapt2 /usr/local/bin && chmod +x /usr/local/bin/aapt2
     - run: curl --version
     - run: python3 --version
     - run: pip3 install requests
     - run: which python3 > Ressources/python.path
     - run: python3  testDeps.py 
     - run: brew services start mongodb/brew/mongodb-community@3.6
-    - run: swift package generate-xcodeproj
-    - run: set -o pipefail && xcodebuild -scheme Run clean test -enableCodeCoverage YES -enableAddressSanitizer YES | xcpretty -f `xcpretty-travis-formatter`
+    #- run: swift package generate-xcodeproj
+    - run: set -o pipefail && swift test | xcpretty -f `xcpretty-travis-formatter`
+    #- run: set -o pipefail && xcodebuild -scheme Run clean test -enableCodeCoverage YES -enableAddressSanitizer YES | xcpretty -f `xcpretty-travis-formatter`
     - run: bash <(curl -s https://codecov.io/bash)
       
   linux:
@@ -34,12 +36,13 @@ jobs:
         ports:
         - 27017:27017
     container: 
-      image: vapor/swift:5.1-xenial
+      image: swift:5.4-xenial
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - run: apt-get update && apt-get install -y libssl-dev zlib1g-dev unzip aapt
-    - run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery --sanitize=thread
+    #- run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery --sanitize=thread
+    - run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery
 
   linux_bionic:
     services:
@@ -48,12 +51,13 @@ jobs:
         ports:
         - 27017:27017
     container: 
-      image: vapor/swift:5.1-bionic
+      image: swift:5.4-bionic
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - run: apt-get update && apt-get install -y libssl-dev zlib1g-dev unzip aapt
-    - run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery --sanitize=thread
+    #- run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery --sanitize=thread
+    - run: MDT_mongoServerUrl=mongodb://mongodb:27017/mobdisttool swift test --enable-test-discovery
       
   deploy_fat:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'

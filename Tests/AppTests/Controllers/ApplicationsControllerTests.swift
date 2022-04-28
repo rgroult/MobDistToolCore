@@ -8,7 +8,7 @@
 import Foundation
 import Vapor
 import XCTest
-import Pagination
+//import Pagination
 @testable import App
 
 let appDtoiOS = ApplicationCreateDto(name: "testAppiOS", platform: Platform.ios, description: "bla bla", base64IconData: nil, enableMaxVersionCheck:  nil)
@@ -29,10 +29,10 @@ final class ApplicationsControllerTests: BaseAppTests {
         let appCreation = appData
         let bodyJSON = try JSONEncoder().encode(appCreation)
         
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Applications", body,token:token){ res in
+        //let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Applications", appData,token:token){ res in
            // print(res.content)
-            let app = try res.content.decode(ApplicationDto.self).wait()
+            let app = try res.content.decode(ApplicationDto.self)
             XCTAssertTrue(app.description == appDtoiOS.description)
             if appCreation.enableMaxVersionCheck == true {
                 XCTAssertTrue(app.maxVersionSecretKey != nil)
@@ -50,7 +50,7 @@ final class ApplicationsControllerTests: BaseAppTests {
                 XCTAssertNil(app.iconUrl)
             }
             XCTAssertTrue(app.adminUsers.first?.email == userIOS.email)
-            XCTAssertEqual(res.http.status.code , 200)
+            XCTAssertEqual(res.status.code , 200)
         }
     }
     
@@ -63,15 +63,15 @@ final class ApplicationsControllerTests: BaseAppTests {
         let token = loginDto.token
         
         let appCreation = appDtoAndroid
-        let bodyJSON = try JSONEncoder().encode(appCreation)
+        //let bodyJSON = try JSONEncoder().encode(appCreation)
         
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Applications", body,token:token){ res in
-            let app = try res.content.decode(ApplicationDto.self).wait()
+        //let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Applications", appCreation,token:token){ res in
+            let app = try res.content.decode(ApplicationDto.self)
             XCTAssertNotNil(app.uuid)
             XCTAssertNotNil(app.apiKey)
             XCTAssertNil(app.iconUrl)
-            XCTAssertEqual(res.http.status.code , 200)
+            XCTAssertEqual(res.status.code , 200)
         }
     }
     
@@ -84,13 +84,13 @@ final class ApplicationsControllerTests: BaseAppTests {
         
         //try to create same app
         let appCreation = appDtoiOS
-        let bodyJSON = try JSONEncoder().encode(appCreation)
+       // let bodyJSON = try JSONEncoder().encode(appCreation)
         
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Applications", body,token:token){ res in
+        //let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Applications", appCreation,token:token){ res in
             print(res.content)
-            XCTAssertEqual(res.http.status.code , 400)
-            let errorResp = try res.content.decode(ErrorDto.self).wait()
+            XCTAssertEqual(res.status.code , 400)
+            let errorResp = try res.content.decode(ErrorDto.self)
             XCTAssertTrue(errorResp.reason == "ApplicationError.alreadyExist")
         }
     }
@@ -102,10 +102,10 @@ final class ApplicationsControllerTests: BaseAppTests {
         let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         let token = loginDto.token
         
-        try app.clientTest(.GET, "/v2/Applications",token:token){ res in
+        try app.clientTest(.GET, "/v2/Applications", token:token){ res in
             print(res.content)
-            XCTAssertEqual(res.http.status.code , 200)
-            let pageApps = try res.content.decode(Paginated<ApplicationSummaryDto>.self).wait()
+            XCTAssertEqual(res.status.code , 200)
+            let pageApps = try res.content.decode(Paginated<ApplicationSummaryDto>.self)
             XCTAssertEqual(pageApps.data.count , 1)
             XCTAssertEqual(pageApps.page.data.total , 1)
             let firstApp = pageApps.data.first
@@ -120,24 +120,32 @@ final class ApplicationsControllerTests: BaseAppTests {
         
         let token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
         //find iOs App
-        let appsResp = try app.clientSyncTest(.GET, "/v2/Applications", nil,["platform":Platform.ios.rawValue] ,token: token)
-        XCTAssertEqual(appsResp.http.status.code , 200)
-        let pageApps = try appsResp.content.decode(Paginated<ApplicationSummaryDto>.self).wait()
+        let appsResp = try app.clientSyncTest(.GET, "/v2/Applications",["platform":Platform.ios.rawValue] ,token: token)
+        XCTAssertEqual(appsResp.status.code , 200)
+        let pageApps = try appsResp.content.decode(Paginated<ApplicationSummaryDto>.self)
         XCTAssertEqual(pageApps.data.count , 1)
         XCTAssertEqual(pageApps.page.data.total , 1)
         
         //find Android App
+        try app.clientTest(.GET, "/v2/Applications", ["platform":Platform.android.rawValue], token: token){ res in
+            let AndroidApps = try res.content.decode(Paginated<ApplicationSummaryDto>.self)
+            XCTAssertEqual(AndroidApps.data.count , 1)
+            XCTAssertEqual(AndroidApps.page.data.total , 1)
+        }
+        /*
         let AndroidApps = try app.clientSyncTest(.GET, "/v2/Applications", nil,["platform":Platform.ios.rawValue] ,token: token).content.decode(Paginated<ApplicationSummaryDto>.self).wait()
         XCTAssertEqual(AndroidApps.data.count , 1)
-        XCTAssertEqual(AndroidApps.page.data.total , 1)
+        XCTAssertEqual(AndroidApps.page.data.total , 1)*/
     }
     
     func testFilterApplicationsBadPlatform() throws {
         try testCreate()
         let token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
         
-        let appsResp = try app.clientSyncTest(.GET, "/v2/Applications", nil,["platform":"TOTO"] ,token: token)
-        XCTAssertEqual(appsResp.http.status.code , 400)
+        try app.clientTest(.GET, "/v2/Applications",["platform":"TOTO"] ,token: token) { res in
+            XCTAssertEqual(res.status.code , 400)
+        }
+       
     }
     
     func testAllApplicationsMultipleUsers() throws {
@@ -149,8 +157,8 @@ final class ApplicationsControllerTests: BaseAppTests {
         
         try app.clientTest(.GET, "/v2/Applications",token:token){ res in
             print(res.content)
-            XCTAssertEqual(res.http.status.code , 200)
-            let apps = try res.content.decode(Paginated<ApplicationSummaryDto>.self).wait()
+            XCTAssertEqual(res.status.code , 200)
+            let apps = try res.content.decode(Paginated<ApplicationSummaryDto>.self)
             XCTAssertTrue(apps.page.data.total == 2)
            /* apps.forEach({ app in
                 if app.adminUsers.contains(where: { $0.email == userToto.email }) {
@@ -170,7 +178,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         let token = loginDto.token
         
         let appResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
-        let apps = try appResp.content.decode(Paginated<ApplicationSummaryDto>.self).wait()
+        let apps = try appResp.content.decode(Paginated<ApplicationSummaryDto>.self)
         let firstApp = apps.data.first
         
         let uuid = firstApp?.uuid
@@ -179,11 +187,11 @@ final class ApplicationsControllerTests: BaseAppTests {
         //update
         var updateDto = ApplicationUpdateDto(name: "NewName", description: "New description", maxVersionCheckEnabled: true,base64IconData:  "data:image/png;base64,\(base64EncodedData)")
         
-        var body = try updateDto.convertToHTTPBody()
+        //var body = try updateDto.convertToHTTPBody()
         
-        var updateResp = try app.clientSyncTest(.PUT, "/v2/Applications/\(uuid!)", body,token:token)
-        XCTAssertEqual(updateResp.http.status.code , 200)
-        var updatedApp = try updateResp.content.decode(ApplicationDto.self).wait()
+        var updateResp = try app.clientSyncTest(.PUT, "/v2/Applications/\(uuid!)", updateDto,token:token)
+        XCTAssertEqual(updateResp.status.code , 200)
+        var updatedApp = try updateResp.content.decode(ApplicationDto.self)
         
         XCTAssertTrue(updatedApp.iconUrl?.contains("/v2/Applications/\(uuid!)/icon") ?? false )
         XCTAssertEqual(updatedApp.name, updateDto.name)
@@ -192,16 +200,16 @@ final class ApplicationsControllerTests: BaseAppTests {
         XCTAssertNotNil(updatedApp.maxVersionSecretKey)
         //check icon Url content
         let iconApp = try app.clientSyncTest(.GET, updatedApp.iconUrl!, isAbsoluteUrl:true)
-        XCTAssertEqual(iconApp.http.status.code , 200)
+        XCTAssertEqual(iconApp.status.code , 200)
         
         //update 2
         updateDto = ApplicationUpdateDto(name: "NewName 2", description: "bla bla", maxVersionCheckEnabled: false,base64IconData:"")
         
-        body = try updateDto.convertToHTTPBody()
+        //body = try updateDto.convertToHTTPBody()
         
-        updateResp = try app.clientSyncTest(.PUT, "/v2/Applications/\(uuid!)", body,token:token)
-        XCTAssertEqual(updateResp.http.status.code , 200)
-        updatedApp = try updateResp.content.decode(ApplicationDto.self).wait()
+        updateResp = try app.clientSyncTest(.PUT, "/v2/Applications/\(uuid!)", updateDto,token:token)
+        XCTAssertEqual(updateResp.status.code , 200)
+        updatedApp = try updateResp.content.decode(ApplicationDto.self)
         
         XCTAssertNil(updatedApp.iconUrl)
         XCTAssertEqual(updatedApp.name, updateDto.name)
@@ -237,7 +245,7 @@ final class ApplicationsControllerTests: BaseAppTests {
     
     func findApp(token:String, name:String) throws -> ApplicationSummaryDto?{
         let allAppsResp = try app.clientSyncTest(.GET, "/v2/Applications",token:token)
-        let apps = try allAppsResp.content.decode(Paginated<ApplicationSummaryDto>.self).wait()
+        let apps = try allAppsResp.content.decode(Paginated<ApplicationSummaryDto>.self)
         
         //find not admin app
         return apps.data.first(where:{ $0.name == name})
@@ -260,9 +268,9 @@ final class ApplicationsControllerTests: BaseAppTests {
         let body = try updateDto.convertToHTTPBody()
         
         //try to update not administrated App
-        let updateResp = try app.clientSyncTest(.PUT, "/v2/Applications/\(uuid!)",body,token:token)
+        let updateResp = try app.clientSyncTest(.PUT, "/v2/Applications/\(uuid!)",updateDto,token:token)
         print(updateResp.content)
-        XCTAssertEqual(updateResp.http.status.code , 400)
+        XCTAssertEqual(updateResp.status.code , 400)
     }
     
     func testDeleteApplication() throws {
@@ -281,7 +289,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         //delete App
         let deleteApp = try app.clientSyncTest(.DELETE, "/v2/Applications/\(appFound!.uuid)",token:token)
         print(deleteApp.content)
-        XCTAssertEqual(deleteApp.http.status.code , 200)
+        XCTAssertEqual(deleteApp.status.code , 200)
         
     }
 
@@ -289,8 +297,8 @@ final class ApplicationsControllerTests: BaseAppTests {
     func testDeleteApplicationWithArtifacts() throws {
         try testCreateMultiple()
         //count all artifacts
-        XCTAssertEqual(try context.count(MDTApplication.self).wait(), 2)
-        XCTAssertEqual(try context.count(Artifact.self).wait(), 0)
+        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: []).wait(), 2)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 0)
 
         //login
         var token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
@@ -302,7 +310,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         let branches = ["master","dev","release"]
         try uploadArtifact(branches: branches , numberPerBranches: 5, apiKey: appDetail.apiKey!,mediaType:apkContentType)
         //number of artifact
-        XCTAssertEqual(try context.count(Artifact.self).wait(), 15)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 15)
 
 
         token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
@@ -310,16 +318,16 @@ final class ApplicationsControllerTests: BaseAppTests {
         appDetail = try returnAppDetail(uuid: appiOSFound!.uuid, token: token)
         try uploadArtifact(branches: branches , numberPerBranches: 4, apiKey: appDetail.apiKey!,mediaType:ipaContentType)
         //number of artifact
-        XCTAssertEqual(try context.count(Artifact.self).wait(), 27)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 27)
 
         token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
         //delete App
         let deleteApp = try app.clientSyncTest(.DELETE, "/v2/Applications/\(appAndroidFound!.uuid)",token:token)
-        XCTAssertEqual(deleteApp.http.status.code , 200)
+        XCTAssertEqual(deleteApp.status.code , 200)
 
         //count all artifacts
-        XCTAssertEqual(try context.count(MDTApplication.self).wait(), 1)
-        XCTAssertEqual(try context.count(Artifact.self).wait(), 12)
+        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: []).wait(), 1)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 12)
     }
 
     func testDeleteApplicationKO() throws {
@@ -337,8 +345,8 @@ final class ApplicationsControllerTests: BaseAppTests {
         
         //delete App
         let deleteApp = try app.clientSyncTest(.DELETE, "/v2/Applications/\(appFound!.uuid)",token:token)
-        XCTAssertEqual(deleteApp.http.status.code , 400)
-        let errorResp = try deleteApp.content.decode(ErrorDto.self).wait()
+        XCTAssertEqual(deleteApp.status.code , 400)
+        let errorResp = try deleteApp.content.decode(ErrorDto.self)
         XCTAssertEqual(errorResp.reason , "ApplicationError.notAnApplicationAdministrator")
     }
     
@@ -362,8 +370,8 @@ final class ApplicationsControllerTests: BaseAppTests {
         //check detail
         let detailResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)",token:token)
         print(detailResp.content)
-        XCTAssertEqual(detailResp.http.status.code , 200)
-        let app = try detailResp.content.decode(ApplicationDto.self).wait()
+        XCTAssertEqual(detailResp.status.code , 200)
+        let app = try detailResp.content.decode(ApplicationDto.self)
         XCTAssertTrue(app.iconUrl?.contains("/v2/Applications/\(app.uuid)/icon") ?? false )
         XCTAssertEqual(app.adminUsers.count , 1)
         XCTAssertEqual(app.availableBranches , [])
@@ -387,7 +395,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         */
         //check detail
         let detailResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)",token:token)
-        let app = try detailResp.content.decode(ApplicationDto.self).wait()
+        let app = try detailResp.content.decode(ApplicationDto.self)
         XCTAssertNil(app.apiKey)
     }
     
@@ -407,7 +415,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         let adminEscaped = userIOS.email.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed)
         let resp = try app.clientSyncTest(.PUT, "/v2/Applications/\(appFound!.uuid)/adminUsers/\(adminEscaped!)",token:token)
         print(resp.content)
-        XCTAssertEqual(resp.http.status.code , 200)
+        XCTAssertEqual(resp.status.code , 200)
         
         //check detail
         let detailResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)",token:token)
@@ -594,16 +602,18 @@ final class ApplicationsControllerTests: BaseAppTests {
         XCTAssertNotNil(appFound?.iconUrl)
         
         //check detail
-        let iconResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)/icon")
-        let responseData = iconResp.http.body.data
+        var iconResp = try app.clientSyncTest(.GET, "/v2/Applications/\(appFound!.uuid)/icon")
+        let responseData = iconResp.bodyData// body.readData(length: iconResp.body.readableBytes)
         print(iconResp.content)
         XCTAssertEqual(responseData,Data(base64Encoded: base64EncodedData))
-        XCTAssertEqual(iconResp.http.contentType?.serialize() , "image/png")
+        XCTAssertEqual(iconResp.content.contentType?.serialize(), "image/png")
         
         //check if result is same as it from app
         print("retrieve with url :\(appFound?.iconUrl)")
-        let icon = try app.clientSyncTest(.GET, appFound!.iconUrl!,isAbsoluteUrl:true)
-        XCTAssertEqual(icon.http.body.data,responseData)
+        var icon = try app.clientSyncTest(.GET, appFound!.iconUrl!,isAbsoluteUrl:true)
+        let iconData = icon.bodyData //body.readData(length: icon.body.readableBytes)
+        
+        XCTAssertEqual(iconData,responseData)
     }
     
     func testRetrieveVersion() throws {
@@ -621,7 +631,7 @@ final class ApplicationsControllerTests: BaseAppTests {
        // app/{appId}/versions?pageIndex=1&limitPerPage=30&branch=master'
     }
     
-    func uploadArtifact(branches:[String],names:[String] = ["prod"], numberPerBranches:Int,apiKey:String, mediaType:MediaType = ipaContentType) throws {
+    func uploadArtifact(branches:[String],names:[String] = ["prod"], numberPerBranches:Int,apiKey:String, mediaType:HTTPMediaType = ipaContentType) throws {
         let formatter = NumberFormatter()
         formatter.minimumIntegerDigits = 3
         
@@ -783,7 +793,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         let uuids = allApps.data.prefix(10).map{$0.uuid}
         
         let updateInfo = UpdateUserDto(favoritesApplicationsUUID:uuids)
-        let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo ,  token: token)
         XCTAssertEqual(updateResp.http.status.code , 200)
         
         //retrieve favorites Apps
@@ -816,7 +826,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         //retrieve latest
         //v2/Applications/{appUUID}/maxversion/{branch}/{name}
         var query = generateMaxVersionUrl(secret: appSecret, branch: "test")
-        var maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",nil,query,token:token)
+        var maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",query,token:token)
         var maxVersion = try maxVersionResp.content.decode(MaxVersionArtifactDto.self).wait()
         XCTAssertEqual(maxVersion.branch, branch)
         XCTAssertEqual(maxVersion.version, version)
@@ -824,28 +834,22 @@ final class ApplicationsControllerTests: BaseAppTests {
          version = "1.0.1"
         _ = try ArtifactsContollerTests.uploadArtifactSuccess(contentFile: fileData, apiKey: appDetail.apiKey!, branch: branch, version: version, name: "prod", contentType:ipaContentType, inside: app)
         query = generateMaxVersionUrl(secret: appSecret, branch: "test")
-        maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",nil,query,token:token)
+        maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",query,token:token)
         maxVersion = try maxVersionResp.content.decode(MaxVersionArtifactDto.self).wait()
         XCTAssertEqual(maxVersion.branch, branch)
         XCTAssertEqual(maxVersion.version, version)
         
         //test direct download
         let ipaFile = try app.clientSyncTest(.GET, maxVersion.info.directLinkUrl,isAbsoluteUrl:true)
-        #if os(Linux)
-            //URLSEssion on linux doens not handle redirect by default
-            XCTAssertEqual(ipaFile.http.status, .seeOther)
-            XCTAssertEqual( ipaFile.http.headers.firstValue(name: .location),TestingStorageService.defaultIpaUrl)
-        #else
-            XCTAssertTrue(ipaFile.http.contentType == .binary)
-            XCTAssertEqual(ipaFile.http.body.count,fileData.count)
-        #endif
+        XCTAssertTrue(ipaFile.content.contentType == .binary)
+        XCTAssertEqual(ipaFile.bodyCount,fileData.count)
     }
     
     func testMaxVersionNotActivated() throws {
         let (token,appDetail) = try createAndReturnAppDetail()
         
         let query = generateMaxVersionUrl(secret: "secret", branch: "test")
-        let maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",nil,query,token:token)
+        let maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",query,token:token)
         XCTAssertEqual(maxVersionResp.http.status.code, 400)
         let errorResp = try maxVersionResp.content.decode(ErrorDto.self).wait()
         XCTAssertEqual(errorResp.reason , "ApplicationError.disabledFeature")
@@ -865,21 +869,21 @@ final class ApplicationsControllerTests: BaseAppTests {
         
         //after 30 seconds delay
         var query = generateMaxVersionUrl(secret: appSecret, branch: "test",dateDelta: 31) //max delay of 30secs
-        var maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",nil,query,token:token)
+        var maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",query,token:token)
         XCTAssertEqual(maxVersionResp.http.status.code, 400)
         var errorResp = try maxVersionResp.content.decode(ErrorDto.self).wait()
         XCTAssertEqual(errorResp.reason , "ApplicationError.expirationTimestamp")
         
         //not artifact found
         query = generateMaxVersionUrl(secret: appSecret, branch: "test")
-        maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",nil,query,token:token)
+        maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",query,token:token)
         XCTAssertEqual(maxVersionResp.http.status.code, 400)
         errorResp = try maxVersionResp.content.decode(ErrorDto.self).wait()
         XCTAssertEqual(errorResp.reason , "ArtifactError.notFound")
         
         //invalid hash
         query = generateMaxVersionUrl(secret: "toto", branch: "test")
-        maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",nil,query,token:token)
+        maxVersionResp =  try app.clientSyncTest(.GET, "/v2/Applications/\(appDetail.uuid)/maxversion/test/prod",query,token:token)
         XCTAssertEqual(maxVersionResp.http.status.code, 400)
         errorResp = try maxVersionResp.content.decode(ErrorDto.self).wait()
         XCTAssertEqual(errorResp.reason , "ApplicationError.invalidSignature")
@@ -896,8 +900,8 @@ final class ApplicationsControllerTests: BaseAppTests {
 
 extension ApplicationsControllerTests {
     class func createApp(with info:ApplicationCreateDto, inside app:Application,token:String?) throws -> ApplicationDto {
-        let body = try info.convertToHTTPBody()
-        let result = try app.clientSyncTest(.POST, "/v2/Applications" , body,token:token)
+        //let body = try info.convertToHTTPBody()
+        let result = try app.clientSyncTest(.POST, "/v2/Applications", info,token:token)
         print(result.content)
         return try result.content.decode(ApplicationDto.self).wait()
     }

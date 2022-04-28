@@ -21,18 +21,18 @@ enum StorageError:Error {
     case internalError
 }
 
-protocol StorageServiceProtocol: Service  {
+protocol StorageServiceProtocol/*: Service*/  {
     var storageIdentifier:String { get }
     
     func  initializeStore(with config:[String:String]) throws-> Bool
     
-    func store(file:Foundation.FileHandle, with info:StorageInfo, into eventLoop:EventLoop) throws-> Future<StorageAccessUrl>
+    func store(file:Foundation.FileHandle, with info:StorageInfo, into eventLoop:EventLoop)-> EventLoopFuture<StorageAccessUrl>
     
-    func getStoredFile(storedIn:StorageAccessUrl, into eventLoop:EventLoop) throws-> Future<StoredResult>
+    func getStoredFile(storedIn:StorageAccessUrl, into eventLoop:EventLoop)-> EventLoopFuture<StoredResult>
     
     func extractStorageId(storageInfo:String) throws-> String
     
-    func deleteStoredFileStorageId(storedIn:StorageAccessUrl, into eventLoop:EventLoop) throws-> Future<Void>
+    func deleteStoredFileStorageId(storedIn:StorageAccessUrl, into eventLoop:EventLoop) -> EventLoopFuture<Void>
 }
 
 extension StorageServiceProtocol {
@@ -45,5 +45,27 @@ extension StorageServiceProtocol {
     
     internal func makeStorageAccessUrl(from:String) -> String{
         return "\(storageIdentifier)://\(from)"
+    }
+}
+
+struct StorageServiceProtocolKey: StorageKey {
+    typealias Value = StorageServiceProtocol
+}
+
+extension Application {
+    var storageService: StorageServiceProtocol? {
+        get {
+            self.storage[StorageServiceProtocolKey.self]
+        }
+        set {
+            self.storage[StorageServiceProtocolKey.self] = newValue
+        }
+    }
+}
+
+extension Request {
+    func storageService() throws -> StorageServiceProtocol  {
+        guard let service =  application.storageService else { throw Abort(.internalServerError) }
+        return service
     }
 }

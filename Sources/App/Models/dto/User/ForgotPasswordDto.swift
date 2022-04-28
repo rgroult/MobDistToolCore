@@ -6,7 +6,10 @@
 //
 
 import Foundation
+import Vapor
 
 struct ForgotPasswordDto: Codable {
     var email:String
 }
+
+extension ForgotPasswordDto : Content {}

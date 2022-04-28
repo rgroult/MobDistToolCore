@@ -7,7 +7,7 @@
 
 import Foundation
 import Swiftgger
-import Pagination
+import Vapor
 
 extension ApplicationsController:APIBuilderControllerProtocol {
     

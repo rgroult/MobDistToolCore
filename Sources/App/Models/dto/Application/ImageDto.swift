@@ -29,8 +29,8 @@ struct ImageDto {
         data = decodeData
     }
     
-    static func create(within eventLoop:EventLoop, base64Image:String?,alternateBase64:String? = nil) -> Future<ImageDto?> {
-        let promise = eventLoop.newPromise(ImageDto?.self)
+    static func create(within eventLoop:EventLoop, base64Image:String?,alternateBase64:String? = nil) -> EventLoopFuture<ImageDto?> {
+        let promise = eventLoop.makePromise(of: ImageDto?.self)
         
         /// Dispatch  work to happen on a background thread
         DispatchQueue.global().async {
@@ -38,17 +38,24 @@ struct ImageDto {
             if let alternateBase64 = alternateBase64, imageDecoded == nil {
                 imageDecoded = ImageDto(from: alternateBase64)
             }
-            promise.succeed(result: imageDecoded)
+            promise.succeed(imageDecoded)
         }
         
         return promise.futureResult
     }
-    static func create(for req:Request, base64Image:String?) -> Future<ImageDto?> {
+    static func create(for req:Request, base64Image:String?) -> EventLoopFuture<ImageDto?> {
         return create(within: req.eventLoop, base64Image: base64Image)
     }
 }
 
 extension ImageDto: ResponseEncodable {
+    func encodeResponse(for request: Request) -> EventLoopFuture<Response> {
+        //TO DO : Performance
+        let response = Response(status: .ok, body:.init(data: data))
+        response.headers.add(name: .contentType, value: contentType)
+        return request.eventLoop.makeSucceededFuture(response)
+    }
+    /*
     func encode(for req: Request) throws -> EventLoopFuture<Response> {
         //TO DO : Performance
         var response = HTTPResponse(status: .ok, body:HTTPBody(data: data))
@@ -56,5 +63,5 @@ extension ImageDto: ResponseEncodable {
         return req.eventLoop.newSucceededFuture(result: Response(http: response, using: req.privateContainer))
      //   return response
         //throw "Not implemteted"
-    }
+    }*/
 }

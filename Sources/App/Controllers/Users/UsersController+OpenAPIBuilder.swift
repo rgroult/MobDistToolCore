@@ -7,8 +7,9 @@
 
 import Foundation
 import Swiftgger
-import Meow
-import Pagination
+//import Meow
+//import Pagination
+import Vapor
 
 extension UsersController:APIBuilderControllerProtocol {
     func generateOpenAPI(apiBuilder:OpenAPIBuilder){

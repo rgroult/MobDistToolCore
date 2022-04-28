@@ -16,7 +16,7 @@ final class ArtifactsServiceTests: BaseAppTests {
     
     override func setUp() {
         super.setUp()
-        XCTAssertNoThrow(context = try app.make(Future<Meow.Context>.self).wait())
+        XCTAssertNoThrow(context = try app.meow)
         XCTAssertNoThrow(normalUser =  try createUser(name: normalUSerInfo.name, email: normalUSerInfo.email, password: normalUSerInfo.password,isActivated:true, into: context).wait())
         let adminUser = try? findUser(by: "admin@localhost.com", into: context).wait()
         XCTAssertNotNil(adminUser)
@@ -27,7 +27,7 @@ final class ArtifactsServiceTests: BaseAppTests {
         XCTAssertNoThrow(try deleteUser(withEmail: normalUser.email, into: context).wait())
        
         //delete all apps
-        XCTAssertNoThrow(try context.deleteAll(MDTApplication.self,where:Query()).wait())
+        XCTAssertNoThrow(try context.collection(for: MDTApplication.self).deleteAll(where: [:]).wait())
          super.tearDown()
     }
     
@@ -35,12 +35,13 @@ final class ArtifactsServiceTests: BaseAppTests {
         let app = try createApplication(name: "testApp", platform: Platform.android, description: "testApp", adminUser: normalUser, into: context).wait()
         
         try addArtifact(branches: ["master","test"], numberPerBranches: 10, app: app)
-        let (cursor,total) = try findAndSortArtifacts(app: app, selectedBranch: nil, excludedBranch: App.lastVersionName, into: context)
+        let allArtifacts = try findAndSortArtifacts(app: app, selectedBranch: nil, excludedBranch: App.lastVersionName, paginationInfo: .init(additionalStages: [], currentPageIndex: 0, pageSize: 99999), into: context).wait()
+        //let (cursor,total) = try findAndSortArtifacts(app: app, selectedBranch: nil, excludedBranch: App.lastVersionName, into: context)
        
-        let allResults = try cursor.getAllResults().wait()
-        let totalResults = try total.wait()
-        XCTAssertEqual(totalResults, 20)
-        allResults.forEach { art in
+        //let allResults = try cursor.getAllResults().wait()
+        //let totalResults = try total.wait()
+        XCTAssertEqual(allArtifacts?.total, 20)
+        allArtifacts?.data.forEach { art in
             XCTAssertEqual(art.artifacts.count, 2)
         }
     }
@@ -53,17 +54,17 @@ final class ArtifactsServiceTests: BaseAppTests {
             for idx in 0..<numberPerBranches {
                 let version = formatter.string(from: NSNumber(value: idx))
                 var artifact = try createArtifact(app: app, name: "dev", version: "1.2.\(version!)", branch: branch, sortIdentifier: nil, tags: nil)
-                try artifact.save(to: context).wait()
+                try artifact.save(in: context).wait()
                 artifact = try createArtifact(app: app, name: "prod", version: "1.2.\(version!)", branch: branch, sortIdentifier: nil, tags: nil)
-                try artifact.save(to: context).wait()
+                try artifact.save(in: context).wait()
             }
         }
     }
 
     func testDeleteArtifactForApplication() throws {
         //count all artifacts
-        XCTAssertEqual(try context.count(MDTApplication.self).wait(), 0)
-        XCTAssertEqual(try context.count(Artifact.self).wait(), 0)
+        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: []).wait(), 0)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 0)
 
 
         let app = try createApplication(name: "testApp", platform: Platform.android, description: "testApp", adminUser: normalUser, into: context).wait()
@@ -73,8 +74,8 @@ final class ArtifactsServiceTests: BaseAppTests {
         try addArtifact(branches: ["master","test"], numberPerBranches: 10, app: app2)
 
         //count all artifacts
-        XCTAssertEqual(try context.count(MDTApplication.self).wait(), 2)
-        XCTAssertEqual(try context.count(Artifact.self).wait(), 80)
+        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: []).wait(), 2)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 80)
 
         //delete one App
         try deleteAllArtifacts(app: app2, storage: TestingStorageService(), into: context).wait()
@@ -82,7 +83,7 @@ final class ArtifactsServiceTests: BaseAppTests {
 
 
         //count all artifacts
-        XCTAssertEqual(try context.count(MDTApplication.self).wait(), 1)
-        XCTAssertEqual(try context.count(Artifact.self).wait(), 40)
+        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: []).wait(), 1)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 40)
     }
 }

@@ -1,4 +1,4 @@
-FROM swift:5.1 AS builder
+FROM swift:5.4 AS builder
 RUN apt-get  update && apt-get install -y libssl-dev zlib1g-dev unzip aapt && apt-get -qqy purge apport && rm -rf /var/lib/apt/lists/*
 WORKDIR /BUILD
 ADD . ./
@@ -12,7 +12,7 @@ RUN mv `swift build -c release --show-bin-path`/Run /app/bin/
 ADD ./Sources/App/Config/envs/production/configDockerFull.json /app/config/config.json
 
 
-FROM swift:5.1-bionic-slim
+FROM swift:5.4-bionic-slim
 RUN apt-get update && apt-get install -y unzip aapt && apt-get -qqy purge apport && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /app/bin
 ADD Public /app/Public/

@@ -16,10 +16,10 @@ let userANDROID = RegisterDto(email: "titi@titi.com", name: "titi", password: "p
 final class UsersControllerAutomaticRegistrationTests: BaseAppTests {
     func testRegister() throws{
         let registerReq = userIOS
-        let registerJSON = try JSONEncoder().encode(registerReq)
+        //let registerJSON = try JSONEncoder().encode(registerReq)
         
-        let body = registerJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+       // let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", registerReq){ res in
             XCTAssertNotNil(res)
             // let token = res.content.get(String.self, at: "token")
             print(res.content)
@@ -34,10 +34,10 @@ final class UsersControllerAutomaticRegistrationTests: BaseAppTests {
     
     func testRegisterInavlidEmailFormat() throws{
         let registerReq = RegisterDto(email: "toto_toto.com", name: "toto", password: "VéRyComCET1DePQ55WD")
-        let registerJSON = try JSONEncoder().encode(registerReq)
+       // let registerJSON = try JSONEncoder().encode(registerReq)
         
-        let body = registerJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+        //let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", registerReq){ res in
             XCTAssertNotNil(res)
             XCTAssertEqual(res.http.status.code , 400)
             let errorResp = try res.content.decode(ErrorDto.self).wait()
@@ -54,9 +54,9 @@ final class UsersControllerAutomaticRegistrationTests: BaseAppTests {
     func testForgotPassword() throws {
         try testRegister()
         let forgot = ForgotPasswordDto(email: userIOS.email)
-        let bodyJSON = try JSONEncoder().encode(forgot)
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/forgotPassword", body){ res in
+      //  let bodyJSON = try JSONEncoder().encode(forgot)
+       // let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/forgotPassword", forgot){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 400)
             XCTAssertNotNil(res)
@@ -75,10 +75,10 @@ final class UsersControllerWhiteDomainsRegistrationTests: BaseAppTests {
     
     func testRegisterOK() throws{
         let registerReq = userIOS
-        let registerJSON = try JSONEncoder().encode(registerReq)
+       // let registerJSON = try JSONEncoder().encode(registerReq)
         
-        let body = registerJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+       // let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", registerReq){ res in
             XCTAssertNotNil(res)
             XCTAssertEqual(res.http.status.code , 200)
         }
@@ -86,10 +86,10 @@ final class UsersControllerWhiteDomainsRegistrationTests: BaseAppTests {
     
     func testRegisterKO() throws{
         let registerReq = userANDROID
-        let registerJSON = try JSONEncoder().encode(registerReq)
+       // let registerJSON = try JSONEncoder().encode(registerReq)
         
-        let body = registerJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+       // let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", registerReq){ res in
             XCTAssertNotNil(res)
             XCTAssertEqual(res.http.status.code , 400)
             let errorResp = try res.content.decode(ErrorDto.self).wait()
@@ -109,10 +109,10 @@ final class UsersControllerPasswordStrengthAndDelayRegistrationTests: BaseAppTes
     
     func testRegisterKO() throws{
         let registerReq = userIOS
-        let registerJSON = try JSONEncoder().encode(registerReq)
+      //  let registerJSON = try JSONEncoder().encode(registerReq)
         
-        let body = registerJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+     //   let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", registerReq){ res in
             XCTAssertNotNil(res)
             XCTAssertEqual(res.http.status.code , 400)
             let errorResp = try res.content.decode(ErrorDto.self).wait()
@@ -121,10 +121,10 @@ final class UsersControllerPasswordStrengthAndDelayRegistrationTests: BaseAppTes
     }
     func testRegisterOK() throws{
         let registerReq = RegisterDto(email: "toto@toto.com", name: "toto", password: "VéRyComCET1DePQ55WD")
-        let registerJSON = try JSONEncoder().encode(registerReq)
+       // let registerJSON = try JSONEncoder().encode(registerReq)
         
-        let body = registerJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+       // let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", registerReq){ res in
             XCTAssertNotNil(res)
             XCTAssertEqual(res.http.status.code , 200)
           //  let errorResp = try res.content.decode(ErrorDto.self).wait()
@@ -138,7 +138,7 @@ final class UsersControllerPasswordStrengthAndDelayRegistrationTests: BaseAppTes
         let registerUser = RegisterDto(email: "toto@toto.com", name: "toto", password: "VéRyComCET1DePQ55WD")
         XCTAssertNoThrow(try login(withEmail: registerUser.email, password: registerUser.password, inside: app))
         print("Delay \(start.timeIntervalSinceNow)")
-        XCTAssertTrue(abs(start.timeIntervalSinceNow) >= 10)
+        XCTAssertTrue(abs(start.timeIntervalSinceNow) >= 9) //sometimes it can be 9.99999..
     }
 }
 
@@ -170,10 +170,10 @@ final class UsersControllerNoAutomaticAndTemplatesRegistrationTests: BaseAppTest
     
     func testRegisterAlternateTemplate() throws{
         let registerReq = userIOS
-        let registerJSON = try JSONEncoder().encode(registerReq)
+       // let registerJSON = try JSONEncoder().encode(registerReq)
         
-        let body = registerJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+       // let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", registerReq){ res in
             XCTAssertNotNil(res)
             // let token = res.content.get(String.self, at: "token")
             print(res.content)
@@ -196,10 +196,10 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     
     func testRegister() throws{
         let registerReq = userIOS
-        let registerJSON = try JSONEncoder().encode(registerReq)
+       // let registerJSON = try JSONEncoder().encode(registerReq)
         
-        let body = registerJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/register", body){ res in
+       // let body = registerJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/register", registerReq){ res in
             XCTAssertNotNil(res)
             // let token = res.content.get(String.self, at: "token")
             print(res.content)
@@ -223,7 +223,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
        
         XCTAssertEqual(user.isActivated, false)
         //activation
-        try app.clientTest(.GET, "/v2/Users/activation?activationToken=\(user.activationToken!)", nil){ res in
+        try app.clientTest(.GET, "/v2/Users/activation?activationToken=\(user.activationToken!)"){ res in
             XCTAssertNotNil(res)
             XCTAssertEqual(res.http.status.code , 200)
         }
@@ -238,7 +238,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         
         XCTAssertEqual(user.isActivated, false)
         //activation
-        try app.clientTest(.GET, "/v2/Users/activation?activationToken=BadToken)", nil){ res in
+        try app.clientTest(.GET, "/v2/Users/activation?activationToken=BadToken)"){ res in
             print(res.content)
             XCTAssertNotNil(res)
             XCTAssertEqual(res.http.status.code , 400)
@@ -251,10 +251,10 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         try testRegister()
         //login
         let login = LoginReqDto(email: userIOS.email, password: userIOS.password)
-        let bodyJSON = try JSONEncoder().encode(login)
+        //let bodyJSON = try JSONEncoder().encode(login)
         
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/login", body){ res in
+        //let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/login", login){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 400)
             let errorResp = try res.content.decode(ErrorDto.self).wait()
@@ -267,10 +267,10 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         try testActivation()
         //login
         let login = LoginReqDto(email: userIOS.email, password: userIOS.password)
-        let bodyJSON = try JSONEncoder().encode(login)
+     //   let bodyJSON = try JSONEncoder().encode(login)
         
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/login", body){ res in
+     //   let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/login", login){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 200)
             XCTAssertNotNil(res)
@@ -286,10 +286,10 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         try testActivation()
         //login
         let login = LoginReqDto(email: userIOS.email, password: "bad password")
-        let bodyJSON = try JSONEncoder().encode(login)
+      //  let bodyJSON = try JSONEncoder().encode(login)
         
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/login", body){ res in
+     //   let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/login", login){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 400)
             XCTAssertNotNil(res)
@@ -303,10 +303,10 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         //refresh Login
         let login = RefreshTokenDto(email: userIOS.email, refreshToken: loginDto.refreshToken!)
-        let bodyJSON = try JSONEncoder().encode(login)
+      //  let bodyJSON = try JSONEncoder().encode(login)
         
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/refresh", body){ res in
+      //  let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/refresh", login){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 200)
             XCTAssertNotNil(res)
@@ -323,10 +323,10 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         //refresh Login
         let login = RefreshTokenDto(email: userIOS.email, refreshToken: "Bad Token")
-        let bodyJSON = try JSONEncoder().encode(login)
+        //let bodyJSON = try JSONEncoder().encode(login)
         
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/refresh", body){ res in
+        //let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/refresh", login){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 401)
         }
@@ -336,11 +336,24 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
          try testActivation()
         let loginDto = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
         //refresh Login
-        let login = RefreshTokenDto(email: "user@email.Com", refreshToken: loginDto.refreshToken!)
-        let bodyJSON = try JSONEncoder().encode(login)
+        let refreshDto = RefreshTokenDto(email: "user@email.Com", refreshToken: loginDto.refreshToken!)
+     //   let bodyJSON = try JSONEncoder().encode(login)
         
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/refresh", body){ res in
+   //     let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/refresh", refreshDto){ res in
+            print(res.content)
+            XCTAssertEqual(res.http.status.code , 401)
+        }
+    }
+    
+    func testRefreshLoginKOExpiredToken() throws {
+        try testActivation()
+        //login
+        let login = LoginReqDto(email: userIOS.email, password: userIOS.password)
+        let refreshToken = try app.jwt.signers.sign(JWTRefreshTokenPayload(email: userIOS.email,startDate:Date().addingTimeInterval(-refreshTokenExpiration - 1)))
+        
+        let refreshDto = RefreshTokenDto(email: userIOS.email, refreshToken: refreshToken)
+        try app.clientTest(.POST, "/v2/Users/refresh", refreshDto){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 401)
         }
@@ -350,9 +363,9 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     func testForgotPassword() throws {
         try testActivation()
         let forgot = ForgotPasswordDto(email: userIOS.email)
-        let bodyJSON = try JSONEncoder().encode(forgot)
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/forgotPassword", body){ res in
+       // let bodyJSON = try JSONEncoder().encode(forgot)
+       // let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/forgotPassword", forgot){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 200)
             XCTAssertNotNil(res)
@@ -370,10 +383,10 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         
         //login
         let login = LoginReqDto(email: userIOS.email, password: password)
-        let bodyJSON = try JSONEncoder().encode(login)
+       // let bodyJSON = try JSONEncoder().encode(login)
         
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/login", body){ res in
+       // let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/login", login){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 400)
             let errorResp = try res.content.decode(ErrorDto.self).wait()
@@ -384,9 +397,9 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     func testForgotPasswordKO() throws {
         try testActivation()
         let forgot = ForgotPasswordDto(email: "john@Doe.com")
-        let bodyJSON = try JSONEncoder().encode(forgot)
-        let body = bodyJSON.convertToHTTPBody()
-        try app.clientTest(.POST, "/v2/Users/forgotPassword", body){ res in
+       // let bodyJSON = try JSONEncoder().encode(forgot)
+       // let body = bodyJSON.convertToHTTPBody()
+        try app.clientTest(.POST, "/v2/Users/forgotPassword", forgot){ res in
             print(res.content)
             XCTAssertEqual(res.http.status.code , 400)
             XCTAssertNotNil(res)
@@ -434,6 +447,16 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         XCTAssertNotNil(loginResp.refreshToken)
         let token = loginResp.refreshToken!
         let result = try app.clientSyncTest(.GET, "/v2/Users/me", token: token)
+        XCTAssertEqual(result.http.status.code , 400) // NB: 401 should be better but this middleware version generate 400 on bad token format
+    }
+    
+    func testMeKOExpiredToken() throws {
+        try testActivation()
+        //login
+        let login = LoginReqDto(email: userIOS.email, password: userIOS.password)
+        let token = try app.jwt.signers.sign(JWTTokenPayload(email: userIOS.email,startDate:Date().addingTimeInterval(-tokenExpiration - 1)))
+        
+        let result = try app.clientSyncTest(.GET, "/v2/Users/me", token: token)
         XCTAssertEqual(result.http.status.code , 401)
     }
     
@@ -447,7 +470,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         XCTAssertEqual(me.favoritesApplicationsUUID,[])
         //XCTAssertNil(me.)
         let updateInfo = UpdateUserDto(name: "Foo Super User",favoritesApplicationsUUID:["XXX_XXX-XXX"])
-        let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
         //check update resp
         let updatedMe = try updateResp.content.decode(UserDto.self).wait()
         XCTAssertEqual(updatedMe.name, updateInfo.name)
@@ -461,7 +484,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         
         //delete app favorites
         let update2Info = UpdateUserDto(name: nil, password: nil,favoritesApplicationsUUID:[])
-        let update2Resp = try app.clientSyncTest(.PUT, "/v2/Users/me", update2Info.convertToHTTPBody() , token: token)
+        let update2Resp = try app.clientSyncTest(.PUT, "/v2/Users/me", update2Info , token: token)
         let updated2Me = try update2Resp.content.decode(UserDto.self).wait()
         XCTAssertEqual(updated2Me.favoritesApplicationsUUID, [])
     }
@@ -473,12 +496,12 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
 
         //should failed without current password
         var updateInfo = UpdateUserDto(password:"new password")
-        var httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        var httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
         XCTAssertEqual(httpResult.http.status.code , 400)
 
         let newPassword = "new password"
         updateInfo = UpdateUserDto(password:newPassword,currentPassword:userIOS.password )
-        httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
         XCTAssertEqual(httpResult.http.status.code , 200)
         let _ = try httpResult.content.decode(UserDto.self).wait()
 
@@ -500,7 +523,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         //should sucess without current password because sysadmin
         let newPassword = "new password"
         let updateInfo = UpdateUserDto(password:newPassword)
-        let httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        let httpResult = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
         XCTAssertEqual(httpResult.http.status.code , 200)
         let _ = try httpResult.content.decode(UserDto.self).wait()
 
@@ -523,7 +546,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         
         //update Me : ex password
         let updateInfo = UpdateUserDto(name: nil,favoritesApplicationsUUID:nil)
-        let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
         //check update resp
         let updatedMe = try updateResp.content.decode(UserDto.self).wait()
         XCTAssertEqual(updatedMe.name, userIOS.name)
@@ -538,7 +561,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         let me = try profile(with: token, inside: app)
         
         let updateInfo = UpdateUserFullDto(name: "Foo Super User", favoritesApplicationsUUID:["XXX_XXX-XXX"],isActivated: !me.isActivated!,isSystemAdmin: !me.isSystemAdmin!)
-        let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo.convertToHTTPBody() , token: token)
+        let updateResp = try app.clientSyncTest(.PUT, "/v2/Users/me", updateInfo , token: token)
         XCTAssertEqual(updateResp.http.status.code, 200)
         let updatedDto = try updateResp.content.decode(UserDto.self).wait()
         //check that isAdmin and Activated not changed
@@ -553,7 +576,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         
         //test update without be a admin
         let updateInfo = UpdateUserFullDto(name: "Foo Super User", password: "azerty",favoritesApplicationsUUID:["XXX_XXX-XXX"],isActivated: false,isSystemAdmin: true)
-        var updateResp = try app.clientSyncTest(.PUT, "/v2/Users/\(userIOS.email)", updateInfo.convertToHTTPBody() , token: token)
+        var updateResp = try app.clientSyncTest(.PUT, "/v2/Users/\(userIOS.email)", updateInfo , token: token)
         XCTAssertEqual(updateResp.http.status.code, 401)
         //check update resp
 
@@ -561,7 +584,7 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
         let configuration = try MdtConfiguration.loadConfig(from: nil, from: &environment)
         let adminToken = try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app).token
         //retry as admin
-        updateResp = try app.clientSyncTest(.PUT, "/v2/Users/\(userIOS.email)", updateInfo.convertToHTTPBody() , token: adminToken)
+        updateResp = try app.clientSyncTest(.PUT, "/v2/Users/\(userIOS.email)", updateInfo, token: adminToken)
         XCTAssertEqual(updateResp.http.status.code, 200)
         let updatedDto = try updateResp.content.decode(UserDto.self).wait()
         XCTAssertEqual(updatedDto.name,updateInfo.name)
@@ -593,16 +616,16 @@ func profile(with token:String,inside app:Application) throws -> UserDto {
 func login(withEmail:String, password:String,inside app:Application) throws -> LoginRespDto {
     //login
     let login = LoginReqDto(email:withEmail, password: password)
-    let bodyJSON = try JSONEncoder().encode(login)
-    let body = bodyJSON.convertToHTTPBody()
-    let result = try app.clientSyncTest(.POST, "/v2/Users/login", body)
+ //   let bodyJSON = try JSONEncoder().encode(login)
+  //  let body = bodyJSON.convertToHTTPBody()
+    let result = try app.clientSyncTest(.POST, "/v2/Users/login", login)
     return try result.content.decode(LoginRespDto.self).wait()
 }
 
 func register(registerInfo:RegisterDto, inside app:Application) throws -> UserDto {
     //register
-    let bodyJSON = try JSONEncoder().encode(registerInfo)
-    let body = bodyJSON.convertToHTTPBody()
-    let result = try app.clientSyncTest(.POST, "/v2/Users/register", body)
+  //  let bodyJSON = try JSONEncoder().encode(registerInfo)
+  //  let body = bodyJSON.convertToHTTPBody()
+    let result = try app.clientSyncTest(.POST, "/v2/Users/register", registerInfo)
     return try result.content.decode(UserDto.self).wait()
 }

@@ -17,7 +17,7 @@ struct ApplicationDto: Codable {
     var adminUsers: [UserDto]
     var availableBranches:[String]
     //admin fields
-    var hasPermanentLinks:Bool?
+    var permanentLinks:[PermanentLinkDto]?
     var apiKey:String?
     var maxVersionSecretKey:String?
     var iconUrl:String? = nil
@@ -29,20 +29,20 @@ extension ApplicationDto {
         return ApplicationDto( name: "Awesome App", platform:.ios ,description:"",uuid:"dsfdsfdsf",adminUsers:[], availableBranches:["release","develop","master"],apiKey:"SQDQSDCQD",maxVersionSecretKey:"ùmlùlmjlsdlf", iconUrl:nil,createdDate: Date())
     }
 
-    static func create(from app:MDTApplication, content:ModelVisibility, in context: Context) -> Future<ApplicationDto>{
+    static func create(from app:MDTApplication, content:ModelVisibility, urlCreator:@escaping ((String) -> (installUrl:String,installPageUrl:String)), in context: Meow.MeowDatabase) -> EventLoopFuture<ApplicationDto>{
         var appDto = ApplicationDto(from: app, content:content)
         
         return app.adminUsers
-            .map { $0.resolve(in: context) }.flatten(on: context)
-            .and(findDistinctsBranches(app: app, into: context).mapIfError{ _ in []})
-           // .and((app.permanentLinks ?? []).map{ $0.resolve(in: context)}.flatten(on: context).mapIfError{ _ in []})
-           // .and( (app.permanentLinks ?? []).map{ retrievePermanentLink(app: app, with: $0, into: context)}.flatten(on: context).mapIfError{ _ in []})
-           // .and((app.permanentLinks ?? []).map{ $0.resolve(in: context)}.flatten(on: context).mapIfError{ _ in []})
-            .map({ users, branches in
-              //  let ((users, branches), links) = arg
+            .map { $0.resolve(in: context) }.flatten(on: context.eventLoop)
+            .and(findDistinctsBranches(app: app, into: context).flatMapError{ _ in context.eventLoop.makeSucceededFuture([])})
+            .and(content == .light ? context.eventLoop.makeSucceededFuture([]) : retrievePermanentLinks(app: app, into: context).flatMapError{ _ in context.eventLoop.makeSucceededFuture([])})
+            .map({ (arg0 , linksInfo) in
+                let (users, branches) = arg0
                 appDto.adminUsers = users.map{UserDto.create(from: $0, content: .light)}
                 appDto.availableBranches = branches
-                appDto.hasPermanentLinks = content == .light ? nil : !(app.permanentLinks?.isEmpty ?? true)
+                appDto.permanentLinks = content == .light ? nil : linksInfo.map{ info in
+                    let (installUrl, installPageUrl) = urlCreator(info.tokenId)
+                    return PermanentLinkDto(uuid: info.tokenId, from: info.link, artifact: info.artifact, installUrl: installUrl, installPageUrl: installPageUrl) }
                 //appDto.permanentLinks = content == .light ? nil : tokensInfo.map{ PermanentLinkDto(from: $0)}.compactMap{ $0} //only as admin
                 return appDto
             })

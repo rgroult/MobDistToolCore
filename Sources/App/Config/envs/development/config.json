@@ -1,6 +1,6 @@
 {
     "serverListeningPort":8080,
-    "basePathPrefix":"/great",
+    "basePathPrefix":"great",
     "serverExternalUrl":"http://localhost:8080",
     "mongoServerUrl":"mongodb://localhost:27017/mobdisttool",
     "jwtSecretToken":"qsdqsdqsdqs",

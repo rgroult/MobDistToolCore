@@ -5,12 +5,22 @@ import Meow
 public func boot(_ app: Application) throws {
     // Your code here
    // let context:Meow.Context = try app.make()
-    let config = try app.make(MdtConfiguration.self)
-    let logger:Logger = try app.make()
-    try app.make(Future<Meow.Context>.self)
-        .whenSuccess{ context in
-            do {
-                let adminUserCreation = try createSysAdminIfNeeded(into: context, with: config)
+    let config = try app.appConfiguration() //try app.make(MdtConfiguration.self)
+    let logger:Logger = app.logger// try app.make()
+    let meow = app.meow
+    //try app.make(EventLoopFuture<Meow.Context>.self)
+    //    .whenSuccess{ context in
+           // do {
+    do {
+        let adminUserCreated = try createSysAdminIfNeeded(into: meow, with: config).wait()
+        if adminUserCreated {
+            logger.info("Admin user(\(config.initialAdminEmail)) created !")
+        }
+    }catch {
+        logger.error("Unable to create initial admin user: \(error)")
+    }
+    /*
+                let adminUserCreation = createSysAdminIfNeeded(into: meow, with: config)
     
                 adminUserCreation.whenSuccess { result in
                         if result {
@@ -20,21 +30,21 @@ public func boot(_ app: Application) throws {
                 
                 adminUserCreation.whenFailure{error in
                         logger.error("Unable to create initial admin user: \(error)")
-                }
-            }catch {
+                }*/
+            /*}catch {
                  logger.error("Unable to create initial admin user: \(error)")
-            }
+            }*/
             //display statistics of server
-            context.count(User.self).whenSuccess({ count in
+            meow.collection(for: User.self).count(where:Document()).whenSuccess({ count in
                 logger.info("Number Users:\(count)")
             })
-            context.count(MDTApplication.self).whenSuccess({ count in
+            meow.collection(for: MDTApplication.self).count(where: Document()).whenSuccess({ count in
                 logger.info("Number Applications:\(count)")
             })
-            context.count(Artifact.self).whenSuccess({ count in
+            meow.collection(for: Artifact.self).count(where: Document()).whenSuccess({ count in
                 logger.info("Number Artifacts:\(count)")
             })
-        }
+      //  }
     
     
 }

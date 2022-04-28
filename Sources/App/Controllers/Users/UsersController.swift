@@ -6,20 +6,20 @@
 //
 
 import Vapor
-import MeowVapor
+import Meow
 import BSON
 import Swiftgger
 import JWT
 import JWTAuth
 import SwiftSMTP
-import Pagination
+//import Pagination
 import zxcvbn
 
 enum RegistrationError : Error {
     case invalidEmailFormat, emailDomainForbidden
 }
 
-extension RegistrationError:Debuggable {
+extension RegistrationError:DebuggableError {
     var reason: String {
         switch self {
         case .invalidEmailFormat:
@@ -46,10 +46,11 @@ final class UsersController:BaseController {
     
     let sortFields = ["email" : "email","created" : "createdAt","lastlogin" : "lastLogin"]
     
-    func register(_ req: Request) throws -> Future<UserDto> {
-        let config = try req.make(MdtConfiguration.self)
-        return try req.content.decode(RegisterDto.self)
-            .flatMap{ registerDto -> Future<UserDto>  in
+    func register(_ req: Request) throws -> EventLoopFuture<UserDto> {
+        let config = try req.application.appConfiguration()    //req.make(MdtConfiguration.self)
+        let registerDto =  try req.content.decode(RegisterDto.self)
+            //.flatMap{ registerDto -> EventLoopFuture<UserDto>  in
+                
                 guard registerDto.email.isValidEmail() else { throw RegistrationError.invalidEmailFormat}
                 
                 //check in white domains
@@ -64,131 +65,151 @@ final class UsersController:BaseController {
                 
                 //register user
                 let needRegistrationEmail = !config.automaticRegistration
-                let context = try req.context()
+                let meow = req.meow
                 
-                return try createUser(name: registerDto.name, email: registerDto.email, password: registerDto.password, isActivated:!needRegistrationEmail, into: context)
+                return createUser(name: registerDto.name, email: registerDto.email, password: registerDto.password, isActivated:!needRegistrationEmail, into: meow)
                     .flatMap{ user in
                         let userCreated = UserDto.create(from: user, content: ModelVisibility.full)
                         if needRegistrationEmail {
+                            do {
                             //sent registration email
-                            let emailService = try req.make(EmailService.self)
-                            return try emailService.sendValidationEmail(for: user, into: req).map{
+                            let emailService = try req.application.appEmailService()
+                            return emailService.sendValidationEmail(for: user, into: req.eventLoop).map{
                                 userCreated }
-                                .catchFlatMap({ error -> Future<UserDto> in
+                                .flatMapError({ error -> EventLoopFuture<UserDto> in
                                     //delete create user
-                                    return try delete(user: user, into: context).map{
+                                    return delete(user: user, into: meow).flatMapThrowing{
                                         throw error
                                     }
                                 })
+                            }catch {
+                                //delete create user
+                                return delete(user: user, into: meow).flatMapThrowing{
+                                    throw error
+                                }
+                            }
                         }else {
-                            return req.eventLoop.newSucceededFuture(result: userCreated)
+                            return req.eventLoop.makeSucceededFuture(userCreated)
                         }
                 }
                 .do({[weak self]  dto in self?.track(event: .Register(email: registerDto.email, isSuccess: true), for: req)})
-                .catch({[weak self]  error in self?.track(event: .Register(email: registerDto.email, isSuccess: false,failedError:error), for: req)})
-        }
+                .catch({[weak self]  error in
+                        self?.track(event: .Register(email: registerDto.email, isSuccess: false,failedError:error), for: req)})
     }
     
-    func forgotPassword(_ req: Request) throws -> Future<MessageDto> {
-        return try req.content.decode(ForgotPasswordDto.self)
-            .flatMap({ forgotPasswordDto in
-                let config = try req.make(MdtConfiguration.self)
+    func forgotPassword(_ req: Request) throws -> EventLoopFuture<MessageDto> {
+        let forgotPasswordDto =  try req.content.decode(ForgotPasswordDto.self)
+            //.flatMap({ forgotPasswordDto in
+        let config = try req.application.appConfiguration()//  req.make(MdtConfiguration.self)
                 if config.automaticRegistration {
                     //ask to a admin
                     throw  Abort(.badRequest, reason: "Contact an administrator to retrieve new password")
                 }
                 //reset user
-                let context = try req.context()
+        let meow = req.meow
+        let emailService = try req.application.appEmailService()
                 let newPassword = random(15)
-                return try findUser(by: forgotPasswordDto.email, into: context)
-                    .flatMap({ user  in
+                return findUser(by: forgotPasswordDto.email, into: meow)
+                    .flatMapThrowing({ user in
                         guard let user = user else { throw UserError.notFound}
-                        return try resetUser(user: user, newPassword: newPassword, into: context)
+                        return user
+                    })
+                    .flatMap({ user  in
+                        return resetUser(user: user, newPassword: newPassword, into: meow)
                             .flatMap({ user in
                                 let message = MessageDto(message:"Your account has been temporarily desactivated, a email with new password and activation link was sent")
                                 //sent reset email
-                                let emailService = try req.make(EmailService.self)
-                                return try emailService.sendResetEmail(for: user, newPassword: newPassword, into: req)
+                                let sendEmailFuture:EventLoopFuture<Void>
+                                do {
+                                    sendEmailFuture = try emailService.sendResetEmail(for: user, newPassword: newPassword, into: req.eventLoop)
+                                }catch {
+                                    return req.eventLoop.makeFailedFuture(error)
+                                }
+                                return sendEmailFuture
                                     .map { message}
                                     .do({ [weak self] dto in self?.track(event: .ForgotPassword(email: user.email), for: req)})
                             })
                     })
-            })
+        //    })
         // throw Abort(.custom(code: 500, reasonPhrase: "Not Implemented"))
     }
     
-    func refreshLogin(_ req: Request) throws -> Future<LoginRespDto> {
-        return try req.content.decode(RefreshTokenDto.self)
-            .flatMap{ refreshDto -> Future<LoginRespDto>  in
-                let signers = try req.make(MDT_Signers.self)
-                let signer = signers.signer()
+    func refreshLogin(_ req: Request) throws -> EventLoopFuture<LoginRespDto> {
+        let refreshDto = try req.content.decode(RefreshTokenDto.self)
+          //  .flatMap{ refreshDto -> Future<LoginRespDto>  in
+                //let signers = try req.make(MDT_Signers.self)
+                //let signer = signers.signer()
                 //verify refreshToken
-                let token:JWT<JWTRefreshTokenPayload>
+        //let payload = try req.jwt.verify(as: TestPayload.self)
+        let token:JWTRefreshTokenPayload
+              //  let token:JWT<JWTRefreshTokenPayload>
                 do {
-                    token = try JWT<JWTRefreshTokenPayload>(from: refreshDto.refreshToken, verifiedUsing: signer)
+                    token = try req.jwt.verify(refreshDto.refreshToken, as: JWTRefreshTokenPayload.self)
+                        //try JWT<JWTRefreshTokenPayload>(from: refreshDto.refreshToken, verifiedUsing: signer)
                 }catch {
                     throw Abort(.unauthorized, reason: "Invalid credentials")
                 }
-                guard token.payload.username == refreshDto.email else { throw Abort(.unauthorized, reason: "Invalid credentials") }
-                let context = try req.context()
-                return try findUser(by: refreshDto.email, into: context)
-                    .map { user in
+                guard token.username == refreshDto.email else { throw Abort(.unauthorized, reason: "Invalid credentials") }
+        let meow = req.meow
+                return findUser(by: refreshDto.email, into: meow)
+                    .flatMapThrowing { user in
                         guard let user = user else { throw UserError.notFound }
                         return try UsersController.generateDto(req, user: user, generateRefeshToken: false)
                 }
                 .do({[weak self]  dto in self?.track(event: .RefreshLogin(email: dto.email, isSuccess: true), for: req)})
                 .catch({[weak self]  error in self?.track(event: .RefreshLogin(email: refreshDto.email, isSuccess: false,failedError:error), for: req)})
-        }
+       // }
     }
     
-    func login(_ req: Request) throws -> Future<LoginRespDto> {
-        let config = try req.make(MdtConfiguration.self)
+    func login(_ req: Request) throws -> EventLoopFuture<LoginRespDto> {
+        let config = try req.application.appConfiguration()
         let delay = config.loginResponseDelay
-        //return try self.loginDelayed(req)
-        return req.eventLoop.scheduleTask(in: TimeAmount.seconds(delay)) { return try self.loginDelayed(req)}
+        return req.eventLoop.scheduleTask(in: TimeAmount.seconds(Int64(delay))) { return try self.loginDelayed(req)}
             .futureResult.flatMap{$0}
     }
     
-    func loginDelayed(_ req: Request) throws -> Future<LoginRespDto> {
-        return try req.content.decode(LoginReqDto.self)
-            .flatMap{ loginDto -> Future<LoginRespDto>  in
-                let context = try req.context()
-                return try findUser(by: loginDto.email, and: loginDto.password, updateLastLogin: true, into: context)
-                    .map({ user in
+    func loginDelayed(_ req: Request) throws -> EventLoopFuture<LoginRespDto> {
+        let loginDto =  try req.content.decode(LoginReqDto.self)
+          //  .flatMap{ loginDto -> EventLoopFuture<LoginRespDto>  in
+                let meow = req.meow
+                return findUser(by: loginDto.email, and: loginDto.password, updateLastLogin: true, into: meow)
+                    .flatMapThrowing({ user in
                         return try UsersController.generateDto(req, user: user, generateRefeshToken: true)
                     })
                     .do({[weak self]  dto in self?.track(event: .Login(email: dto.email, isSuccess: true), for: req)})
                     .catch({[weak self]  error in self?.track(event: .Login(email: loginDto.email, isSuccess: false,failedError:error), for: req)})
-        }
+      //  }
     }
     
     
     class func generateDto(_ req: Request,user:User,generateRefeshToken:Bool)throws -> LoginRespDto{
         // user is activated ?
         guard user.isActivated else { throw UserError.notActivated}
-        let signers = try req.make(MDT_Signers.self)
+     /*   let signers = try req.make(MDT_Signers.self)
         let signer = signers.signer()
         let jwt = JWT(header: JWTHeader(kid: signerIdentifier), payload: JWTTokenPayload(email: user.email))
-        let token = String(bytes: try jwt.sign(using: signer), encoding: .utf8)!
+        let token = String(bytes: try jwt.sign(using: signer), encoding: .utf8)!*/
+        let token = try req.jwt.sign(JWTTokenPayload(email: user.email))
         var refreshToken:String? = nil
         if generateRefeshToken {
-            let jwt = JWT(header: JWTHeader(kid: signerIdentifier), payload: JWTRefreshTokenPayload(email: user.email))
-            refreshToken = String(bytes: try jwt.sign(using: signer), encoding: .utf8)!
+           // let jwt = JWT(header: JWTHeader(kid: signerIdentifier), payload: JWTRefreshTokenPayload(email: user.email))
+            refreshToken = try req.jwt.sign(JWTRefreshTokenPayload(email: user.email))
+            //refreshToken = String(bytes: try jwt.sign(using: signer), encoding: .utf8)!
         }
         
         return LoginRespDto( email: user.email, name: user.name,token:token,refreshToken: refreshToken)
     }
     
-    func me(_ req: Request) throws -> Future<UserDto> {
+    func me(_ req: Request) throws -> EventLoopFuture<UserDto> {
+        let meow = req.meow
+        guard let appController = appController else { throw Abort(.internalServerError)}
         return try retrieveMandatoryUser(from: req)
-            .flatMap({[weak self]user throws -> Future<UserDto> in
-                let context = try req.context()
-                guard let appController = self?.appController else { throw Abort(.internalServerError)}
+            .flatMap({user -> EventLoopFuture<UserDto> in
                 //administreted Applications
-                return try findApplications(for: user, into: context)
+                return findApplications(for: user, into: meow)
                     .map(transform: {appController.generateSummaryDto(from: $0)})
                     // .map(transform: {ApplicationSummaryDto(from: $0)})
-                    .getAllResults()
+                    .allResults()
                     .map{apps -> UserDto in
                         var userDto = UserDto.create(from: user, content: .full)
                         userDto.administeredApplications = apps
@@ -197,33 +218,48 @@ final class UsersController:BaseController {
             })
     }
     
-    func all(_ req: Request) throws -> Future<Paginated<UserDto>> {
+    func all(_ req: Request) throws -> EventLoopFuture<Paginated<UserDto>> {
+        let searchQuery = try self.extractSearch(from: req, searchField: "email")
         return try retrieveMandatoryAdminUser(from: req)
-            .flatMap({[weak self]_ in
-                guard let `self` = self else { throw Abort(.internalServerError)}
-                let context = try req.context()
+            .flatMap({_ -> EventLoopFuture<Paginated<UserDto>> in
+               // guard let `self` = self else { throw Abort(.internalServerError)}
+                let meow = req.meow
+             /*   let cursor:MappedCursor<MappedCursor<FindQueryBuilder, User>,UserDto> = allUsers(into: meow, additionalQuery:searchQuery )
+                   .map{result -> UserDto in return UserDto.create(from: result, content: .full)}
                 
-                let searchQuery = try self.extractSearch(from: req, searchField: "email")
+                let result:EventLoopFuture<Paginated<UserDto>> = cursor.paginate(for: req, model: User.self, sortFields: self.sortFields,defaultSort: "email", findQuery: searchQuery)
+ 
+                */
+                //let findQuery = allUsers(into: meow, additionalQuery: searchQuery)
+                let paginatedInfo = req.extractPaginatioInfo(sortFields: self.sortFields,defaultSort: "email")
+                let pageResult = allUsersPaginated(into: meow, additionalQuery: searchQuery, paginationInfo: paginatedInfo)
+                return pageResult.map { pageResult in
+                    return pageResult?.map{UserDto.create(from: $0, content: .full)}.pageOutput(from: paginatedInfo) ?? PaginationResult.emptyOutput(from: paginatedInfo)
+                }
+                /*
+                let pageResult = try findAndSortArtifacts(app: app, selectedBranch: selectedBranch, excludedBranch: excludedBranch, paginationInfo: paginatedInfo, into: meow)
                 
-                let cursor:MappedCursor<MappedCursor<FindCursor, User>, UserDto> = try allUsers(into: context, additionalQuery:searchQuery )
-                    .map(transform: {UserDto.create(from: $0, content: .full)})
+                    return pageResult.map { pageResult in
+                        return pageResult?.map{ ArtifactGroupedDto(from: $0)}.pageOutput(from: paginatedInfo) ?? PaginationResult.emptyOutput(from: paginatedInfo)
+                    }
+                */
+               /* return findQuery.paginate(for: req, model: User.self, sortFields: self.sortFields, defaultSort: "email", findQuery: searchQuery, transform: {UserDto.create(from: $0, content: .full)})*/
                 
-                let result:Future<Paginated<UserDto>> = cursor.paginate(for: req, sortFields: self.sortFields,defaultSort: "email", findQuery: searchQuery)
-                return result
+                //return result
             })
     }
     
-    func update(_ req: Request) throws -> Future<UserDto> {
+    func update(_ req: Request) throws -> EventLoopFuture<UserDto> {
+        let updateDto = try req.content.decode(UpdateUserDto.self)
+        let config = try req.application.appConfiguration()
         return try retrieveMandatoryUser(from: req)
-            .flatMap({user throws -> Future<UserDto> in
-                return try req.content.decode(UpdateUserDto.self)
-                    .flatMap({ updateDto  in
+            .flatMap({user -> EventLoopFuture<UserDto> in
                         //update user
-                        let context = try req.context()
-
+                        let meow = req.meow
+                let updateUserFuture:EventLoopFuture<User>
+                do {
                         if let password = updateDto.password {
                             //check password strength
-                            let config = try req.make(MdtConfiguration.self)
                             let strength = Zxcvbn.estimateScore(password)
                             guard strength >= config.minimumPasswordStrength else { throw UserError.invalidPassworsStrength(required: config.minimumPasswordStrength)}
 
@@ -234,77 +270,83 @@ final class UsersController:BaseController {
                                 guard passwordHash == user.password else { throw UserError.invalidLoginOrPassword }
                             }
                         }
-
-                        return try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID,isSystemAdmin: nil,isActivated: nil, into: context)
+                    updateUserFuture = try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID,isSystemAdmin: nil,isActivated: nil, into: meow)
+                }catch {
+                    return req.eventLoop.makeFailedFuture(error)
+                }
+                        return updateUserFuture
                             .map{UserDto.create(from: $0, content: .full)}
                             //Add administrated App
                             .flatMap({[weak self] userDto in
-                                guard let appController = self?.appController else { throw Abort(.internalServerError)}
+                                guard let appController = self?.appController else { return req.eventLoop.makeFailedFuture (Abort(.internalServerError))}
                                 //administreted Applications
-                                return try findApplications(for: user, into: context)
+                                return findApplications(for: user, into: meow)
                                     .map(transform: {appController.generateSummaryDto(from: $0)})
                                     // .map(transform: {ApplicationSummaryDto(from: $0)})
-                                    .getAllResults()
+                                    .allResults()
                                     .map{apps -> UserDto in
                                         var result = userDto
                                         result.administeredApplications = apps
                                         return result
                                 }
                             })
-                    })
                     .do({[weak self]  dto in self?.track(event: .UpdateUser(email: user.email, isSuccess: true), for: req)})
                     .catch({[weak self]  error in self?.track(event: .UpdateUser(email: user.email, isSuccess: false,failedError:error), for: req)})
             })
     }
     
-    func updateUser(_ req: Request) throws -> Future<UserDto> {
-        let email = try req.parameters.next(String.self)
+    func updateUser(_ req: Request) throws -> EventLoopFuture<UserDto> {
+        guard let email = req.parameters.get("email") else { throw Abort(.badRequest)}
+        let updateDto = try req.content.decode(UpdateUserFullDto.self)
         return try retrieveMandatoryAdminUser(from: req)
-            .flatMap({ _ throws -> Future<UserDto> in
-                return try req.content.decode(UpdateUserFullDto.self)
-                    .flatMap({ updateDto  in
-                        let context = try req.context()
+            .flatMap({ _ -> EventLoopFuture<UserDto> in
+               // return try req.content.decode(UpdateUserFullDto.self)
+                   // .flatMap({ updateDto  in
+                        let meow = req.meow
                         //find user
-                        return try findUser(by: email, into: context)
+                        return findUser(by: email, into: meow)
                             .flatMap { user  in
+                                do {
                                 guard let user = user else { throw Abort(.notFound)}
-                                return try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID, isSystemAdmin: updateDto.isSystemAdmin, isActivated: updateDto.isActivated, into: context)
+                                return try App.updateUser(user: user, newName: updateDto.name, newPassword: updateDto.password, newFavoritesApplicationsUUID: updateDto.favoritesApplicationsUUID, isSystemAdmin: updateDto.isSystemAdmin, isActivated: updateDto.isActivated, into: meow)
                                     .map{UserDto.create(from: $0, content: .full)}
+                                }catch {
+                                    return req.eventLoop.makeFailedFuture( error)
+                                }
                         }
-                    })
+                 //   })
             })
             .do({[weak self]  dto in self?.track(event: .UpdateUser(email: email, isSuccess: true), for: req)})
             .catch({[weak self]  error in self?.track(event: .UpdateUser(email: email, isSuccess: false,failedError:error), for: req)})
     }
     
-    func deleteUser(_ req: Request) throws -> Future<MessageDto> {
-        let email = try req.parameters.next(String.self)
+    func deleteUser(_ req: Request) throws -> EventLoopFuture<MessageDto> {
+        guard let email = req.parameters.get("email") else { throw Abort(.badRequest)}
         return try retrieveMandatoryAdminUser(from: req)
-            .flatMap({ _ throws in
-                let context = try req.context()
+            .flatMap({ _ in
+                let meow = req.meow
                 //find user
-                return try findUser(by: email, into: context)
+                return findUser(by: email, into: meow)
                     .flatMap { user  in
-                        guard let user = user else { throw Abort(.notFound)}
-                        return try delete(user: user, into: context).map {
+                        guard let user = user else { return req.eventLoop.makeFailedFuture( Abort(.notFound))}
+                        return delete(user: user, into: meow).map {
                             return MessageDto(message: "User Deleted")
                         }
-                        
                 }
             })
             .do({ [weak self] dto in self?.track(event: .DeleteUser(email: email, isSuccess:true), for: req)})
             .catch({[weak self]  error in self?.track(event: .DeleteUser(email: email, isSuccess: false,failedError:error), for: req)})
     }
     
-    func activation(_ req: Request) throws -> Future<MessageDto> {
+    func activation(_ req: Request) throws -> EventLoopFuture<MessageDto> {
         if let activationToken = try? req.query.get(String.self, at: "activationToken") {
             //activate user
-            let context = try req.context()
-            return try activateUser(withToken: activationToken, into: context)
+            let meow = req.meow
+            return activateUser(withToken: activationToken, into: meow)
                 .do({[weak self]  user in self?.track(event: .Activation(email: user.email, isSuccess: true), for: req)})
                 .catch({[weak self]  error in self?.track(event: .Activation(email: "<Token>", isSuccess: false,failedError:error), for: req)})
                 .map { _ in MessageDto(message:"Activation Done")}
-                .thenIfErrorThrowing({ error in
+                .flatMapErrorThrowing({ error in
                     if let userError = error as? UserError, userError == UserError.notFound {
                         throw Abort(.badRequest, reason: "Invalid activationToken")
                     }

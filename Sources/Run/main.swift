@@ -4,11 +4,12 @@ import Vapor
 
 var mdtApp:Application!
 func closeApp(){
-    try? mdtApp.runningServer?.close().wait()
+    mdtApp.shutdown()
+   /* try? mdtApp.runningServer?.close().wait()
        mdtApp.shutdownGracefully { error in
            guard let error = error else { return }
            print("Error on shutDown :\(error)")
-       }
+       }*/
 }
 
 signal(SIGINT) { signal in
@@ -27,8 +28,16 @@ signal(SIGTERM) { signal in
 }
 
 do {
+    var env = try Environment.detect()
+    try LoggingSystem.bootstrap(from: &env)
+    let app = Application(env)
+    mdtApp = app
+    defer { app.shutdown() }
+    try configure(app)
+    try app.run()
+    /*
     mdtApp = try app(.detect())
-    try mdtApp.run()
+    try mdtApp.run()*/
 }catch {
     print("Unexpected error :\(error)")
 }

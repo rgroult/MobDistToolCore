@@ -10,6 +10,7 @@ import XCTest
 import Vapor
 import Meow
 @testable import App
+import XCTVapor
 
 class BaseAppTests: XCTestCase {
     //let droplet = try! Droplet.testable()
@@ -32,20 +33,22 @@ class BaseAppTests: XCTestCase {
 //        }
 //    }
     internal var app:Application!
-    internal var context:Meow.Context!
+    internal var context:Meow.MeowDatabase!
     override func setUp() {
         configure()
     }
         
     func configure(with env:Environment? = nil) {
         do {
+           // app?.shutdown()
             app = try Application.runningAppTest(loadingEnv:env)
-            context = try app.make(Future<Meow.Context>.self).wait()
+            context = app.meow
+            //context = try app.make(Future<Meow.Context>.self).wait()
             //delete existing data
             try cleanDatabase(into: context)
             //try context.manager.database.drop().wait()
-            let config = try app.make(MdtConfiguration.self)
-            _ = try createSysAdminIfNeeded(into: context, with: config)
+            let config = try app.appConfiguration()//  try app.make(MdtConfiguration.self)
+            _ = try createSysAdminIfNeeded(into: context, with: config).wait()
             
         }catch {
             print("Error Starting server:\(error)")
@@ -53,18 +56,22 @@ class BaseAppTests: XCTestCase {
         }
     }
     
-    private func cleanDatabase(into:Context) throws {
-        try context.deleteAll(User.self, where:Query()).wait()
-        try context.deleteAll(MDTApplication.self, where:Query()).wait()
-        try context.deleteAll(TokenInfo.self, where:Query()).wait()
-        try context.deleteAll(Artifact.self, where:Query()).wait()
+    private func cleanDatabase(into:Meow.MeowDatabase) throws {
+        try into.raw.drop().wait()
+        /*
+        try context.collection(for: User.self).deleteAll(where: [:]).wait()
+        try context.collection(for: MDTApplication.self).deleteAll(where: [:]).wait()
+        try context.collection(for: TokenInfo.self).deleteAll(where: [:]).wait()
+        try context.collection(for: Artifact.self).deleteAll(where: [:]).wait()*/
     }
     
     override func tearDown()  {
         do {
-        try app.runningServer?.close().wait()
+            app.shutdown()
+            //try app.running?.onStop.wait()
+        // try app.server.shutdown()//   runningServer?.close().wait()
         //try context.manager.database.drop().wait()
-        try context.syncShutdownGracefully()
+       // try context.syncShutdownGracefully()
             context = nil
         }catch {
             print("Error Stopping server:\(error)")

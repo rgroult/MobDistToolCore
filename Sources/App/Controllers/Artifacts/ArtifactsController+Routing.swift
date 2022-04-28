@@ -62,34 +62,35 @@ extension ArtifactsController {
         }
     }
     
-    func configure(with router: Router, and protectedRouter:Router){
-        let artifactRouter = router.grouped("\(controllerVersion)/\(pathPrefix)")
+    func configure(with router: RoutesBuilder, and protectedRouter:RoutesBuilder){
+        let artifactRouter = router.grouped("\(controllerVersion)","\(pathPrefix)")
         //GET '{apiKey}/deploy
-        artifactRouter.get("", String.parameter,PathComponent.constant("deploy"), use:self.deploy)
+        artifactRouter.get([.parameter("apiKey"),.constant("deploy")], use:self.deploy)
         //POST '{apiKey}/{branch}/{version}/{artifactName}
-        artifactRouter.post("", String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.createArtifactByApiKey)
+        artifactRouter.post([.parameter("apiKey"),.parameter("branch"),.parameter("version"),.parameter("artifactName")],  use: self.createArtifactByApiKey)
         //DELETE '{apiKey}/{branch}/{version}/{artifactName}
-        artifactRouter.delete("", String.parameter ,String.parameter,String.parameter,String.parameter,  use: self.deleteArtifactByApiKey)
+        artifactRouter.delete([.parameter("apiKey"),.parameter("branch"),.parameter("version"),.parameter("artifactName")],  use: self.deleteArtifactByApiKey)
         
-        //POST '{apiKey}/last/{artifactName}
-        artifactRouter.post("", String.parameter ,PathComponent.constant("latest"),String.parameter,  use: self.createLastArtifactByApiKey)
-        //DELETE '{apiKey}/last/{artifactName}
-        artifactRouter.delete("", String.parameter ,PathComponent.constant("latest"),String.parameter,  use: self.deleteLastArtifactByApiKey)
+        //POST '{apiKey}/latest/{artifactName}
+        artifactRouter.post([.parameter("apiKey"),.constant("latest"),.parameter("artifactName")],  use: self.createLastArtifactByApiKey)
+        //DELETE '{apiKey}/latest/{artifactName}
+        artifactRouter.delete([.parameter("apiKey"),.constant("latest"),.parameter("artifactName")],  use: self.deleteLastArtifactByApiKey)
         
         //GET /file?token='
-        artifactRouter.get("",PathComponent.constant("file"),  use: self.downloadArtifactFile)
+        artifactRouter.get([.constant("file")],  use: self.downloadArtifactFile)
         //GET /ios_plist?token='
-        artifactRouter.get("", PathComponent.constant("ios_plist"),  use: self.downloadArtifactManifest)
+        artifactRouter.get([.constant("ios_plist")],  use: self.downloadArtifactManifest)
         
         //GET /install?token='
-        artifactRouter.get("",PathComponent.constant("install"),  use: self.installArtifactPage)
+        artifactRouter.get([.constant("install")],  use: self.installArtifactPage)
         //GET /icon?token='
-        artifactRouter.get("",PathComponent.constant("icon"),  use: self.downloadArtifactIcon)
+        artifactRouter.get([.constant("icon")],  use: self.downloadArtifactIcon)
 
         //protected
         //GET {artifact uuid}/download
-        let protectedArtifactRouter = protectedRouter.grouped("\(controllerVersion)/\(pathPrefix)")
-        protectedArtifactRouter.get("",String.parameter,PathComponent.constant("download"), use:self.downloadInfo)
+        let protectedArtifactRouter = protectedRouter.grouped("\(controllerVersion)","\(pathPrefix)")
+        //NB: use "apiKey" parameter name instead of "uuid" to resolve conflic into TrieRouter
+        protectedArtifactRouter.get([.parameter("apiKey"),.constant("download")], use:self.downloadInfo)
     }
 }
 

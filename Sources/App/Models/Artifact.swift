@@ -6,12 +6,12 @@
 //
 
 import Vapor
-import MeowVapor
+import Meow
 import MongoKitten
 
 typealias StorageAccessUrl = String
 
-final class Artifact: Model,QueryableModel {
+final class Artifact: Model/*,QueryableModel*/ {
     static let collectionName = "MDTArtifact"
     var _id = ObjectId()
     var application:  Reference<MDTApplication>
@@ -57,7 +57,7 @@ final class Artifact: Model,QueryableModel {
     
     func addMetaData(metaData:[String:String]){
         var allTags:[String:String]
-        if let existingData = metaDataTags?.convertToData(), let existingTags = try? JSONDecoder().decode([String : String].self,from: existingData)  {
+        if let existingData = metaDataTags?.data(using: .utf8), let existingTags = try? JSONDecoder().decode([String : String].self,from: existingData)  {
             allTags = existingTags.merging(metaData, uniquingKeysWith: { (_, new) in new})
         }else {
             allTags = metaData
@@ -68,7 +68,7 @@ final class Artifact: Model,QueryableModel {
     }
     
     func retrieveMetaData() -> [String:String]? {
-        if let tagsData = metaDataTags?.convertToData() {
+        if let tagsData = metaDataTags?.data(using: .utf8) {
             let decoder = JSONDecoder()
             decoder.dataDecodingStrategy = .custom({ decoder -> Data in
                 //decode only String and Int
@@ -103,4 +103,4 @@ final class Artifact: Model,QueryableModel {
 //extension Artifact: Content { }
 
 /// Allows `Todo` to be used as a dynamic parameter in route definitions.
-extension Artifact: Parameter { }
+//extension Artifact: Parameter { }

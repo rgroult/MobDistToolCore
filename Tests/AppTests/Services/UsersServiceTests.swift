@@ -15,11 +15,11 @@ final class UsersServiceTests: BaseAppTests {
     
     override func setUp() {
         super.setUp()
-        
     }
     
     func dropNormalUsers(){
-        XCTAssertNoThrow(try context.deleteAll(User.self, where: Query.valEquals(field: "isSystemAdmin", val: false)).wait())
+        XCTAssertNoThrow(try context.collection(for: User.self).deleteAll(where: "isSystemAdmin" == false).wait())
+        //XCTAssertNoThrow(try context.deleteAll(User.self, where: Query.valEquals(field: "isSystemAdmin", val: false)).wait())
     }
     
     func testCreateNormalUser() throws {
