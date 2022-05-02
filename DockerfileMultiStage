@@ -6,7 +6,7 @@ RUN export hash=$(cat .git/$(cat .git/HEAD | cut -d' ' -f2)) && echo let MDT_Git
 RUN cat ./Sources/App/gitCommit.swift
 RUN swift package clean
 RUN swift package resolve
-RUN swift build -c release
+RUN swift build -c release --product Run
 RUN mkdir -p /app/bin
 RUN mv `swift build -c release --product Run --show-bin-path`/Run /app/bin/
 ADD ./Sources/App/Config/envs/production/configDockerFull.json /app/config/config.json
