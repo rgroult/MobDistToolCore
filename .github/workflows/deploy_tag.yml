@@ -1,0 +1,35 @@
+name: Test And Deploy
+
+on:
+  push:
+    tags: 
+      - '*'
+
+jobs:
+  deploy_fat:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish v${{github.ref_name}} Tag to Docker Hub
+        uses: elgohr/Publish-Docker-Github-Action@2.14
+        with: 
+          name: rgroult2/mobdisttool-core:${{github.ref_name}}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          dockerfile: Dockerfile
+  
+  deploy_bionic:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish v${{github.ref_name}} Bionic Tag to Docker Hub
+        uses: elgohr/Publish-Docker-Github-Action@2.14
+        with: 
+          name: rgroult2/mobdisttool-core:bionic-${{github.ref_name}}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          dockerfile: DockerfileMultiStage
+  
+

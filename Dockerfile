@@ -11,7 +11,7 @@ RUN mkdir -p /app/bin
 ADD ./Sources/App/Config/envs/production/configDockerFull.json /app/config/config.json
 ADD Public /app/Public/
 RUN ls -lhR /app/
-RUN mv `swift build -c release --show-bin-path`/Run /app/bin/
+RUN mv `swift build -c release --product Run --show-bin-path`/Run /app/bin/
 EXPOSE 8080
 RUN ls /app/bin/Run
 RUN ls /app/config/config.json
