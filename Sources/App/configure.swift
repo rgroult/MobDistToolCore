@@ -4,6 +4,7 @@ import MongoKitten
 import Meow
 import JWTAuth
 import JWT
+import Logging
 
 let signerIdentifier = "mdt_jwt_signer"
 
@@ -22,10 +23,12 @@ let signerIdentifier = "mdt_jwt_signer"
     }
 }*/
 
+var loggingSystemAlreadyBootstrapped = false
+
 /// Called before your application initializes.
 public func configure(_ app: Application) throws {
-//public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
-    //load config
+    //configuration
+    
     let configuration:MdtConfiguration
     do {
         print("Loading Config")
@@ -36,13 +39,45 @@ public func configure(_ app: Application) throws {
         throw error
     }
     app.mdtConfiguration = configuration
+    
+    //Logging
+    let mdtLogger = try MdtFileLogger(logDirectory: configuration.logDirectory, includeTimestamps: true)
+    //force duplicate logging on startup
+    mdtLogger.duplicateOnStandartOutput = true
+    app.mdtLogger = mdtLogger //try .init(logDirectory: config.logDirectory, includeTimestamps: true)
+    try app.appFileLogger().logLevel = configuration.logLevelAsLevel
+    
+    //need this for unittests because app restarted into test and LoggingSystem forbids 2 bootstrap
+    if !loggingSystemAlreadyBootstrapped {
+            loggingSystemAlreadyBootstrapped = true
+        LoggingSystem.bootstrap { name in
+            //print("REQUESTED \(name)")
+            return mdtLogger
+        }
+    }
+    //force reload of app logger
+    app.logger = .init(label: app.logger.label)
+    
+//public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
+    //load config
+   /* let configuration:MdtConfiguration
+    do {
+        print("Loading Config")
+        configuration = try MdtConfiguration.loadConfig(from: nil, from: &app.environment)
+        print("config: \(configuration)")
+    }catch {
+        print("Unable to read configuration: \(error)")
+        throw error
+    }
+    app.mdtConfiguration = configuration*/
+   
     /*
     try MdtFileLogger.initialize(logDirectory: configuration.logDirectory, includeTimestamps: true)
     MdtFileLogger.shared.logLevel = configuration.logLevelAsLevel
     services.register(Logger.self) { container throws -> MdtFileLogger in
         return MdtFileLogger.shared
     }*/
-    app.mdtLogger = try .init(logDirectory: configuration.logDirectory, includeTimestamps: true)
+    
     
   /*  try MdtActivityFileLogger.initialize(logDirectory: configuration.logDirectory, includeTimestamps: true)
     services.register(ActivityLogger.self) { container throws -> MdtActivityFileLogger in
@@ -166,4 +201,10 @@ public func configure(_ app: Application) throws {
     try boot(app)
     //print all availables routes
     app.logger.info("Available routes:\n \(app.routes.description)")
+    
+    //update duplicate logging
+    switch app.environment {
+    case .production: mdtLogger.duplicateOnStandartOutput = false
+    default: mdtLogger.duplicateOnStandartOutput = true
+    }
 }

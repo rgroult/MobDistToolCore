@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/Flight-School/AnyCodable",
         "state": {
           "branch": null,
-          "revision": "b1a7a8a6186f2fcb28f7bda67cfc545de48b3c80",
-          "version": "0.6.2"
+          "revision": "f9fda69a7b704d46fb5123005f2f7e43dbb8a0fa",
+          "version": "0.6.5"
         }
       },
       {
@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/swift-server/async-http-client.git",
         "state": {
           "branch": null,
-          "revision": "70826d038d5bdc3142a386b735792d87ef7a5dfc",
-          "version": "1.8.1"
+          "revision": "24425989dadab6d6e4167174791a23d4e2a6d0c3",
+          "version": "1.10.0"
         }
       },
       {
@@ -87,8 +87,8 @@
         "repositoryURL": "https://github.com/Tyler-Keith-Thompson/CucumberSwift",
         "state": {
           "branch": null,
-          "revision": "ac7fe71e554c4121d9b749ee724768cf22ea4fc3",
-          "version": "3.3.6"
+          "revision": "b3436fc03a2d8a28f7ba89d6c280ba9825ed6f42",
+          "version": "3.3.11"
         }
       },
       {
@@ -105,8 +105,8 @@
         "repositoryURL": "https://github.com/vapor/fluent-kit.git",
         "state": {
           "branch": null,
-          "revision": "d5273e8d050c51dd7e1d3a4dab08fe32ec9ffffa",
-          "version": "1.20.0"
+          "revision": "6fc2804a4d8b3f8a66f2d4bb3e3789aac3abd53d",
+          "version": "1.23.5"
         }
       },
       {
@@ -123,8 +123,8 @@
         "repositoryURL": "https://github.com/vapor/jwt-kit.git",
         "state": {
           "branch": null,
-          "revision": "1822bb0abf0a31a4b5078ec19061c548835253b5",
-          "version": "4.3.0"
+          "revision": "5f9c44d4c196cc06c3fc601f279169f121d6f62d",
+          "version": "4.4.0"
         }
       },
       {
@@ -141,8 +141,8 @@
         "repositoryURL": "https://github.com/OpenKitten/MongoKitten.git",
         "state": {
           "branch": null,
-          "revision": "d22edbbf262d6925dbaed74cc83fa8953e867590",
-          "version": "6.7.2"
+          "revision": "c3ca3bec61fec81c06d2275df8cde2dee72d1cab",
+          "version": "6.7.5"
         }
       },
       {
@@ -177,8 +177,8 @@
         "repositoryURL": "https://github.com/vapor/sql-kit.git",
         "state": {
           "branch": null,
-          "revision": "9cc30f8cef132e91a07e36005612b37f918731fc",
-          "version": "3.16.0"
+          "revision": "89b0a0a5f110e77272fb5a775064a31bfc1f155c",
+          "version": "3.18.0"
         }
       },
       {
@@ -195,8 +195,8 @@
         "repositoryURL": "https://github.com/apple/swift-crypto.git",
         "state": {
           "branch": null,
-          "revision": "a8911e0fadc25aef1071d582355bd1037a176060",
-          "version": "2.0.4"
+          "revision": "d9825fa541df64b1a7b182178d61b9a82730d01f",
+          "version": "2.1.0"
         }
       },
       {
@@ -213,8 +213,8 @@
         "repositoryURL": "https://github.com/apple/swift-metrics.git",
         "state": {
           "branch": null,
-          "revision": "3edd2f57afc4e68e23c3e4956bc8b65ca6b5b2ff",
-          "version": "2.2.0"
+          "revision": "eadb828f878fed144387e3845866225bb7082c56",
+          "version": "2.3.0"
         }
       },
       {
@@ -222,8 +222,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "51c3fc2e4a0fcdf4a25089b288dd65b73df1b0ef",
-          "version": "2.37.0"
+          "revision": "124119f0bb12384cef35aa041d7c3a686108722d",
+          "version": "2.40.0"
         }
       },
       {
@@ -231,8 +231,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-extras.git",
         "state": {
           "branch": null,
-          "revision": "f73ca5ee9c6806800243f1ac415fcf82de9a4c91",
-          "version": "1.10.2"
+          "revision": "8eea84ec6144167354387ef9244b0939f5852dc8",
+          "version": "1.11.0"
         }
       },
       {
@@ -240,8 +240,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-http2.git",
         "state": {
           "branch": null,
-          "revision": "6e94a7be32891d1b303a3fcfde8b5bf64d162e74",
-          "version": "1.19.1"
+          "revision": "72bcaf607b40d7c51044f65b0f5ed8581a911832",
+          "version": "1.21.0"
         }
       },
       {
@@ -249,8 +249,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
         "state": {
           "branch": null,
-          "revision": "52a486ff6de9bc3e26bf634c5413c41c5fa89ca5",
-          "version": "2.17.2"
+          "revision": "1750873bce84b4129b5303655cce2c3d35b9ed3a",
+          "version": "2.19.0"
         }
       },
       {
@@ -258,8 +258,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-transport-services.git",
         "state": {
           "branch": null,
-          "revision": "8ab824b140d0ebcd87e9149266ddc353e3705a3e",
-          "version": "1.11.4"
+          "revision": "1a4692acb88156e3da1b0c6732a8a38b2a744166",
+          "version": "1.12.0"
         }
       },
       {
@@ -285,8 +285,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "88901368be090e69077418c36d17552e145ddd6e",
-          "version": "4.54.1"
+          "revision": "b05266f863ee93eeff4b6d075364ccc8f81bbc1e",
+          "version": "4.57.0"
         }
       },
       {
@@ -303,8 +303,8 @@
         "repositoryURL": "https://github.com/vapor/websocket-kit.git",
         "state": {
           "branch": null,
-          "revision": "ff8fbce837ef01a93d49c6fb49a72be0f150dac7",
-          "version": "2.3.0"
+          "revision": "e32033ad3c68ebec1b761bc961be7bd56bad02f8",
+          "version": "2.3.1"
         }
       },
       {
