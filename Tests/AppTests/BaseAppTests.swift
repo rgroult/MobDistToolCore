@@ -66,16 +66,16 @@ class BaseAppTests: XCTestCase {
     }
     
     override func tearDown()  {
-        do {
+       // do {
             app.shutdown()
             //try app.running?.onStop.wait()
         // try app.server.shutdown()//   runningServer?.close().wait()
         //try context.manager.database.drop().wait()
        // try context.syncShutdownGracefully()
             context = nil
-        }catch {
+    /*    }catch {
             print("Error Stopping server:\(error)")
             XCTAssertFalse(true)
-        }
+        }*/
     }
 }

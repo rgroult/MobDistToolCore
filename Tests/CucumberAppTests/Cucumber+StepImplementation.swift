@@ -27,6 +27,7 @@ struct StepContext {
 var currentStep:StepContext? = nil
 
 extension Cucumber: StepImplementation {
+#if Xcode
     public var bundle: Bundle {
         class Findme { }
         let bundle = Bundle(for: Findme.self)
@@ -37,6 +38,11 @@ extension Cucumber: StepImplementation {
         }
         return bundle
     }
+    #else
+    public var bundle: Bundle {
+        return Bundle.module
+    }
+    #endif
 
     public func setupSteps() {
         print("setupSteps")
