@@ -6,6 +6,7 @@
 //
 
 import Vapor
+import Logging
 
 public typealias LogLevel = Logging.Logger.Level
 
@@ -17,10 +18,22 @@ extension LogLevel{
     }
 }
 
-public class MdtFileLogger/*: Logger */{
+public class MdtFileLogger: LogHandler{
+    public subscript(metadataKey metadataKey: String) -> Logger.Metadata.Value? {
+        get {
+            return metadata[metadataKey]
+        }
+        set(newValue) {
+            metadata[metadataKey] = newValue
+        }
+    }
+    
+    public var metadata: Logger.Metadata = .init()
+    
     static var shared:MdtFileLogger!
 
-    var logLevel = LogLevel.debug
+    public var logLevel = LogLevel.debug
+    public var duplicateOnStandartOutput = false
     let includeTimestamps: Bool
     let fileManager = FileManager.default
     var fileQueue = DispatchQueue.init(label: "MdtFileLogger", qos: .utility)
@@ -91,8 +104,26 @@ public class MdtFileLogger/*: Logger */{
         guard logFileHandle != nil else { throw "Unable to create log file :\(logFileUrl.absoluteString)"}
         //print("Log file create \(logFileUrl)")
     }
-    
-    public func log(_ string: String, at level: LogLevel, file: String, function: String, line: UInt, column: UInt) {
+    public func log(level: Logger.Level,
+                    message: Logger.Message,
+                    metadata: Logger.Metadata?,
+                    source: String,
+                    file: String,
+                    function: String,
+                    line: UInt) {
+        guard level.index >= logLevel.index else { return }
+       
+        //display file and line only for debug and verbose
+        var output:String
+        let debugIndex = LogLevel.debug.index
+        if level.index <= debugIndex {
+             output = "[ \(level.description) ] \(message) (\(file):\(line))"
+        }else {
+             output = "[ \(level.description) ] \(message)"
+        }
+        saveToFile(output)
+    }
+    public func log1(_ string: String, at level: LogLevel, file: String, function: String, line: UInt, column: UInt) {
        // let fileName = level.description.lowercased() + ".log"
         guard level.index >= logLevel.index else { return }
        
@@ -109,11 +140,14 @@ public class MdtFileLogger/*: Logger */{
     
     func saveToFile(_ string: String) {
         fileQueue.async {[weak self] in
-            var output = string + "\n"
+            var output = string
             if let dateFormatter = self?.dateFormatter, self?.includeTimestamps  == true {
                 output = "\(dateFormatter.string(from:Date())) " + output
             }
-
+            if self?.duplicateOnStandartOutput == true {
+                print(output)
+            }
+            output = output + "\n"
             if let data = output.data(using: .utf8) {
                 self?.logFileHandle?.write(data)
             }

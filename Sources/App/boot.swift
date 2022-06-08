@@ -3,14 +3,12 @@ import Meow
 
 /// Called after your application has initialized.
 public func boot(_ app: Application) throws {
-    // Your code here
-   // let context:Meow.Context = try app.make()
-    let config = try app.appConfiguration() //try app.make(MdtConfiguration.self)
     let logger:Logger = app.logger// try app.make()
     let meow = app.meow
     //try app.make(EventLoopFuture<Meow.Context>.self)
     //    .whenSuccess{ context in
            // do {
+    let config = try app.appConfiguration() 
     do {
         let adminUserCreated = try createSysAdminIfNeeded(into: meow, with: config).wait()
         if adminUserCreated {
