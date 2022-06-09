@@ -508,6 +508,23 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
             XCTAssertEqual(file.bodyCount,fileData.count)
 
         }
+    
+    func testStoragePartialDownloadiOSDownloadFile() throws {
+            let fileData = try ArtifactsContollerTests.fileData(name: "calculator", ext: "ipa")
+            let dwInfo = try ArtifactsContollerTests.donwloadInfo(apiKey: iOSApiKey!, fileData: fileData,into:app!,with:token)
+            print(dwInfo.directLinkUrl)
+        
+            let partialSize = 1024
+            let file = try app.clientSyncTest(.GET, dwInfo.directLinkUrl,isAbsoluteUrl:true){ request in
+                request.headers.add(name: "Range", value: "bytes=0-\(partialSize - 1)")
+                print("Request \(request)")
+            }
+            print(file.headers)
+            XCTAssertTrue(file.status == .partialContent)
+            XCTAssertTrue(file.content.contentType == ipaContentType)
+            XCTAssertEqual( file.headers.first(name: .contentLength),"\(partialSize)")
+            XCTAssertEqual(file.bodyCount,partialSize)
+        }
 
 
         func testStorageDownloadAndroidDownloadFile() throws {
@@ -521,4 +538,21 @@ final class LocalStorageArtifactsContollerTests: BaseAppTests {
             XCTAssertEqual( file.headers.first(name: .contentLength),"\(fileData.count)")
             XCTAssertEqual(file.bodyCount,fileData.count)
         }
+    
+    func testStoragePartialDownloadAndroidDownloadFile() throws {
+        let fileData = try ArtifactsContollerTests.fileData(name: "testdroid-sample-app", ext: "apk")
+        let dwInfo = try ArtifactsContollerTests.donwloadInfo(apiKey: androidApiKey!, fileData: fileData,contentType:apkContentType,into:app!,with:token)
+        print(dwInfo.directLinkUrl)
+        XCTAssertEqual(dwInfo.installUrl,dwInfo.directLinkUrl)
+        let partialSize = 1024
+        let file = try app.clientSyncTest(.GET, dwInfo.installUrl,isAbsoluteUrl:true){ request in
+            request.headers.add(name: "Range", value: "bytes=0-\(partialSize - 1)")
+            print("Request \(request)")
+        }
+        print(file.headers)
+        XCTAssertTrue(file.status == .partialContent)
+        XCTAssertTrue(file.content.contentType == apkContentType)
+        XCTAssertEqual( file.headers.first(name: .contentLength),"\(partialSize)")
+        XCTAssertEqual(file.bodyCount,partialSize)
+    }
 }

@@ -14,6 +14,17 @@ let IPA_CONTENT_TYPE = "application/octet-stream ipa"
 let BINARY_CONTENT_TYPE = "application/octet-stream"
 let APK_CONTENT_TYPE = "application/vnd.android.package-archive"
 
+extension HTTPMediaType {
+    static func parseFrom(value:String)->HTTPMediaType? {
+        let splittedValues = value.split(separator: "/")
+        if let first = splittedValues.first {
+            let second = splittedValues.count > 1 ? splittedValues.last : nil
+            return .init(type:String(first) , subType: String(second ?? ""))
+        }
+        return nil
+    }
+}
+
 enum customHeadersName:String {
     case filename = "x-filename"
     case sortIdentifier = "x-sortidentifier"
@@ -358,17 +369,16 @@ final class ArtifactsController:BaseController  {
                     //TO DO
                     case .asUrI(let url):
                         if url.scheme == "file"{ //local files
-                            response = req.fileio.streamFile(at: url.path)
-                          //      .map { response in
-                            response.headers.replaceOrAdd(name: .contentType, value: artifact.contentType ?? HTTPMediaType.binary.serialize())
+                            response = req.fileio.streamFile(at: url.path,mediaType:HTTPMediaType.parseFrom(value: artifact.contentType ?? HTTPMediaType.binary.serialize()) )
+                           // response.headers.replaceOrAdd(name: .contentType, value: artifact.contentType ?? HTTPMediaType.binary.serialize())
                                     //response.http.contentType = contentType
                                     // remove transfer encoding header and replace to "real" content length
                                     // to be able to have progresss download OTA
-                                    response.headers.remove(name: .transferEncoding)
+                                    //response.headers.remove(name: .transferEncoding)
                                     response.headers.replaceOrAdd(name: "Content-Disposition", value: "attachment; filename=\(artifact.filename ?? "file")")
-                                    if let contentSize =  artifact.size {
+                                   /* if let contentSize =  artifact.size {
                                          response.headers.replaceOrAdd(name: .contentLength, value: "\(contentSize)")
-                                    }
+                                    }*/
                                    // return response
                            // }
                         }else {
