@@ -394,12 +394,18 @@ final class ArtifactsController:BaseController  {
     
     func deploy(_ req: Request) throws -> EventLoopFuture<Response> {
         guard let apiKey = req.parameters.get("apiKey") else { throw Abort(.badRequest)}
+        let useRequestHost = try? req.query.get(Bool.self, at: "useRequestHostUrl")
         let meow = req.meow
         let config = try req.application.appConfiguration()
+        
         return try findApplication(apiKey: apiKey, into: meow).flatMapThrowing{app in
             guard let _ = app else { throw ApplicationError.notFound }
-            let baseUrl = config.serverUrl.appendingPathComponent(config.pathPrefix)
-            let scriptCode = pythonDeployScript(apiKey: apiKey, exernalServerHost: baseUrl.absoluteString)
+            //set script url access
+            var baseUrl = config.serverUrl.appendingPathComponent(config.pathPrefix)
+            if useRequestHost == true, let requestHost = req.headers[.host].first, let url = URL(string: "https://\(requestHost)") {
+                baseUrl = url.appendingPathComponent(config.pathPrefix)
+            }
+            let scriptCode = pythonDeployScript(apiKey: apiKey, exernalServerHost:  baseUrl.absoluteString)
             let response = Response(body:.init(string: scriptCode))
             response.headers.contentType = HTTPMediaType(type: "application", subType: "x-python-code")
             return response

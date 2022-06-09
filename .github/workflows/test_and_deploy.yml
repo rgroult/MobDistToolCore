@@ -25,6 +25,7 @@ jobs:
     - run: python3  testDeps.py 
     - run: brew services start mongodb/brew/mongodb-community@3.6
     #- run: swift package generate-xcodeproj
+    - run: echo "Build SHA ${GITHUB_SHA}"
     - run: set -o pipefail && swift test | xcpretty -f `xcpretty-travis-formatter`
     #- run: set -o pipefail && xcodebuild -scheme Run clean test -enableCodeCoverage YES -enableAddressSanitizer YES | xcpretty -f `xcpretty-travis-formatter`
     - run: bash <(curl -s https://codecov.io/bash)
@@ -35,6 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - run: echo "Build SHA ${GITHUB_SHA}"
     - run: apt-get update && apt-get install -y libssl-dev zlib1g-dev unzip aapt
     - run: swift build -c release --product Run
 

@@ -9,8 +9,8 @@ import Vapor
 import Foundation
 
 final class TestingStorageService: StorageServiceProtocol {
-    static let defaultIpaUrl = "https://github.com/bitbar/bitbar-samples/blob/master/apps/ios/calculator.ipa?raw=true"
-    static let defaultApkUrl = "https://github.com/bitbar/bitbar-samples/blob/master/apps/android/testdroid-sample-app.apk?raw=true"
+    static let defaultIpaUrl = "https://github.com/rgroult/MobDistToolCore/blob/develop/Ressources/calculator.ipa?raw=true"
+    static let defaultApkUrl = "https://github.com/rgroult/MobDistToolCore/blob/develop/Ressources/testdroid-sample-app.apk?raw=true"
     var storageIdentifier = "TestingStorage"
     
     func initializeStore(with config: [String : String]) throws -> Bool {
