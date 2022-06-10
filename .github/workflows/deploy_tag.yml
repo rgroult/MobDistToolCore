@@ -18,6 +18,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           dockerfile: Dockerfile
+          buildoptions: "--build-arg GITHUB_SHA"
   
   deploy_bionic:
     if: github.event_name == 'push'
@@ -31,5 +32,6 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           dockerfile: DockerfileMultiStage
+          buildoptions: "--build-arg GITHUB_SHA"
   
 

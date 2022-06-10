@@ -1,4 +1,5 @@
 FROM swift:5.4
+ARG GITHUB_SHA
 RUN apt-get  update && apt-get install -y libssl-dev zlib1g-dev unzip aapt && apt-get -qqy purge apport && rm -rf /var/lib/apt/lists/*
 WORKDIR /BUILD
 ADD . ./

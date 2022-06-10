@@ -805,6 +805,49 @@ final class ApplicationsControllerTests: BaseAppTests {
         XCTAssertEqual(Set(favoritesAppUuid),Set(uuids))
     }
     
+    func testFavoritesAndApplicationsMultiThreaded() throws {
+        _ = try register(registerInfo: userIOS, inside: app)
+        //login
+        let token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
+        try ApplicationsControllerTests.populateApplications(nbre: 20, inside: app, token: token)
+        
+        let semaphore = DispatchSemaphore(value: 1)
+        
+        var ended = 0
+        
+        for idx in 0..<100 {
+            
+        DispatchQueue.global(qos: .background).async { [weak self] () in
+            
+            try? login(withEmail: userIOS.email, password: userIOS.password, inside: self!.app)
+            try? self?.app.clientSyncTest(.GET, "/v2/Applications",token:token)
+            try? self?.app.clientSyncTest(.GET, "/v2/Applications/favorites", token: token)
+            print("ENDED ONE \(idx)")
+            semaphore.wait()
+            ended += 1
+            semaphore.signal()
+        }
+
+        }
+        
+        while (true) { //bouh !!! never do that :D
+            Thread.sleep(forTimeInterval: 1.0)
+            semaphore.wait()
+            let value = ended
+            semaphore.signal()
+            if ended == 100 {
+                break
+            }
+        }
+        /*
+        DispatchQueue.global(qos: .background).sync {
+           // semaphore.wait()
+            print("ENDED AFTE SEMEPHORE")
+        }*/
+        print("ENDED ALL")
+        
+    }
+    
     func testMaxVersion() throws {
         var appWithMaxVersion = appDtoiOS
         appWithMaxVersion.enableMaxVersionCheck = true
