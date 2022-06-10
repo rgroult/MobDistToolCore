@@ -26,7 +26,7 @@ final class PaginationControllerTests: BaseAppTests {
     func testUsersPagination() throws{
         let usersToCreate = 100
         
-        try populateUsers(nbre: usersToCreate,tempo: 0.5)
+        try populateUsers(nbre: usersToCreate,tempo: 0)
         
         let nbreOfUsers = usersToCreate + 1  //admin
         
@@ -145,7 +145,7 @@ final class PaginationControllerTests: BaseAppTests {
     
     func testApplicationsPaginationSearchByName() throws {
         let token = try loginAsAdmin()
-        try populateApplications(nbre: 30, tempo: 0.4, token: token)
+        try populateApplications(nbre: 30, tempo: 0, token: token)
         
         let apps = try paginationRequest(path: "/v2/Applications", perPage: 20, order: .descending,sortBy:"created" ,searchby:"Application01" , pageNumber: 0, maxElt: 10, token: token) { (elt:ApplicationSummaryDto?) in
                 XCTAssertEqual( "Application019" , elt?.name)
@@ -164,7 +164,7 @@ final class PaginationControllerTests: BaseAppTests {
     
     func testApplicationsPaginationSearchByNameBigValue() throws {
         let token = try loginAsAdmin()
-        try populateApplications(nbre: 30, tempo: 0.4, token: token)
+        try populateApplications(nbre: 30, tempo: 0, token: token)
         
         let apps = try paginationRequest(path: "/v2/Applications", perPage: 99999999999999999, order: .descending,sortBy:"created" ,searchby:"Application01" , pageNumber: 0, maxElt: 10, token: token) { (elt:ApplicationSummaryDto?) in
                 XCTAssertEqual( "Application019" , elt?.name)
@@ -183,7 +183,7 @@ final class PaginationControllerTests: BaseAppTests {
     
     func testApplicationsPaginationSortByCreated() throws {
         let token = try loginAsAdmin()
-        try populateApplications(nbre: 50, tempo: 0.5, token: token)
+        try populateApplications(nbre: 50, tempo: 0, token: token)
         
         try paginationRequest(path: "/v2/Applications", perPage: 20, order: .descending,sortBy:"created" , pageNumber: 0, maxElt: 50, token: token) { (elt:ApplicationSummaryDto?) in
             XCTAssertEqual( "Application050" , elt?.name)

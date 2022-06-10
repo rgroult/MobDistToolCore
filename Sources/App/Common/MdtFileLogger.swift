@@ -21,10 +21,10 @@ extension LogLevel{
 public class MdtFileLogger: LogHandler{
     public subscript(metadataKey metadataKey: String) -> Logger.Metadata.Value? {
         get {
-            return metadata[metadataKey]
+            return nil// metadata[metadataKey]
         }
         set(newValue) {
-            metadata[metadataKey] = newValue
+          //  metadata[metadataKey] = newValue
         }
     }
     
