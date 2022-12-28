@@ -145,6 +145,13 @@ func updateUser(user:User, newName:String?,newPassword:String?, newFavoritesAppl
     return user.save(in: context).map{_ in user}
 }
 
+func disableUser(user:User,into context:Meow.MeowDatabase) -> EventLoopFuture<User>{
+    user.isActivated = false
+    //generate activation token
+    user.activationToken = UUID().uuidString
+    return user.save(in: context).map{_ in user}
+}
+
 func activateUser(withToken:String, into context:Meow.MeowDatabase) -> EventLoopFuture<User>{
     return findActivableUser(by: withToken, into: context)
         .flatMap({ user in

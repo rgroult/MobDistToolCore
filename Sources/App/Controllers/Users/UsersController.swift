@@ -337,6 +337,39 @@ final class UsersController:BaseController {
             .catch({[weak self]  error in self?.track(event: .DeleteUser(email: email, isSuccess: false,failedError:error), for: req)})
     }
     
+    func disableUser(_ req: Request) throws -> EventLoopFuture<MessageDto> {
+        guard let email = req.parameters.get("email") else { throw Abort(.badRequest)}
+        let emailService = try req.application.appEmailService()
+        let config = try req.application.appConfiguration()
+        return try retrieveMandatoryAdminUser(from: req)
+            .flatMap({ _ in
+                let meow = req.meow
+                //find user
+                return findUser(by: email, into: meow)
+                    .flatMap { user  -> EventLoopFuture<User> in
+                        guard let user = user else { return req.eventLoop.makeFailedFuture( Abort(.notFound))}
+                        return App.disableUser(user: user, into: meow)
+                    }
+                    .flatMap { user -> EventLoopFuture<MessageDto> in
+                        let message = MessageDto(message:"Account has been desactivated, a email with an activation link was sent")
+                        let sendEmailFuture:EventLoopFuture<Void>
+                        do {
+                            if config.automaticRegistration {
+                                sendEmailFuture = req.eventLoop.makeSucceededVoidFuture()
+                            } else {
+                                sendEmailFuture = try emailService.sendDesactivationEmail(for: user, into: req.eventLoop)
+                            }
+                        } catch {
+                            return req.eventLoop.makeFailedFuture(error)
+                        }
+                        return sendEmailFuture
+                            .map{ message }
+                }
+            })
+            .do({ [weak self] dto in self?.track(event: .DisableUser(email: email, isSuccess:true), for: req)})
+            .catch({[weak self]  error in self?.track(event: .DisableUser(email: email, isSuccess: false,failedError:error), for: req)})
+    }
+    
     func activation(_ req: Request) throws -> EventLoopFuture<MessageDto> {
         if let activationToken = try? req.query.get(String.self, at: "activationToken") {
             //activate user

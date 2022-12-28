@@ -94,12 +94,23 @@ extension UsersController:APIBuilderControllerProtocol {
                                 ],
                                       authorization: true
                             ),
+                            APIAction(method: .put, route: generateRoute("\(Verb.specificUser.rawValue)/\(Verb.disable)"),
+                                      summary: "Disable User",
+                                      description: "Disable user : need be admin",
+                                      parameters: [ APIParameter(name: "email", parameterLocation:.path, description: "Email", required: true)],
+                                      responses: [
+                                        APIResponse(code: "200", description: "Profile disabled", object: MessageDto.self),
+                                        APIResponse(code: "500", description: "Internal Error"),
+                                        APIResponse(code: "401", description: "Authentication error Error"),
+                                ],
+                                      authorization: true
+                            ),
                             APIAction(method: .delete, route: generateRoute(Verb.specificUser.rawValue),
                                       summary: "Delete User",
                                       description: "Delete user : need be admin",
                                       parameters: [ APIParameter(name: "email", parameterLocation:.path, description: "Email", required: true)],
                                       responses: [
-                                        APIResponse(code: "200", description: "Profiles found", object: Paginated<MessageDto>.self),
+                                        APIResponse(code: "200", description: "Profile deleted", object: MessageDto.self),
                                         APIResponse(code: "500", description: "Internal Error"),
                                         APIResponse(code: "401", description: "Authentication error Error"),
                                 ],

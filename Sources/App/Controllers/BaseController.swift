@@ -23,7 +23,7 @@ class BaseController {
     let pathPrefix:String
     
     func generateRoute(_ verb:String)->String{
-        return "\(basePathPrefix)/\(controllerVersion)/\(pathPrefix)/\(verb)"
+        return "/\(basePathPrefix)/\(controllerVersion)/\(pathPrefix)/\(verb)"
     }
     
     init(version:String,pathPrefix:String,apiBuilder:OpenAPIBuilder?){
