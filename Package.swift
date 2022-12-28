@@ -33,7 +33,7 @@ let package = Package(
         .package(url: "https://github.com/OpenKitten/MongoKitten.git", from: "6.0.0"),
         
         // open APi
-        .package(url: "https://github.com/mczachurski/Swiftgger.git", from: "1.3.1"),
+        .package(url: "https://github.com/mczachurski/Swiftgger.git", from: "1.4.0"),
         
         //🔐 crypto
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMinor(from: "1.3.0")),
