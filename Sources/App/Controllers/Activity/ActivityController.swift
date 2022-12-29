@@ -22,7 +22,7 @@ final class ActivityController:BaseController {
         .flatMap({_ in
             let meow = req.meow
             //count number of users, Applications and Artifacts
-            let futures = [meow.collection(for: User.self).count(where: []), meow.collection(for: MDTApplication.self).count(where: []) ,meow.collection(for: Artifact.self).count(where: [])]
+            let futures = [meow.collection(for: User.self).count(where: Document()), meow.collection(for: MDTApplication.self).count(where: Document()) ,meow.collection(for: Artifact.self).count(where: Document())]
             return futures.flatten(on: meow.eventLoop)
                 .map { counts in
                     return MetricsSummaryDto(UsersCount: counts[0], ApplicationsCount:  counts[1], ArtifactsCount:  counts[2])

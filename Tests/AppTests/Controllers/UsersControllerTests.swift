@@ -215,7 +215,25 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
     
     
     func testActivation() throws {
-        try testRegister()
+        try activation(withRegister: true)
+       /* try testRegister()
+        //retrieve activation token
+        let userFound = try findUser(by: userIOS.email, into: context).wait()
+        XCTAssertNotNil(userFound)
+        guard let user = userFound else { return }
+       
+        XCTAssertEqual(user.isActivated, false)
+        //activation
+        try app.clientTest(.GET, "/v2/Users/activation?activationToken=\(user.activationToken!)"){ res in
+            XCTAssertNotNil(res)
+            XCTAssertEqual(res.http.status.code , 200)
+        }*/
+    }
+    
+    func activation(withRegister:Bool) throws {
+        if withRegister {
+            try testRegister()
+        }
         //retrieve activation token
         let userFound = try findUser(by: userIOS.email, into: context).wait()
         XCTAssertNotNil(userFound)
@@ -563,6 +581,34 @@ final class UsersControllerNoAutomaticRegistrationTests: BaseAppTests {
 
         //login with new password
         _ = try login(withEmail: configuration.initialAdminEmail,password:newPassword,inside:app)
+    }
+    
+    func testDisableUserAsSysAdmin() throws {
+        try testActivation()
+
+        var environment = app.environment
+        let configuration = try MdtConfiguration.loadConfig(from: nil, from: &environment)
+        let loginResp = try login(withEmail: configuration.initialAdminEmail, password: configuration.initialAdminPassword, inside: app)
+        let token = loginResp.token
+        var httpResult = try app.clientSyncTest(.PUT, "/v2/Users/\(userIOS.email)/disable" , token: token)
+        XCTAssertEqual(httpResult.http.status.code , 200)
+        
+        //try to login as userIOS must failed
+        XCTAssertThrowsError(try login(withEmail: userIOS.email, password: userIOS.password, inside: app))
+        
+        //activation
+        try activation(withRegister: false)
+        
+        //try to login as userIOS must success
+        XCTAssertNoThrow(try login(withEmail: userIOS.email, password: userIOS.password, inside: app))
+    }
+    
+    func testDisableUser() throws {
+        try testActivation()
+        let loginResp = try login(withEmail: userIOS.email, password: userIOS.password, inside: app)
+        let token = loginResp.token
+        var httpResult = try app.clientSyncTest(.PUT, "/v2/Users/\(userANDROID.email)/disable" , token: token)
+        XCTAssertEqual(httpResult.http.status.code , 401)
     }
     
     func testUpdateWithApp() throws {

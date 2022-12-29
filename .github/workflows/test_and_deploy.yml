@@ -15,7 +15,7 @@ jobs:
     - run: brew install pkg-config
     - run: brew install libressl
     - run: brew tap mongodb/brew
-    - run: brew install mongodb-community@3.6
+    - run: brew install mongodb-community@4.2
     - run: mkdir -p $PWD/data/db
     - run: cp binaries/aapt2 /usr/local/bin && chmod +x /usr/local/bin/aapt2
     - run: curl --version
@@ -23,7 +23,7 @@ jobs:
     - run: pip3 install requests
     - run: which python3 > Ressources/python.path
     - run: python3  testDeps.py 
-    - run: brew services start mongodb/brew/mongodb-community@3.6
+    - run: brew services start mongodb/brew/mongodb-community@4.2
     #- run: swift package generate-xcodeproj
     - run: echo "Build SHA ${GITHUB_SHA}"
     - run: set -o pipefail && swift test | xcpretty -f `xcpretty-travis-formatter`

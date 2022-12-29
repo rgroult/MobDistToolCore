@@ -21,6 +21,8 @@ final class User: Model {
     var isActivated:Bool
     var activationToken:String?
     var lastLogin:Date?
+    var lastDisable:Date?
+    var lastActivation:Date?
     var createdAt:Date
     var favoritesApplicationsUUID:String?
     
@@ -33,6 +35,8 @@ final class User: Model {
         isActivated = false
         activationToken = nil
         lastLogin = nil
+        lastDisable = nil
+        lastActivation = nil
         createdAt = Date()
         favoritesApplicationsUUID = nil
     }

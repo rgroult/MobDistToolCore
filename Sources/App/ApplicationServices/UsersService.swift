@@ -13,8 +13,11 @@ enum UserError: Error,Equatable {
     case notFound
     case notActivated
     case alreadyExist
+    case alreadyDisabled
     case invalidLoginOrPassword
     case userNotAdministrator
+    case deleteAdministratorIsForbidden
+    case disableAdministratorIsForbidden
     case fieldInvalid(fieldName:String)
     case invalidPassworsStrength(required:Int)
 }
@@ -30,12 +33,18 @@ extension UserError: DebuggableError {
             return "UserError.fieldInvalid:\(fieldName)"
         case .alreadyExist:
             return "UserError.alreadyPresent"
+        case .alreadyDisabled:
+            return "UserError.alreadyDisabled"
         case .notActivated:
             return "UserError.notActivated"
         case .userNotAdministrator:
             return "UserError.userNotAdministrator"
         case .invalidPassworsStrength:
             return "UserError.invalidPassworsStrength"
+        case .deleteAdministratorIsForbidden:
+            return "UserError.deleteAdministratorIsForbidden"
+        case .disableAdministratorIsForbidden:
+            return "UserError.disableAdministratorIsForbidden"
         }
     }
     
@@ -128,6 +137,12 @@ func updateUser(user:User, newName:String?,newPassword:String?, newFavoritesAppl
     }
     if let isActivated = isActivated {
         user.isActivated = isActivated
+        if !isActivated {
+            user.lastDisable = .init()
+        } else {
+            user.lastActivation = .init()
+            user.activationToken = nil
+        }
     }
     if let favoritesApplicationsUUID = newFavoritesApplicationsUUID {
         if favoritesApplicationsUUID.isEmpty {
@@ -145,6 +160,19 @@ func updateUser(user:User, newName:String?,newPassword:String?, newFavoritesAppl
     return user.save(in: context).map{_ in user}
 }
 
+func disableUser(user:User,into context:Meow.MeowDatabase) throws -> EventLoopFuture<User>{
+    if !user.isActivated && user.activationToken != nil && user.lastDisable != nil {
+        throw UserError.alreadyDisabled
+    }
+    if user.lastDisable == nil {
+        user.lastDisable = .init()
+    }
+    user.isActivated = false
+    //generate activation token
+    user.activationToken = UUID().uuidString
+    return user.save(in: context).map{_ in user}
+}
+
 func activateUser(withToken:String, into context:Meow.MeowDatabase) -> EventLoopFuture<User>{
     return findActivableUser(by: withToken, into: context)
         .flatMap({ user in
@@ -153,6 +181,7 @@ func activateUser(withToken:String, into context:Meow.MeowDatabase) -> EventLoop
             //activate user
             user.isActivated = true
             user.activationToken  = nil
+            user.lastActivation = .init()
             return user.save(in: context).map{_ in user}
         })
 }

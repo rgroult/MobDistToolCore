@@ -35,6 +35,7 @@ enum ActivityEvent {
     case RefreshLogin(email:String,isSuccess:Bool, failedError:Error? = nil)
     case UpdateUser(email:String,isSuccess:Bool, failedError:Error? = nil)
     case DeleteUser(email:String,isSuccess:Bool, failedError:Error? = nil)
+    case DisableUser(email:String,isSuccess:Bool, failedError:Error? = nil)
     case ForgotPassword(email:String)
     
     case CreateApp(app:MDTApplication, user:User)
@@ -81,6 +82,8 @@ enum ActivityEvent {
              return "UpdateUser " + formatMessage(isSucess: isSuccess, value: "User:\(email)", failedError: failedError)
         case .DeleteUser(let email, let isSuccess, let failedError):
             return "DeleteUser " + formatMessage(isSucess: isSuccess, value: "User:\(email)", failedError: failedError)
+        case .DisableUser(let email, let isSuccess, let failedError):
+            return "DisableUser " + formatMessage(isSucess: isSuccess, value: "User:\(email)", failedError: failedError)
         case .ForgotPassword(let email):
             return "ForgotPassword - User:\(email)"
         case .CreateApp(let app, let user):

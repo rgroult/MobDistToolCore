@@ -10,7 +10,7 @@ import Vapor
 extension UsersController {
     
     enum Verb:String {
-        case login, refresh, me, activation,register, forgotPassword
+        case login, refresh, me, activation,register, forgotPassword, disable
         case specificUser = "{email}"
     }
     
@@ -25,6 +25,7 @@ extension UsersController {
         let usersProtectedRouter = protectedRouter.grouped("\(controllerVersion)","\(pathPrefix)")
         usersProtectedRouter.get([.constant(Verb.me.rawValue)], use: self.me)
         usersProtectedRouter.put([.constant(Verb.me.rawValue)], use: self.update)
+        usersProtectedRouter.put([.parameter("email"),.constant(Verb.disable.rawValue)], use: self.disableUser)
         usersProtectedRouter.get([], use: self.all)
         usersProtectedRouter.put([.parameter("email")], use: self.updateUser)
         usersProtectedRouter.delete([.parameter("email")], use: self.deleteUser)
