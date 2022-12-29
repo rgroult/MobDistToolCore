@@ -63,8 +63,8 @@ final class ArtifactsServiceTests: BaseAppTests {
 
     func testDeleteArtifactForApplication() throws {
         //count all artifacts
-        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: []).wait(), 0)
-        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 0)
+        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: Document()).wait(), 0)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: Document()).wait(), 0)
 
 
         let app = try createApplication(name: "testApp", platform: Platform.android, description: "testApp", adminUser: normalUser, into: context).wait()
@@ -74,8 +74,8 @@ final class ArtifactsServiceTests: BaseAppTests {
         try addArtifact(branches: ["master","test"], numberPerBranches: 10, app: app2)
 
         //count all artifacts
-        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: []).wait(), 2)
-        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 80)
+        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: Document()).wait(), 2)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: Document()).wait(), 80)
 
         //delete one App
         try deleteAllArtifacts(app: app2, storage: TestingStorageService(), into: context).wait()
@@ -83,7 +83,7 @@ final class ArtifactsServiceTests: BaseAppTests {
 
 
         //count all artifacts
-        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: []).wait(), 1)
-        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 40)
+        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: Document()).wait(), 1)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: Document()).wait(), 40)
     }
 }

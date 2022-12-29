@@ -9,6 +9,7 @@
 import CucumberSwift
 import Foundation
 import TestsToolkit
+import Meow
 import XCTest
 
 public extension Cucumber {
@@ -74,11 +75,11 @@ public extension Cucumber {
         }
         Then("^I count artifacts in database, I can see (\\d+) artifact\\(s\\)$") { matches, _ in
             let integer = Int(matches[1])
-            XCTAssertEqual(try! currentStep!.context.collection(for: Artifact.self).count(where: []).wait(),integer)
+            XCTAssertEqual(try! currentStep!.context.collection(for: Artifact.self).count(where: Document()).wait(),integer)
         }
         Then("^I count tokens in database, I can see (\\d+) token\\(s\\)$") { matches, _ in
             let integer = Int(matches[1])
-            XCTAssertEqual(try! currentStep!.context.collection(for: TokenInfo.self).count(where: []).wait(),integer)
+            XCTAssertEqual(try! currentStep!.context.collection(for: TokenInfo.self).count(where: Document()).wait(),integer)
         }
     }
 }

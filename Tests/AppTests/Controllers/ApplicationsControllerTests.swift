@@ -7,6 +7,7 @@
 
 import Foundation
 import Vapor
+import Meow
 import XCTest
 //import Pagination
 @testable import App
@@ -297,8 +298,8 @@ final class ApplicationsControllerTests: BaseAppTests {
     func testDeleteApplicationWithArtifacts() throws {
         try testCreateMultiple()
         //count all artifacts
-        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: []).wait(), 2)
-        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 0)
+        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: Document()).wait(), 2)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: Document()).wait(), 0)
 
         //login
         var token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
@@ -310,7 +311,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         let branches = ["master","dev","release"]
         try uploadArtifact(branches: branches , numberPerBranches: 5, apiKey: appDetail.apiKey!,mediaType:apkContentType)
         //number of artifact
-        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 15)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: Document()).wait(), 15)
 
 
         token = try login(withEmail: userIOS.email, password: userIOS.password, inside: app).token
@@ -318,7 +319,7 @@ final class ApplicationsControllerTests: BaseAppTests {
         appDetail = try returnAppDetail(uuid: appiOSFound!.uuid, token: token)
         try uploadArtifact(branches: branches , numberPerBranches: 4, apiKey: appDetail.apiKey!,mediaType:ipaContentType)
         //number of artifact
-        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 27)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: Document()).wait(), 27)
 
         token = try login(withEmail: userANDROID.email, password: userANDROID.password, inside: app).token
         //delete App
@@ -326,8 +327,8 @@ final class ApplicationsControllerTests: BaseAppTests {
         XCTAssertEqual(deleteApp.status.code , 200)
 
         //count all artifacts
-        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: []).wait(), 1)
-        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: []).wait(), 12)
+        XCTAssertEqual(try context.collection(for: MDTApplication.self).count(where: Document()).wait(), 1)
+        XCTAssertEqual(try context.collection(for: Artifact.self).count(where: Document()).wait(), 12)
     }
 
     func testDeleteApplicationKO() throws {
@@ -774,11 +775,11 @@ final class ApplicationsControllerTests: BaseAppTests {
         try uploadArtifact(branches: ["master","dev"] , numberPerBranches: 2, apiKey: appDetail.apiKey!)
         
         var app = try returnAppDetail(uuid: appDetail.uuid, token: token)
-        XCTAssertEqual(app.availableBranches, ["master","dev"])
+        XCTAssertEqual(Set(app.availableBranches), Set(["master","dev"]))
         
         try uploadLatestArtifact(numberOfUpload: 2, apiKey: appDetail.apiKey!)
         app = try returnAppDetail(uuid: appDetail.uuid, token: token)
-        XCTAssertEqual(app.availableBranches, ["master","dev"])
+        XCTAssertEqual(Set(app.availableBranches), Set(["master","dev"]))
     }
     
     func testFavoritesApplications() throws {
