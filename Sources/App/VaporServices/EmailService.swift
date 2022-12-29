@@ -181,7 +181,7 @@ final class EmailService {
     func sendDesactivationEmail(for user:User, into eventLoop:EventLoop) throws -> EventLoopFuture<Void> {
         let html:String
         do {
-           html = try generateMailContent(with: generateAbsoluteActivationUrl(for: user))
+           html = try generateDisableUserMailContent(with: generateAbsoluteActivationUrl(for: user))
         }catch {
             return eventLoop.makeFailedFuture(error)
         }
