@@ -18,6 +18,8 @@ struct UserDto: Codable {
     var administeredApplications:[ApplicationSummaryDto] = []
     var createdAt:Date? = nil
     var lastLogin:Date? = nil
+    var lastActivation:Date? = nil
+    var lastDisable:Date? = nil
     var message:String? = nil
 }
 
@@ -50,6 +52,8 @@ extension UserDto {
             
             createdAt = user.createdAt
             lastLogin = user.lastLogin
+            lastActivation = user.lastActivation
+            lastDisable = user.lastDisable
         }
     }
 }

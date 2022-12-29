@@ -328,6 +328,7 @@ final class UsersController:BaseController {
                 return findUser(by: email, into: meow)
                     .flatMap { user  in
                         guard let user = user else { return req.eventLoop.makeFailedFuture( Abort(.notFound))}
+                        guard !user.isSystemAdmin else {return  req.eventLoop.makeFailedFuture( UserError.deleteAdministratorIsForbidden) }
                         return delete(user: user, into: meow).map {
                             return MessageDto(message: "User Deleted")
                         }
@@ -339,7 +340,6 @@ final class UsersController:BaseController {
     
     func disableUser(_ req: Request) throws -> EventLoopFuture<MessageDto> {
         guard let email = req.parameters.get("email") else { throw Abort(.badRequest)}
-        let emailService = try req.application.appEmailService()
         let config = try req.application.appConfiguration()
         return try retrieveMandatoryAdminUser(from: req)
             .flatMap({ _ in
@@ -348,16 +348,24 @@ final class UsersController:BaseController {
                 return findUser(by: email, into: meow)
                     .flatMap { user  -> EventLoopFuture<User> in
                         guard let user = user else { return req.eventLoop.makeFailedFuture( Abort(.notFound))}
-                        return App.disableUser(user: user, into: meow)
+                        guard !user.isSystemAdmin else {return  req.eventLoop.makeFailedFuture( UserError.disableAdministratorIsForbidden) }
+                        do {
+                            return try App.disableUser(user: user, into: meow)
+                        }catch {
+                            return req.eventLoop.makeFailedFuture(error)
+                        }
                     }
                     .flatMap { user -> EventLoopFuture<MessageDto> in
-                        let message = MessageDto(message:"Account has been desactivated, a email with an activation link was sent")
+                        print("\(user.isActivated) \(user.lastDisable) \(user.activationToken)")
+                        let message:MessageDto
                         let sendEmailFuture:EventLoopFuture<Void>
                         do {
-                            if config.automaticRegistration {
-                                sendEmailFuture = req.eventLoop.makeSucceededVoidFuture()
-                            } else {
+                            if let emailService = try? req.application.appEmailService() {
+                                message = MessageDto(message:"Account has been desactivated, a email with an activation link was sent")
                                 sendEmailFuture = try emailService.sendDesactivationEmail(for: user, into: req.eventLoop)
+                            } else {
+                                message = MessageDto(message:"Account has been desactivated")
+                                sendEmailFuture = req.eventLoop.makeSucceededVoidFuture()
                             }
                         } catch {
                             return req.eventLoop.makeFailedFuture(error)
